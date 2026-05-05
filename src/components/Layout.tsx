@@ -5,8 +5,9 @@ const navItems = [
   { to: "/", label: "Home", end: true },
   { to: "/groups", label: "Groups" },
   { to: "/teams", label: "Teams" },
+  { to: "/stadiums", label: "Stadiums" },
   { to: "/fixtures", label: "Fixtures" },
-  { to: "/prediction", label: "Prediction" },
+  { to: "/prediction", label: "Predict" },
 ];
 
 const Layout = () => {

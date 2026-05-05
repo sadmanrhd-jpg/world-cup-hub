@@ -10,6 +10,8 @@ import Teams from "./pages/Teams";
 import TeamPage from "./pages/TeamPage";
 import Fixtures from "./pages/Fixtures";
 import Prediction from "./pages/Prediction";
+import Stadiums from "./pages/Stadiums";
+import StadiumPage from "./pages/StadiumPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +29,8 @@ const App = () => (
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/:slug" element={<TeamPage />} />
             <Route path="/fixtures" element={<Fixtures />} />
+            <Route path="/stadiums" element={<Stadiums />} />
+            <Route path="/stadiums/:id" element={<StadiumPage />} />
             <Route path="/prediction" element={<Prediction />} />
           </Route>
           <Route path="*" element={<NotFound />} />
