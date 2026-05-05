@@ -27,7 +27,7 @@ const Home = () => {
                 View Fixtures
               </Link>
               <Link to="/prediction" className="px-6 py-3 rounded-full border border-border bg-secondary/50 hover:bg-secondary font-semibold transition-colors">
-                See Prediction
+                Make Your Prediction
               </Link>
             </div>
           </div>
