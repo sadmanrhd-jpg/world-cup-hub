@@ -53,6 +53,26 @@ const TeamPage = () => {
       </div>
 
       <section>
+        <h2 className="text-2xl font-bold mb-4">Venues at WC 2026</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from(new Set(teamFixtures.map((f) => f.stadium)))
+            .map((venueName) => STADIUMS.find((s) => s.name === venueName))
+            .filter((s): s is NonNullable<typeof s> => !!s)
+            .map((s) => (
+              <Link key={s.id} to={`/stadiums/${s.id}`} className="card-elevated rounded-2xl border border-border overflow-hidden hover:border-primary/50 transition-all">
+                <div className="aspect-[16/10] bg-secondary/40 overflow-hidden">
+                  <StadiumImage wikiTitle={s.wikiTitle} alt={s.realName} className="w-full h-full object-cover" />
+                </div>
+                <div className="p-4">
+                  <div className="font-semibold">{s.name}</div>
+                  <div className="text-xs text-muted-foreground">{s.city}</div>
+                </div>
+              </Link>
+            ))}
+        </div>
+      </section>
+
+      <section>
         <h2 className="text-2xl font-bold mb-4">Kits</h2>
         <div className="grid sm:grid-cols-3 gap-4">
           <KitSwatch label="Home" value={team.kits.home} />
