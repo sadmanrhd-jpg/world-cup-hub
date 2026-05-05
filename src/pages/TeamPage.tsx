@@ -1,5 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { FIXTURES, getTeam } from "@/data/wc26";
+import { STADIUMS } from "@/data/stadiums";
+import StadiumImage from "@/components/StadiumImage";
 
 const KitSwatch = ({ label, value }: { label: string; value?: string }) => {
   if (!value) return null;
