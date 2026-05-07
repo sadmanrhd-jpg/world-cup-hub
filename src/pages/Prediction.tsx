@@ -128,12 +128,11 @@ const Prediction = () => {
     setState((s) => ({ ...s, knockout: { ...s.knockout, [key]: value } }));
   };
 
-  const moveThird = (idx: number, dir: -1 | 1) => {
+  const setThirdRank = (team: string, newRank: number) => {
     setState((s) => {
-      const arr = [...s.thirdsRank];
-      const j = idx + dir;
-      if (j < 0 || j >= arr.length) return s;
-      [arr[idx], arr[j]] = [arr[j], arr[idx]];
+      const arr = s.thirdsRank.filter((t) => t !== team);
+      const clamped = Math.max(1, Math.min(newRank, arr.length + 1));
+      arr.splice(clamped - 1, 0, team);
       return { ...s, thirdsRank: arr };
     });
   };
@@ -269,14 +268,22 @@ const Prediction = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {state.thirdsRank.map((name, i) => {
               const g = groupOf(name);
+              const total = state.thirdsRank.length;
               return (
                 <div
                   key={name}
                   className="card-elevated rounded-xl border border-border p-3 flex items-center gap-3"
                 >
-                  <div className="w-8 h-8 rounded-full bg-primary/15 text-primary font-bold flex items-center justify-center text-sm">
-                    {i + 1}
-                  </div>
+                  <select
+                    value={i + 1}
+                    onChange={(e) => setThirdRank(name, Number(e.target.value))}
+                    className="w-14 bg-input border border-border rounded px-2 py-1 text-sm font-bold text-primary outline-none focus:border-primary"
+                    aria-label="Rank"
+                  >
+                    {Array.from({ length: total }, (_, k) => k + 1).map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">
                       {flag(name)} {name}
@@ -284,26 +291,6 @@ const Prediction = () => {
                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
                       Group {g}
                     </div>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <button
-                      type="button"
-                      onClick={() => moveThird(i, -1)}
-                      disabled={i === 0}
-                      className="text-xs w-6 h-6 rounded border border-border hover:border-primary/50 disabled:opacity-30"
-                      aria-label="Move up"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveThird(i, 1)}
-                      disabled={i === state.thirdsRank.length - 1}
-                      className="text-xs w-6 h-6 rounded border border-border hover:border-primary/50 disabled:opacity-30"
-                      aria-label="Move down"
-                    >
-                      ▼
-                    </button>
                   </div>
                 </div>
               );
