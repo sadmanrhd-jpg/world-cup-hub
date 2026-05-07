@@ -1,24 +1,25 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import confetti from "canvas-confetti";
 import { GROUPS, TEAMS, teamsInGroup } from "@/data/wc26";
 
 // 2026 format: 12 groups of 4. Top 2 + best 8 third-placed advance to R16 (32-team KO).
 type Pos = "first" | "second" | "third";
-type Standings = Record<string, Partial<Record<Pos, string>>>; // group -> pos -> team name
+type Standings = Record<string, Partial<Record<Pos, string>>>; // group -> pos -> team
 type Knockout = Record<string, string | undefined>;
 
-const STORAGE_KEY = "wc26-prediction-v2";
+const STORAGE_KEY = "wc26-prediction-v3";
 const MAX_THIRDS = 8;
 
 const flag = (name?: string) => (name ? TEAMS.find((t) => t.name === name)?.flag ?? "" : "");
 const groupOf = (name?: string) => (name ? TEAMS.find((t) => t.name === name)?.group : undefined);
 
-type State = { standings: Standings; knockout: Knockout };
-const empty: State = { standings: {}, knockout: {} };
+type State = {
+  standings: Standings;
+  thirdsRank: string[]; // ordered list of team names, length up to 8
+  knockout: Knockout;
+};
+const empty: State = { standings: {}, thirdsRank: [], knockout: {} };
 
-// R16 bracket per official FIFA 2026 bracket image.
-// Each match has left & right slot. A slot is either:
-//   { type: "rank", group: "E", pos: "first" | "second" }
-//   { type: "third", allowed: ["A","B","C","D","F"] }   // 8 groups eligible
 type Slot =
   | { type: "rank"; group: string; pos: "first" | "second"; label: string }
   | { type: "third"; allowed: string[]; label: string };
@@ -39,7 +40,6 @@ const R16: { left: Slot; right: Slot }[] = [
   { left: r("H", "first"),  right: r("J", "second") },
   { left: r("D", "first"),  right: t3("BEFIJ") },
   { left: r("G", "first"),  right: t3("AEHIJ") },
-  // Right side of bracket
   { left: r("C", "first"),  right: r("F", "second") },
   { left: r("E", "second"), right: r("I", "second") },
   { left: r("A", "first"),  right: t3("CEFHI") },
@@ -50,13 +50,36 @@ const R16: { left: Slot; right: Slot }[] = [
   { left: r("K", "first"),  right: t3("DEIJL") },
 ];
 
+// Greedy allocate ranked thirds to R16 third-slots.
+// Iterate ranked teams in order; assign each to the first unfilled third-slot
+// whose `allowed` groups include the team's group.
+const allocateThirds = (rank: string[]): Record<number, string> => {
+  const thirdSlots = R16
+    .map((m, i) => ({ i, slot: m.right }))
+    .filter((x) => x.slot.type === "third") as { i: number; slot: Extract<Slot, { type: "third" }> }[];
+  const filled: Record<number, string> = {};
+  const usedSlots = new Set<number>();
+  for (const team of rank) {
+    const g = groupOf(team);
+    if (!g) continue;
+    const target = thirdSlots.find((x) => !usedSlots.has(x.i) && x.slot.allowed.includes(g));
+    if (target) {
+      filled[target.i] = team;
+      usedSlots.add(target.i);
+    }
+  }
+  return filled;
+};
+
 const Prediction = () => {
   const [state, setState] = useState<State>(empty);
+  const championRef = useRef<HTMLDivElement>(null);
+  const lastChampRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setState(JSON.parse(raw));
+      if (raw) setState({ ...empty, ...JSON.parse(raw) });
     } catch {}
   }, []);
 
@@ -64,25 +87,39 @@ const Prediction = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
-  // Count how many groups currently have a 3rd-place pick
-  const thirdsCount = useMemo(
-    () => GROUPS.filter((g) => state.standings[g]?.third).length,
+  const thirdTeams = useMemo(
+    () =>
+      GROUPS.map((g) => state.standings[g]?.third).filter(Boolean) as string[],
     [state.standings]
+  );
+  const thirdsCount = thirdTeams.length;
+
+  // Keep thirdsRank in sync with current third picks
+  useEffect(() => {
+    setState((s) => {
+      const set = new Set(thirdTeams);
+      const cleaned = s.thirdsRank.filter((t) => set.has(t));
+      const missing = thirdTeams.filter((t) => !cleaned.includes(t));
+      const next = [...cleaned, ...missing];
+      if (next.length === s.thirdsRank.length && next.every((v, i) => v === s.thirdsRank[i])) return s;
+      return { ...s, thirdsRank: next };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thirdTeams.join("|")]);
+
+  const thirdSlotAssignments = useMemo(
+    () => allocateThirds(state.thirdsRank),
+    [state.thirdsRank]
   );
 
   const pickPos = (group: string, pos: Pos, team: string) => {
     setState((s) => {
       const cur = { ...(s.standings[group] ?? {}) };
-      // If team already has another position in this group, clear it
       (Object.keys(cur) as Pos[]).forEach((k) => {
         if (cur[k] === team) delete cur[k];
       });
-      // Toggle off if same pos clicked again
-      if (cur[pos] === team) {
-        delete cur[pos];
-      } else {
-        cur[pos] = team;
-      }
+      if (cur[pos] === team) delete cur[pos];
+      else cur[pos] = team;
       return { ...s, standings: { ...s.standings, [group]: cur } };
     });
   };
@@ -91,22 +128,49 @@ const Prediction = () => {
     setState((s) => ({ ...s, knockout: { ...s.knockout, [key]: value } }));
   };
 
+  const moveThird = (idx: number, dir: -1 | 1) => {
+    setState((s) => {
+      const arr = [...s.thirdsRank];
+      const j = idx + dir;
+      if (j < 0 || j >= arr.length) return s;
+      [arr[idx], arr[j]] = [arr[j], arr[idx]];
+      return { ...s, thirdsRank: arr };
+    });
+  };
+
   const reset = () => {
     if (confirm("Clear your entire prediction?")) setState(empty);
   };
 
-  // Resolve each R16 slot to a team based on standings + chosen thirds
-  const thirdsByGroup: Record<string, string> = {};
-  GROUPS.forEach((g) => {
-    const t = state.standings[g]?.third;
-    if (t) thirdsByGroup[g] = t;
-  });
-
-  const resolveSlot = (slot: Slot, key: string): string | undefined => {
+  const resolveSlot = (slot: Slot, r16Index: number, side: "L" | "R"): string | undefined => {
     if (slot.type === "rank") return state.standings[slot.group]?.[slot.pos];
-    // For 3rd-place slots, user picks which of their qualifying thirds fills the slot
-    return state.knockout[`assign-${key}`];
+    if (side === "R") return thirdSlotAssignments[r16Index];
+    return undefined;
   };
+
+  // Confetti when champion is set / changes
+  useEffect(() => {
+    const champ = state.knockout["champ-0"];
+    if (champ && champ !== lastChampRef.current) {
+      lastChampRef.current = champ;
+      const fire = (origin: { x: number; y: number }) =>
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          startVelocity: 45,
+          origin,
+          colors: ["#FFD700", "#FF4D4D", "#3DDC84", "#1E90FF", "#FF8C00"],
+        });
+      fire({ x: 0.2, y: 0.6 });
+      fire({ x: 0.5, y: 0.5 });
+      fire({ x: 0.8, y: 0.6 });
+      setTimeout(() => fire({ x: 0.5, y: 0.4 }), 250);
+      setTimeout(() => fire({ x: 0.3, y: 0.5 }), 500);
+      setTimeout(() => fire({ x: 0.7, y: 0.5 }), 500);
+    } else if (!champ) {
+      lastChampRef.current = undefined;
+    }
+  }, [state.knockout]);
 
   return (
     <div className="container py-12 space-y-12">
@@ -115,7 +179,8 @@ const Prediction = () => {
           <h1 className="text-4xl md:text-5xl font-bold">Your Prediction</h1>
           <p className="text-muted-foreground mt-2 max-w-2xl">
             48 teams · 12 groups · top 2 plus best 8 third-placed advance to a 32-team knockout.
-            Pick 1st, 2nd and 3rd in each group, then fill out the bracket. Saved in your browser.
+            Pick 1st, 2nd and 3rd in each group, rank your thirds, then fill out the bracket.
+            Saved in your browser.
           </p>
         </div>
         <button
@@ -194,18 +259,71 @@ const Prediction = () => {
         </div>
       </section>
 
+      {/* Thirds ranking */}
+      {thirdsCount > 0 && (
+        <section>
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">Rank Your Third-Place Teams</h2>
+          <p className="text-muted-foreground mb-6">
+            Order them 1–8 by how strongly they finished. They auto-fill the bracket's 3rd-place slots based on the official allowed groups.
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {state.thirdsRank.map((name, i) => {
+              const g = groupOf(name);
+              return (
+                <div
+                  key={name}
+                  className="card-elevated rounded-xl border border-border p-3 flex items-center gap-3"
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary/15 text-primary font-bold flex items-center justify-center text-sm">
+                    {i + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {flag(name)} {name}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                      Group {g}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveThird(i, -1)}
+                      disabled={i === 0}
+                      className="text-xs w-6 h-6 rounded border border-border hover:border-primary/50 disabled:opacity-30"
+                      aria-label="Move up"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveThird(i, 1)}
+                      disabled={i === state.thirdsRank.length - 1}
+                      className="text-xs w-6 h-6 rounded border border-border hover:border-primary/50 disabled:opacity-30"
+                      aria-label="Move down"
+                    >
+                      ▼
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Knockout bracket */}
       <section>
         <h2 className="text-2xl md:text-3xl font-bold mb-2">Round of 16</h2>
         <p className="text-muted-foreground mb-6">
-          Slots fill from your group standings. For 3rd-place slots, choose from your qualifying thirds.
+          Slots fill from your group standings and ranked thirds. Tap a team to pick the winner.
         </p>
 
         <div className="grid md:grid-cols-2 gap-4">
           {R16.map((m, i) => {
             const key = `r16-${i}`;
-            const left = resolveSlot(m.left, `${key}-L`);
-            const right = resolveSlot(m.right, `${key}-R`);
+            const left = resolveSlot(m.left, i, "L");
+            const right = resolveSlot(m.right, i, "R");
             const winner = state.knockout[key];
             return (
               <div key={key} className="card-elevated rounded-xl border border-border p-4">
@@ -213,10 +331,6 @@ const Prediction = () => {
                 <SlotRow
                   slot={m.left}
                   resolved={left}
-                  assignKey={`${key}-L`}
-                  state={state}
-                  thirdsByGroup={thirdsByGroup}
-                  onAssign={setKO}
                   isWinner={winner === left && !!left}
                   onPickWinner={() => left && setKO(key, left)}
                 />
@@ -224,10 +338,6 @@ const Prediction = () => {
                 <SlotRow
                   slot={m.right}
                   resolved={right}
-                  assignKey={`${key}-R`}
-                  state={state}
-                  thirdsByGroup={thirdsByGroup}
-                  onAssign={setKO}
                   isWinner={winner === right && !!right}
                   onPickWinner={() => right && setKO(key, right)}
                 />
@@ -273,10 +383,10 @@ const Prediction = () => {
           cols={1}
         />
 
-        <div className="mt-10">
+        <div className="mt-10" ref={championRef}>
           <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-3">Your Champion</h3>
           <div className="card-elevated rounded-2xl border border-primary/40 p-8 text-center glow">
-            <div className="text-6xl">🏆</div>
+            <div className={`text-6xl ${state.knockout["champ-0"] ? "animate-bounce" : ""}`}>🏆</div>
             <div className="text-3xl md:text-5xl font-bold mt-3 gradient-gold-text min-h-[1.2em]">
               {state.knockout["champ-0"]
                 ? `${flag(state.knockout["champ-0"])} ${state.knockout["champ-0"]}`
@@ -295,50 +405,14 @@ const Prediction = () => {
 const SlotRow = ({
   slot,
   resolved,
-  assignKey,
-  state,
-  thirdsByGroup,
-  onAssign,
   isWinner,
   onPickWinner,
 }: {
   slot: Slot;
   resolved?: string;
-  assignKey: string;
-  state: State;
-  thirdsByGroup: Record<string, string>;
-  onAssign: (key: string, value: string) => void;
   isWinner: boolean;
   onPickWinner: () => void;
 }) => {
-  if (slot.type === "third") {
-    const candidates = slot.allowed
-      .map((g) => thirdsByGroup[g])
-      .filter(Boolean) as string[];
-    return (
-      <div className={`flex items-center gap-2 rounded-lg p-2 border ${isWinner ? "border-primary bg-primary/10" : "border-border/50"}`}>
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground w-10">{slot.label}</span>
-        <select
-          value={state.knockout[`assign-${assignKey}`] ?? ""}
-          onChange={(e) => onAssign(`assign-${assignKey}`, e.target.value)}
-          className="flex-1 bg-input border border-border rounded px-2 py-1 text-sm outline-none focus:border-primary"
-        >
-          <option value="">— 3rd from {slot.allowed.join("/")} —</option>
-          {candidates.map((name) => (
-            <option key={name} value={name}>{flag(name)} {name}</option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={onPickWinner}
-          disabled={!resolved}
-          className={`text-xs px-2 py-1 rounded border ${isWinner ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary/50"} disabled:opacity-30`}
-        >
-          ✓
-        </button>
-      </div>
-    );
-  }
   return (
     <button
       type="button"
@@ -365,38 +439,48 @@ const BracketRound = ({
   onPick: (key: string, value: string) => void;
   options: string[];
   cols: number;
-}) => (
-  <div className="mt-8">
-    <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-3">{title}</h3>
-    <div
-      className="grid gap-3"
-      style={{ gridTemplateColumns: `repeat(${Math.min(cols, slots)}, minmax(0, 1fr))` }}
-    >
-      {Array.from({ length: slots }).map((_, i) => {
-        const key = `${stage}-${i}`;
-        const value = state.knockout[key] ?? "";
-        return (
-          <div key={key} className="card-elevated rounded-xl border border-border p-3">
-            <div className="text-xs text-muted-foreground mb-1">
-              {title === "Champion" ? "Winner" : `Match ${i + 1}`}
+}) => {
+  // Prevent reusing a team across multiple slots in the same round
+  const usedInRound = new Set(
+    Array.from({ length: slots }, (_, i) => state.knockout[`${stage}-${i}`]).filter(Boolean) as string[]
+  );
+  return (
+    <div className="mt-8">
+      <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-3">{title}</h3>
+      <div
+        className="grid gap-3"
+        style={{ gridTemplateColumns: `repeat(${Math.min(cols, slots)}, minmax(0, 1fr))` }}
+      >
+        {Array.from({ length: slots }).map((_, i) => {
+          const key = `${stage}-${i}`;
+          const value = state.knockout[key] ?? "";
+          const unique = Array.from(new Set(options));
+          return (
+            <div key={key} className="card-elevated rounded-xl border border-border p-3">
+              <div className="text-xs text-muted-foreground mb-1">
+                {title === "Champion" ? "Winner" : `Match ${i + 1}`}
+              </div>
+              <select
+                value={value}
+                onChange={(e) => onPick(key, e.target.value)}
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
+              >
+                <option value="">— pick —</option>
+                {unique.map((name) => {
+                  const taken = usedInRound.has(name) && name !== value;
+                  return (
+                    <option key={name} value={name} disabled={taken}>
+                      {flag(name)} {name}{taken ? " (picked)" : ""}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
-            <select
-              value={value}
-              onChange={(e) => onPick(key, e.target.value)}
-              className="w-full bg-input border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
-            >
-              <option value="">— pick —</option>
-              {Array.from(new Set(options)).map((name) => (
-                <option key={name} value={name}>
-                  {flag(name)} {name}
-                </option>
-              ))}
-            </select>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Prediction;
