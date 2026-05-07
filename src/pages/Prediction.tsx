@@ -128,12 +128,11 @@ const Prediction = () => {
     setState((s) => ({ ...s, knockout: { ...s.knockout, [key]: value } }));
   };
 
-  const moveThird = (idx: number, dir: -1 | 1) => {
+  const setThirdRank = (team: string, newRank: number) => {
     setState((s) => {
-      const arr = [...s.thirdsRank];
-      const j = idx + dir;
-      if (j < 0 || j >= arr.length) return s;
-      [arr[idx], arr[j]] = [arr[j], arr[idx]];
+      const arr = s.thirdsRank.filter((t) => t !== team);
+      const clamped = Math.max(1, Math.min(newRank, arr.length + 1));
+      arr.splice(clamped - 1, 0, team);
       return { ...s, thirdsRank: arr };
     });
   };
