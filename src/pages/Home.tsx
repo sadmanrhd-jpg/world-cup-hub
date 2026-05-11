@@ -1,14 +1,112 @@
 import { Link } from "react-router-dom";
-import logo from "@/assets/wc26-logo.avif";
-import { GROUPS, teamsInGroup } from "@/data/wc26";
+import heroImg from "@/assets/wc26-hero.jpg";
+import { FIXTURES, GROUPS, getTeam, teamsInGroup } from "@/data/wc26";
+import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
+import { getTeamInfo } from "@/data/teamInfo";
+import { Heart, Star, Trophy } from "lucide-react";
+
+const FavoriteSpotlight = () => {
+  const { slug } = useFavoriteTeam();
+  const team = slug ? getTeam(slug) : null;
+
+  if (!team) {
+    return (
+      <section className="container py-12">
+        <div className="card-elevated rounded-3xl border border-dashed border-border p-10 text-center">
+          <Heart className="mx-auto text-primary" />
+          <h2 className="text-2xl md:text-3xl font-bold mt-3">Pick your favourite team</h2>
+          <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
+            Choose a nation and we'll keep their upcoming matches, history and star player right here on the home page.
+          </p>
+          <Link
+            to="/teams"
+            className="inline-block mt-5 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold glow hover:scale-105 transition-transform"
+          >
+            Browse all 48 teams
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  const info = getTeamInfo(team.name);
+  const upcoming = FIXTURES.filter((f) => f.home === team.name || f.away === team.name).slice(0, 5);
+
+  return (
+    <section className="container py-12">
+      <div className="flex items-center gap-2 mb-4 text-xs uppercase tracking-widest text-primary">
+        <Star className="h-3 w-3 fill-current" /> Your team
+      </div>
+      <div className="card-elevated rounded-3xl border border-primary/30 overflow-hidden">
+        <div className="grid lg:grid-cols-3">
+          <div className="p-8 lg:p-10 bg-gradient-to-br from-primary/15 via-transparent to-transparent">
+            <div className="text-7xl">{team.flag}</div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground mt-4">Group {team.group}</div>
+            <h2 className="text-4xl md:text-5xl font-bold mt-1">{team.name}</h2>
+            <p className="text-muted-foreground mt-3">{info.blurb}</p>
+            <Link to={`/teams/${team.slug}`} className="inline-block mt-5 text-sm text-primary hover:underline">
+              View full team page →
+            </Link>
+          </div>
+
+          <div className="p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border space-y-5">
+            <div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">World Cup history</div>
+              <div className="flex items-baseline gap-3 mt-1">
+                <Trophy className="text-primary" />
+                <span className="text-3xl font-display font-bold gradient-gold-text">{info.titles}</span>
+                <span className="text-sm text-muted-foreground">titles · {info.appearances} apps</span>
+              </div>
+              <div className="text-sm mt-2"><span className="text-muted-foreground">Best:</span> {info.bestFinish}</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Highlight player</div>
+              <div className="text-2xl font-bold mt-1">{info.highlightPlayer.name}</div>
+              <div className="text-xs text-muted-foreground">{info.highlightPlayer.role}</div>
+            </div>
+          </div>
+
+          <div className="p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border">
+            <div className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Upcoming matches</div>
+            <ul className="space-y-2">
+              {upcoming.map((f) => {
+                const opp = f.home === team.name ? f.away : f.home;
+                const oppFlag = (() => {
+                  const allTeams = (window as never) && undefined;
+                  return "";
+                })();
+                return (
+                  <li key={f.id} className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 px-4 py-3">
+                    <div className="text-xs text-muted-foreground w-16 shrink-0">
+                      {new Date(f.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </div>
+                    <div className="flex-1 text-sm font-medium truncate">
+                      vs {opp}
+                    </div>
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:block">
+                      {f.stage === "Group" ? `Group ${f.group}` : f.stage}
+                    </div>
+                  </li>
+                );
+              })}
+              {upcoming.length === 0 && (
+                <li className="text-sm text-muted-foreground">No upcoming matches scheduled.</li>
+              )}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
 
 const Home = () => {
   return (
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 grid-bg opacity-50" />
-        <div className="container relative py-20 md:py-32 grid md:grid-cols-2 gap-12 items-center">
+        <div className="absolute inset-0 grid-bg opacity-40" />
+        <div className="container relative py-16 md:py-28 grid md:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-secondary/50 text-xs uppercase tracking-widest text-muted-foreground">
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -31,12 +129,22 @@ const Home = () => {
               </Link>
             </div>
           </div>
-          <div className="relative flex justify-center">
-            <div className="absolute inset-0 blur-3xl opacity-40 bg-primary rounded-full" />
-            <img src={logo} alt="FIFA World Cup 2026 official logo" className="relative max-w-sm w-full drop-shadow-2xl" />
+          <div className="relative">
+            <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-primary/40 via-primary/10 to-transparent blur-3xl" />
+            <div className="relative rounded-[2rem] overflow-hidden border border-border shadow-2xl">
+              <img
+                src={heroImg}
+                alt="FIFA World Cup 2026 trophy emblem on a stadium-lit pitch"
+                className="w-full h-auto block"
+                loading="eager"
+              />
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Favorite team spotlight */}
+      <FavoriteSpotlight />
 
       {/* Stats */}
       <section className="container py-12">
