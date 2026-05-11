@@ -431,6 +431,7 @@ const BracketRound = ({
   const usedInRound = new Set(
     Array.from({ length: slots }, (_, i) => state.knockout[`${stage}-${i}`]).filter(Boolean) as string[]
   );
+  const unique = Array.from(new Set(options));
   return (
     <div className="mt-8">
       <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-3">{title}</h3>
@@ -440,28 +441,46 @@ const BracketRound = ({
       >
         {Array.from({ length: slots }).map((_, i) => {
           const key = `${stage}-${i}`;
-          const value = state.knockout[key] ?? "";
-          const unique = Array.from(new Set(options));
+          const value = state.knockout[key];
+          // Pair options into matches: slot i pulls from options[i*2] and options[i*2+1]
+          const a = options[i * 2];
+          const b = options[i * 2 + 1];
+          const candidates = title === "Champion" ? unique : [a, b].filter(Boolean) as string[];
           return (
             <div key={key} className="card-elevated rounded-xl border border-border p-3">
-              <div className="text-xs text-muted-foreground mb-1">
+              <div className="text-xs text-muted-foreground mb-2">
                 {title === "Champion" ? "Winner" : `Match ${i + 1}`}
               </div>
-              <select
-                value={value}
-                onChange={(e) => onPick(key, e.target.value)}
-                className="w-full bg-input border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
-              >
-                <option value="">— pick —</option>
-                {unique.map((name) => {
-                  const taken = usedInRound.has(name) && name !== value;
-                  return (
-                    <option key={name} value={name} disabled={taken}>
-                      {flag(name)} {name}{taken ? " (picked)" : ""}
-                    </option>
-                  );
-                })}
-              </select>
+              {candidates.length === 0 ? (
+                <div className="text-xs text-muted-foreground italic px-2 py-3">— pending previous round —</div>
+              ) : (
+                <div className="space-y-2">
+                  {candidates.map((name) => {
+                    const active = value === name;
+                    const taken = usedInRound.has(name) && !active;
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        disabled={taken}
+                        onClick={() => onPick(key, active ? "" : name)}
+                        className={[
+                          "w-full flex items-center gap-2 rounded-lg p-2 border text-left transition-colors text-sm font-medium",
+                          active
+                            ? "border-primary bg-primary/10 glow"
+                            : "border-border/50 hover:border-primary/40 bg-secondary/30",
+                          taken ? "opacity-40 cursor-not-allowed" : "",
+                        ].join(" ")}
+                        title={taken ? "Already picked in this round" : undefined}
+                      >
+                        <span className="text-lg">{flag(name)}</span>
+                        <span className="flex-1 truncate">{name}</span>
+                        {active && <span className="text-[10px] text-primary uppercase tracking-widest">winner</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
