@@ -52,6 +52,23 @@ const TeamPage = () => {
         </div>
       </div>
 
+      <p className="text-lg text-muted-foreground max-w-3xl">{info.blurb}</p>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="card-elevated rounded-2xl border border-border p-5">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">Titles</div>
+          <div className="text-4xl font-display font-bold gradient-gold-text mt-1">{info.titles}</div>
+        </div>
+        <div className="card-elevated rounded-2xl border border-border p-5">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">Appearances</div>
+          <div className="text-4xl font-display font-bold mt-1">{info.appearances}</div>
+        </div>
+        <div className="card-elevated rounded-2xl border border-border p-5 sm:col-span-2">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">Best finish</div>
+          <div className="font-semibold mt-1">{info.bestFinish}</div>
+        </div>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-6">
         <div className="card-elevated rounded-2xl border border-border p-6">
           <h2 className="text-xl font-bold mb-1">Base Camp</h2>
@@ -62,6 +79,12 @@ const TeamPage = () => {
           <p className="text-muted-foreground">{team.homeStadium}</p>
         </div>
       </div>
+
+      <section className="card-elevated rounded-2xl border border-primary/30 p-6">
+        <div className="text-xs uppercase tracking-widest text-primary mb-2">Highlight Player</div>
+        <div className="text-3xl md:text-4xl font-bold">{info.highlightPlayer.name}</div>
+        <div className="text-sm text-muted-foreground mt-1">{info.highlightPlayer.role}</div>
+      </section>
 
       <section>
         <h2 className="text-2xl font-bold mb-4">Venues at WC 2026</h2>
@@ -84,11 +107,16 @@ const TeamPage = () => {
       </section>
 
       <section>
-        <h2 className="text-2xl font-bold mb-4">Kits</h2>
-        <div className="grid sm:grid-cols-3 gap-6 card-elevated rounded-2xl border border-border p-6">
-          <Jersey label="Home" description={team.kits.home} />
-          <Jersey label="Away" description={team.kits.away} />
-          {team.kits.third && <Jersey label="Third" description={team.kits.third} />}
+        <div className="flex items-end justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h2 className="text-2xl font-bold">Kits 2026</h2>
+            <p className="text-sm text-muted-foreground">Match-day shirts. Tap to admire the design.</p>
+          </div>
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Concept colours</span>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-6 card-elevated rounded-2xl border border-border p-8 bg-gradient-to-b from-secondary/30 to-transparent">
+          <Jersey label="Home" description={team.kits.home} number={10} teamShort={teamShort} />
+          <Jersey label="Away" description={team.kits.away} number={9} teamShort={teamShort} />
         </div>
       </section>
 
