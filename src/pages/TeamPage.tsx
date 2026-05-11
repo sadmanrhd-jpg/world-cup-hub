@@ -65,10 +65,10 @@ const TeamPage = () => {
 
       <section>
         <h2 className="text-2xl font-bold mb-4">Kits</h2>
-        <div className="grid sm:grid-cols-3 gap-4">
-          <KitSwatch label="Home" value={team.kits.home} />
-          <KitSwatch label="Away" value={team.kits.away} />
-          <KitSwatch label="Third" value={team.kits.third} />
+        <div className="grid sm:grid-cols-3 gap-6 card-elevated rounded-2xl border border-border p-6">
+          <Jersey label="Home" description={team.kits.home} />
+          <Jersey label="Away" description={team.kits.away} />
+          {team.kits.third && <Jersey label="Third" description={team.kits.third} />}
         </div>
       </section>
 
