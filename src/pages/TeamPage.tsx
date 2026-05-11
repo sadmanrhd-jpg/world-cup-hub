@@ -3,6 +3,9 @@ import { FIXTURES, getTeam } from "@/data/wc26";
 import { STADIUMS } from "@/data/stadiums";
 import StadiumImage from "@/components/StadiumImage";
 import Jersey from "@/components/Jersey";
+import { getTeamInfo } from "@/data/teamInfo";
+import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
+import { Heart } from "lucide-react";
 
 const TeamPage = () => {
   const { slug } = useParams();
