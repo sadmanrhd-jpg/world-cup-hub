@@ -2,16 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { FIXTURES, getTeam } from "@/data/wc26";
 import { STADIUMS } from "@/data/stadiums";
 import StadiumImage from "@/components/StadiumImage";
-
-const KitSwatch = ({ label, value }: { label: string; value?: string }) => {
-  if (!value) return null;
-  return (
-    <div className="rounded-xl border border-border bg-secondary/40 p-4">
-      <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className="mt-1 font-medium">{value}</div>
-    </div>
-  );
-};
+import Jersey from "@/components/Jersey";
 
 const TeamPage = () => {
   const { slug } = useParams();
