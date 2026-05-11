@@ -71,14 +71,10 @@ const FavoriteSpotlight = () => {
             <ul className="space-y-2">
               {upcoming.map((f) => {
                 const opp = f.home === team.name ? f.away : f.home;
-                const oppTeam = getTeam(
-                  // best-effort lookup: opponent might not match a slug directly
-                  ""
-                );
                 const oppFlag = (() => {
-                  const t = (await import("@/data/wc26")) as never;
+                  const allTeams = (window as never) && undefined;
                   return "";
-                });
+                })();
                 return (
                   <li key={f.id} className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 px-4 py-3">
                     <div className="text-xs text-muted-foreground w-16 shrink-0">
@@ -87,7 +83,9 @@ const FavoriteSpotlight = () => {
                     <div className="flex-1 text-sm font-medium truncate">
                       vs {opp}
                     </div>
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:block">{f.stage === "Group" ? `Group ${f.group}` : f.stage}</div>
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:block">
+                      {f.stage === "Group" ? `Group ${f.group}` : f.stage}
+                    </div>
                   </li>
                 );
               })}
