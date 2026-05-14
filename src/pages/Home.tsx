@@ -1,41 +1,9 @@
 import { Link } from "react-router-dom";
-import heroImg from "@/assets/wc26-hero-v2.jpg";
 import { FIXTURES, GROUPS, TEAMS, getTeam, teamsInGroup } from "@/data/wc26";
 import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import { getTeamInfo } from "@/data/teamInfo";
 import { getManager } from "@/data/managers";
 import { Heart, Star, Trophy, Bell } from "lucide-react";
-
-const FlagGrid = () => (
-  <section className="container py-16">
-    <div className="flex items-end justify-between mb-8 flex-wrap gap-3">
-      <div>
-        <div className="text-xs uppercase tracking-[0.3em] text-primary">48 Nations</div>
-        <h2 className="text-3xl md:text-4xl font-bold mt-2">Pick your team</h2>
-        <p className="text-muted-foreground mt-1">Tap any flag to dive into squads, kits, fixtures and history.</p>
-      </div>
-      <Link to="/teams" className="text-sm text-primary hover:underline">All teams →</Link>
-    </div>
-    <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-3">
-      {TEAMS.map((t, i) => (
-        <Link
-          key={t.slug}
-          to={`/teams/${t.slug}`}
-          title={t.name}
-          style={{ animationDelay: `${i * 35}ms`, animationFillMode: "both" }}
-          className="group relative aspect-square rounded-2xl border border-border bg-secondary/40 flex items-center justify-center overflow-hidden hover:border-primary hover:-translate-y-1 hover:scale-110 hover:z-10 transition-all duration-300 animate-fade-in shadow-md hover:shadow-2xl hover:shadow-primary/30"
-        >
-          <span className="text-3xl md:text-4xl transition-transform duration-300 group-hover:scale-110">
-            {t.flag}
-          </span>
-          <span className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-background/90 backdrop-blur text-[10px] text-center py-1 font-medium truncate px-1">
-            {t.name}
-          </span>
-        </Link>
-      ))}
-    </div>
-  </section>
-);
 
 const FavoriteSpotlight = () => {
   const { slug } = useFavoriteTeam();
@@ -145,45 +113,56 @@ const Home = () => {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 grid-bg opacity-40" />
-        <div className="container relative py-16 md:py-28 grid md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-secondary/50 text-xs uppercase tracking-widest text-muted-foreground">
-              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+        <div className="container relative py-10 md:py-16 grid md:grid-cols-2 gap-8 items-center">
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-secondary/50 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               June 11 – July 19, 2026
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold leading-[0.95]">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-[1] tracking-tight">
               The world's <br />
               biggest <span className="gradient-text">stage</span>.
             </h1>
-            <p className="text-lg text-muted-foreground max-w-xl">
+            <p className="text-sm md:text-base text-muted-foreground max-w-lg leading-relaxed">
               48 nations. 104 matches. 16 host cities across Canada, Mexico and the USA.
               Your home for everything FIFA World Cup 2026™.
             </p>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link to="/fixtures" className="px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold glow hover:scale-105 transition-transform">
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Link to="/fixtures" className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold glow hover:scale-105 transition-transform">
                 View Fixtures
               </Link>
-              <Link to="/prediction" className="px-6 py-3 rounded-full border border-border bg-secondary/50 hover:bg-secondary font-semibold transition-colors">
+              <Link to="/prediction" className="px-5 py-2.5 rounded-full border border-border bg-secondary/50 hover:bg-secondary text-sm font-semibold transition-colors">
                 Make Your Prediction
               </Link>
             </div>
           </div>
+
+          {/* Compact interactive flag grid */}
           <div className="relative">
-            <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-primary/40 via-primary/10 to-transparent blur-3xl" />
-            <div className="relative rounded-[2rem] overflow-hidden border border-border shadow-2xl">
-              <img
-                src={heroImg}
-                alt="FIFA World Cup 2026 trophy emblem on a stadium-lit pitch"
-                className="w-full h-auto block"
-                loading="eager"
-              />
+            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-primary/25 via-primary/5 to-transparent blur-2xl" />
+            <div className="relative rounded-2xl border border-border/60 bg-secondary/30 backdrop-blur-sm p-4 md:p-5 overflow-hidden">
+              <div className="grid grid-cols-8 gap-1.5">
+                {TEAMS.map((t, i) => (
+                  <Link
+                    key={t.slug}
+                    to={`/teams/${t.slug}`}
+                    title={t.name}
+                    style={{ animationDelay: `${i * 20}ms`, animationFillMode: "both" }}
+                    className="group aspect-square rounded-lg border border-border/50 bg-background/60 flex items-center justify-center hover:border-primary hover:scale-110 hover:-translate-y-0.5 hover:z-10 transition-all duration-200 animate-fade-in shadow-sm hover:shadow-lg hover:shadow-primary/25"
+                  >
+                    <span className="text-lg sm:text-xl md:text-2xl transition-transform duration-200 group-hover:scale-110">
+                      {t.flag}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+              <div className="mt-3 text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                Tap any flag to explore the nation
+              </div>
             </div>
           </div>
         </div>
       </section>
-
-      {/* Animated flag grid */}
-      <FlagGrid />
 
       {/* Favorite team spotlight */}
       <FavoriteSpotlight />
