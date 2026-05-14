@@ -5,37 +5,6 @@ import { getTeamInfo } from "@/data/teamInfo";
 import { getManager } from "@/data/managers";
 import { Heart, Star, Trophy, Bell } from "lucide-react";
 
-const FlagGrid = () => (
-  <section className="container py-16">
-    <div className="flex items-end justify-between mb-8 flex-wrap gap-3">
-      <div>
-        <div className="text-xs uppercase tracking-[0.3em] text-primary">48 Nations</div>
-        <h2 className="text-3xl md:text-4xl font-bold mt-2">Pick your team</h2>
-        <p className="text-muted-foreground mt-1">Tap any flag to dive into squads, kits, fixtures and history.</p>
-      </div>
-      <Link to="/teams" className="text-sm text-primary hover:underline">All teams →</Link>
-    </div>
-    <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-3">
-      {TEAMS.map((t, i) => (
-        <Link
-          key={t.slug}
-          to={`/teams/${t.slug}`}
-          title={t.name}
-          style={{ animationDelay: `${i * 35}ms`, animationFillMode: "both" }}
-          className="group relative aspect-square rounded-2xl border border-border bg-secondary/40 flex items-center justify-center overflow-hidden hover:border-primary hover:-translate-y-1 hover:scale-110 hover:z-10 transition-all duration-300 animate-fade-in shadow-md hover:shadow-2xl hover:shadow-primary/30"
-        >
-          <span className="text-3xl md:text-4xl transition-transform duration-300 group-hover:scale-110">
-            {t.flag}
-          </span>
-          <span className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-background/90 backdrop-blur text-[10px] text-center py-1 font-medium truncate px-1">
-            {t.name}
-          </span>
-        </Link>
-      ))}
-    </div>
-  </section>
-);
-
 const FavoriteSpotlight = () => {
   const { slug } = useFavoriteTeam();
   const team = slug ? getTeam(slug) : null;
