@@ -195,9 +195,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Animated flag grid */}
-      <FlagGrid />
-
       {/* Favorite team spotlight */}
       <FavoriteSpotlight />
 
