@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import heroImg from "@/assets/wc26-hero-v2.jpg";
 import { FIXTURES, GROUPS, TEAMS, getTeam, teamsInGroup } from "@/data/wc26";
 import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import { getTeamInfo } from "@/data/teamInfo";
