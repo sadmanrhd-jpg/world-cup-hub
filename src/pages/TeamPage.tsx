@@ -4,6 +4,7 @@ import { STADIUMS } from "@/data/stadiums";
 import StadiumImage from "@/components/StadiumImage";
 import Jersey from "@/components/Jersey";
 import { getTeamInfo } from "@/data/teamInfo";
+import { getManager } from "@/data/managers";
 import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import { Heart } from "lucide-react";
 
@@ -80,10 +81,17 @@ const TeamPage = () => {
         </div>
       </div>
 
-      <section className="card-elevated rounded-2xl border border-primary/30 p-6">
-        <div className="text-xs uppercase tracking-widest text-primary mb-2">Highlight Player</div>
-        <div className="text-3xl md:text-4xl font-bold">{info.highlightPlayer.name}</div>
-        <div className="text-sm text-muted-foreground mt-1">{info.highlightPlayer.role}</div>
+      <section className="grid md:grid-cols-2 gap-6">
+        <div className="card-elevated rounded-2xl border border-primary/30 p-6">
+          <div className="text-xs uppercase tracking-widest text-primary mb-2">Head Coach</div>
+          <div className="text-3xl md:text-4xl font-bold">{getManager(team.name)}</div>
+          <div className="text-sm text-muted-foreground mt-1">Manager · {team.name}</div>
+        </div>
+        <div className="card-elevated rounded-2xl border border-primary/30 p-6">
+          <div className="text-xs uppercase tracking-widest text-primary mb-2">Highlight Player</div>
+          <div className="text-3xl md:text-4xl font-bold">{info.highlightPlayer.name}</div>
+          <div className="text-sm text-muted-foreground mt-1">{info.highlightPlayer.role}</div>
+        </div>
       </section>
 
       <section>
@@ -107,16 +115,48 @@ const TeamPage = () => {
       </section>
 
       <section>
-        <div className="flex items-end justify-between mb-4 flex-wrap gap-2">
+        <div className="flex items-end justify-between mb-5 flex-wrap gap-2">
           <div>
-            <h2 className="text-2xl font-bold">Kits 2026</h2>
-            <p className="text-sm text-muted-foreground">Match-day shirts. Tap to admire the design.</p>
+            <div className="text-xs uppercase tracking-[0.3em] text-primary">Match Day</div>
+            <h2 className="text-3xl md:text-4xl font-bold mt-2">2026 Kits</h2>
+            <p className="text-sm text-muted-foreground mt-1">Hover the shirts — concept colours inspired by the official palette.</p>
           </div>
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Concept colours</span>
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Concept
+          </div>
         </div>
-        <div className="grid sm:grid-cols-2 gap-6 card-elevated rounded-2xl border border-border p-8 bg-gradient-to-b from-secondary/30 to-transparent">
-          <Jersey label="Home" description={team.kits.home} number={10} teamShort={teamShort} />
-          <Jersey label="Away" description={team.kits.away} number={9} teamShort={teamShort} />
+        <div className="relative rounded-3xl border border-border overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-secondary/40 to-background" />
+          <div
+            className="absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)",
+              backgroundSize: "32px 32px",
+            }}
+          />
+          <div className="relative grid sm:grid-cols-2 gap-4 p-8 md:p-12">
+            {([
+              { label: "Home", desc: team.kits.home, number: 10 },
+              { label: "Away", desc: team.kits.away, number: 9 },
+            ] as const).map((k) => (
+              <div
+                key={k.label}
+                className="relative rounded-2xl border border-border/60 bg-background/40 backdrop-blur-sm p-6 hover:border-primary/60 hover:bg-background/60 transition-all"
+              >
+                <div className="absolute top-4 right-4 text-[10px] uppercase tracking-[0.25em] text-primary font-semibold">
+                  {k.label}
+                </div>
+                <Jersey
+                  label={k.label}
+                  description={k.desc}
+                  number={k.number}
+                  teamShort={teamShort}
+                  playerName={info.highlightPlayer.name.split(" ").slice(-1)[0]}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
