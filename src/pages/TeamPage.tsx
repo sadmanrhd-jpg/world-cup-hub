@@ -4,6 +4,7 @@ import { STADIUMS } from "@/data/stadiums";
 import StadiumImage from "@/components/StadiumImage";
 import Jersey from "@/components/Jersey";
 import { getTeamInfo } from "@/data/teamInfo";
+import { getManager } from "@/data/managers";
 import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import { Heart } from "lucide-react";
 
@@ -80,10 +81,17 @@ const TeamPage = () => {
         </div>
       </div>
 
-      <section className="card-elevated rounded-2xl border border-primary/30 p-6">
-        <div className="text-xs uppercase tracking-widest text-primary mb-2">Highlight Player</div>
-        <div className="text-3xl md:text-4xl font-bold">{info.highlightPlayer.name}</div>
-        <div className="text-sm text-muted-foreground mt-1">{info.highlightPlayer.role}</div>
+      <section className="grid md:grid-cols-2 gap-6">
+        <div className="card-elevated rounded-2xl border border-primary/30 p-6">
+          <div className="text-xs uppercase tracking-widest text-primary mb-2">Head Coach</div>
+          <div className="text-3xl md:text-4xl font-bold">{getManager(team.name)}</div>
+          <div className="text-sm text-muted-foreground mt-1">Manager · {team.name}</div>
+        </div>
+        <div className="card-elevated rounded-2xl border border-primary/30 p-6">
+          <div className="text-xs uppercase tracking-widest text-primary mb-2">Highlight Player</div>
+          <div className="text-3xl md:text-4xl font-bold">{info.highlightPlayer.name}</div>
+          <div className="text-sm text-muted-foreground mt-1">{info.highlightPlayer.role}</div>
+        </div>
       </section>
 
       <section>
