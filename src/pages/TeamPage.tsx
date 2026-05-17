@@ -135,7 +135,7 @@ const TeamPage = () => {
               backgroundSize: "32px 32px",
             }}
           />
-          <div className="relative grid sm:grid-cols-2 gap-4 p-8 md:p-12">
+          <div className="relative grid sm:grid-cols-2 gap-4 p-4 sm:p-8 md:p-12">
             {([
               { label: "Home", desc: team.kits.home, number: 10 },
               { label: "Away", desc: team.kits.away, number: 9 },
