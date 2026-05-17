@@ -39,7 +39,7 @@ const FavoriteSpotlight = () => {
       </div>
       <div className="card-elevated rounded-3xl border border-primary/30 overflow-hidden">
         <div className="grid lg:grid-cols-3">
-          <div className="p-8 lg:p-10 bg-gradient-to-br from-primary/15 via-transparent to-transparent">
+          <div className="p-5 sm:p-8 lg:p-10 bg-gradient-to-br from-primary/15 via-transparent to-transparent">
             <div className="text-7xl">{team.flag}</div>
             <div className="text-xs uppercase tracking-widest text-muted-foreground mt-4">Group {team.group}</div>
             <h2 className="text-4xl md:text-5xl font-bold mt-1">{team.name}</h2>
@@ -49,7 +49,7 @@ const FavoriteSpotlight = () => {
             </Link>
           </div>
 
-          <div className="p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border space-y-5">
+          <div className="p-5 sm:p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border space-y-5">
             <div>
               <div className="text-xs uppercase tracking-widest text-muted-foreground">World Cup history</div>
               <div className="flex items-baseline gap-3 mt-1">
@@ -73,7 +73,7 @@ const FavoriteSpotlight = () => {
             </div>
           </div>
 
-          <div className="p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border">
+          <div className="p-5 sm:p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border">
             <div className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Upcoming matches</div>
             <ul className="space-y-2">
               {upcoming.map((f) => {
