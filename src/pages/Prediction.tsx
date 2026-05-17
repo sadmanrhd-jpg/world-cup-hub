@@ -232,7 +232,7 @@ const Prediction = () => {
                               disabled={disabled}
                               onClick={() => pickPos(g, pos, team.name)}
                               className={[
-                                "w-8 h-8 rounded-full text-xs font-bold border transition-all",
+                                "w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-full text-[10px] sm:text-xs font-bold border transition-all",
                                 active
                                   ? "bg-primary text-primary-foreground border-primary glow"
                                   : "border-border bg-secondary/40 hover:border-primary/50",
