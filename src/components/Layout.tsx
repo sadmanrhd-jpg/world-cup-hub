@@ -14,22 +14,22 @@ const Layout = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
-        <div className="container flex items-center justify-between h-20">
-          <Link to="/" className="flex items-center gap-3 group">
-            <img src={logo} alt="FIFA World Cup 2026 logo" className="h-12 w-auto transition-transform group-hover:scale-105" />
-            <div className="hidden sm:block leading-tight">
+        <div className="container flex items-center justify-between gap-2 h-16 sm:h-20">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
+            <img src={logo} alt="FIFA World Cup 2026 logo" className="h-9 sm:h-12 w-auto transition-transform group-hover:scale-105" />
+            <div className="hidden md:block leading-tight">
               <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground">FIFA World Cup</div>
               <div className="font-display font-bold text-lg gradient-gold-text">2026</div>
             </div>
           </Link>
-          <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
+          <nav className="flex items-center gap-0.5 sm:gap-2 overflow-x-auto -mr-2 sm:mr-0 pr-2 sm:pr-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `px-3 sm:px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                  `px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                     isActive
                       ? "bg-primary text-primary-foreground glow"
                       : "text-muted-foreground hover:text-foreground hover:bg-secondary"
