@@ -216,9 +216,9 @@ const Prediction = () => {
                   {teams.map((team) => {
                     const myPos = (Object.keys(picks) as Pos[]).find((p) => picks[p] === team.name);
                     return (
-                      <div key={team.slug} className="flex items-center gap-2">
-                        <span className="text-xl">{team.flag}</span>
-                        <span className="flex-1 text-sm font-medium truncate">{team.name}</span>
+                      <div key={team.slug} className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="text-lg sm:text-xl">{team.flag}</span>
+                        <span className="flex-1 min-w-0 text-xs sm:text-sm font-medium truncate">{team.name}</span>
                         {(["first", "second", "third"] as Pos[]).map((pos) => {
                           const active = myPos === pos;
                           const taken = picks[pos] && picks[pos] !== team.name;
