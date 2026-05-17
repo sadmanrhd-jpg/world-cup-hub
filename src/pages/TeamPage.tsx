@@ -31,23 +31,23 @@ const TeamPage = () => {
     <div className="container py-12 space-y-12">
       <div>
         <Link to="/teams" className="text-sm text-muted-foreground hover:text-foreground">← All teams</Link>
-        <div className="mt-4 flex items-center gap-6 flex-wrap">
-          <div className="text-7xl md:text-8xl">{team.flag}</div>
+        <div className="mt-4 flex items-center gap-4 sm:gap-6 flex-wrap">
+          <div className="text-6xl sm:text-7xl md:text-8xl">{team.flag}</div>
           <div className="flex-1 min-w-0">
             <div className="text-xs uppercase tracking-widest text-muted-foreground">Group {team.group}</div>
-            <h1 className="text-4xl md:text-6xl font-bold">{team.name}</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold break-words">{team.name}</h1>
           </div>
           <button
             type="button"
             onClick={() => setFav(isFav ? null : team.slug)}
             className={[
-              "inline-flex items-center gap-2 px-5 py-2.5 rounded-full border font-semibold text-sm transition-all",
+              "inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border font-semibold text-xs sm:text-sm transition-all",
               isFav
                 ? "bg-primary text-primary-foreground border-primary glow"
                 : "border-border bg-secondary/50 hover:border-primary/50",
             ].join(" ")}
           >
-            <Heart className={isFav ? "fill-current" : ""} />
+            <Heart className={`h-4 w-4 ${isFav ? "fill-current" : ""}`} />
             {isFav ? "Favourite team" : "Set as favourite"}
           </button>
         </div>
