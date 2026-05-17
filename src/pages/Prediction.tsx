@@ -436,8 +436,11 @@ const BracketRound = ({
     <div className="mt-8">
       <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-3">{title}</h3>
       <div
-        className="grid gap-3"
-        style={{ gridTemplateColumns: `repeat(${Math.min(cols, slots)}, minmax(0, 1fr))` }}
+        className={`grid gap-3 ${
+          cols >= 4 ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+          : cols === 2 ? "grid-cols-1 sm:grid-cols-2"
+          : "grid-cols-1"
+        }`}
       >
         {Array.from({ length: slots }).map((_, i) => {
           const key = `${stage}-${i}`;
