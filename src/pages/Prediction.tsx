@@ -216,9 +216,9 @@ const Prediction = () => {
                   {teams.map((team) => {
                     const myPos = (Object.keys(picks) as Pos[]).find((p) => picks[p] === team.name);
                     return (
-                      <div key={team.slug} className="flex items-center gap-2">
-                        <span className="text-xl">{team.flag}</span>
-                        <span className="flex-1 text-sm font-medium truncate">{team.name}</span>
+                      <div key={team.slug} className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="text-lg sm:text-xl">{team.flag}</span>
+                        <span className="flex-1 min-w-0 text-xs sm:text-sm font-medium truncate">{team.name}</span>
                         {(["first", "second", "third"] as Pos[]).map((pos) => {
                           const active = myPos === pos;
                           const taken = picks[pos] && picks[pos] !== team.name;
@@ -232,7 +232,7 @@ const Prediction = () => {
                               disabled={disabled}
                               onClick={() => pickPos(g, pos, team.name)}
                               className={[
-                                "w-8 h-8 rounded-full text-xs font-bold border transition-all",
+                                "w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-full text-[10px] sm:text-xs font-bold border transition-all",
                                 active
                                   ? "bg-primary text-primary-foreground border-primary glow"
                                   : "border-border bg-secondary/40 hover:border-primary/50",
@@ -436,8 +436,11 @@ const BracketRound = ({
     <div className="mt-8">
       <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-3">{title}</h3>
       <div
-        className="grid gap-3"
-        style={{ gridTemplateColumns: `repeat(${Math.min(cols, slots)}, minmax(0, 1fr))` }}
+        className={`grid gap-3 ${
+          cols >= 4 ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+          : cols === 2 ? "grid-cols-1 sm:grid-cols-2"
+          : "grid-cols-1"
+        }`}
       >
         {Array.from({ length: slots }).map((_, i) => {
           const key = `${stage}-${i}`;

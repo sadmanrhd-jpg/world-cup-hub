@@ -39,7 +39,7 @@ const FavoriteSpotlight = () => {
       </div>
       <div className="card-elevated rounded-3xl border border-primary/30 overflow-hidden">
         <div className="grid lg:grid-cols-3">
-          <div className="p-8 lg:p-10 bg-gradient-to-br from-primary/15 via-transparent to-transparent">
+          <div className="p-5 sm:p-8 lg:p-10 bg-gradient-to-br from-primary/15 via-transparent to-transparent">
             <div className="text-7xl">{team.flag}</div>
             <div className="text-xs uppercase tracking-widest text-muted-foreground mt-4">Group {team.group}</div>
             <h2 className="text-4xl md:text-5xl font-bold mt-1">{team.name}</h2>
@@ -49,7 +49,7 @@ const FavoriteSpotlight = () => {
             </Link>
           </div>
 
-          <div className="p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border space-y-5">
+          <div className="p-5 sm:p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border space-y-5">
             <div>
               <div className="text-xs uppercase tracking-widest text-muted-foreground">World Cup history</div>
               <div className="flex items-baseline gap-3 mt-1">
@@ -73,7 +73,7 @@ const FavoriteSpotlight = () => {
             </div>
           </div>
 
-          <div className="p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border">
+          <div className="p-5 sm:p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border">
             <div className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Upcoming matches</div>
             <ul className="space-y-2">
               {upcoming.map((f) => {
@@ -140,8 +140,8 @@ const Home = () => {
           {/* Compact interactive flag grid */}
           <div className="relative">
             <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-primary/25 via-primary/5 to-transparent blur-2xl" />
-            <div className="relative rounded-2xl border border-border/60 bg-secondary/30 backdrop-blur-sm p-4 md:p-5 overflow-hidden">
-              <div className="grid grid-cols-8 gap-1.5">
+            <div className="relative rounded-2xl border border-border/60 bg-secondary/30 backdrop-blur-sm p-3 sm:p-4 md:p-5 overflow-hidden">
+              <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5">
                 {TEAMS.map((t, i) => (
                   <Link
                     key={t.slug}
@@ -150,7 +150,7 @@ const Home = () => {
                     style={{ animationDelay: `${i * 20}ms`, animationFillMode: "both" }}
                     className="group aspect-square rounded-lg border border-border/50 bg-background/60 flex items-center justify-center hover:border-primary hover:scale-110 hover:-translate-y-0.5 hover:z-10 transition-all duration-200 animate-fade-in shadow-sm hover:shadow-lg hover:shadow-primary/25"
                   >
-                    <span className="text-lg sm:text-xl md:text-2xl transition-transform duration-200 group-hover:scale-110">
+                    <span className="text-base sm:text-xl md:text-2xl transition-transform duration-200 group-hover:scale-110">
                       {t.flag}
                     </span>
                   </Link>
