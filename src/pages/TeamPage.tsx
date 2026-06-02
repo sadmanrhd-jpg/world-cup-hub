@@ -4,6 +4,7 @@ import { STADIUMS } from "@/data/stadiums";
 import StadiumImage from "@/components/StadiumImage";
 import Jersey from "@/components/Jersey";
 import { getTeamInfo } from "@/data/teamInfo";
+import { getKitImages } from "@/data/kitImages";
 import { getManager } from "@/data/managers";
 import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import { Heart } from "lucide-react";
@@ -119,10 +120,10 @@ const TeamPage = () => {
           <div>
             <div className="text-xs uppercase tracking-[0.3em] text-primary">Match Day</div>
             <h2 className="text-3xl md:text-4xl font-bold mt-2">2026 Kits</h2>
-            <p className="text-sm text-muted-foreground mt-1">Hover the shirts — concept colours inspired by the official palette.</p>
+            <p className="text-sm text-muted-foreground mt-1">Official 2026 jerseys — courtesy of olympics.com.</p>
           </div>
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Concept
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Official
           </div>
         </div>
         <div className="relative rounded-3xl border border-border overflow-hidden">
@@ -135,28 +136,40 @@ const TeamPage = () => {
               backgroundSize: "32px 32px",
             }}
           />
-          <div className="relative grid sm:grid-cols-2 gap-4 p-4 sm:p-8 md:p-12">
-            {([
-              { label: "Home", desc: team.kits.home, number: 10 },
-              { label: "Away", desc: team.kits.away, number: 9 },
-            ] as const).map((k) => (
-              <div
-                key={k.label}
-                className="relative rounded-2xl border border-border/60 bg-background/40 backdrop-blur-sm p-6 hover:border-primary/60 hover:bg-background/60 transition-all"
-              >
-                <div className="absolute top-4 right-4 text-[10px] uppercase tracking-[0.25em] text-primary font-semibold">
-                  {k.label}
-                </div>
-                <Jersey
-                  label={k.label}
-                  description={k.desc}
-                  number={k.number}
-                  teamShort={teamShort}
-                  playerName={info.highlightPlayer.name.split(" ").slice(-1)[0]}
-                />
+          {(() => {
+            const imgs = getKitImages(team.slug);
+            const slots = [
+              { label: "Home", desc: team.kits.home, number: 10, img: imgs.home },
+              { label: "Away", desc: team.kits.away, number: 9, img: imgs.away },
+              ...(team.kits.third || imgs.third
+                ? [{ label: "Third", desc: team.kits.third ?? "Alternate", number: 7, img: imgs.third }]
+                : []),
+            ];
+            const cols = slots.length === 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2";
+            return (
+              <div className={`relative grid ${cols} gap-4 p-4 sm:p-6 md:p-10`}>
+                {slots.map((k) => (
+                  <div
+                    key={k.label}
+                    className="relative rounded-2xl border border-border/60 bg-background/40 backdrop-blur-sm p-4 sm:p-6 hover:border-primary/60 hover:bg-background/60 transition-all"
+                  >
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-[10px] uppercase tracking-[0.25em] text-primary font-semibold">
+                      {k.label}
+                    </div>
+                    <Jersey
+                      label={k.label}
+                      description={k.desc}
+                      number={k.number}
+                      teamShort={teamShort}
+                      playerName={info.highlightPlayer.name.split(" ").slice(-1)[0]}
+                      imageUrl={k.img}
+                      imageAlt={`${team.name} ${k.label} kit 2026`}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </div>
       </section>
 
