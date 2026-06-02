@@ -71,14 +71,13 @@ const Jersey = ({
 }) => {
   if (imageUrl) {
     return (
-      <div className="group flex flex-col items-center gap-3 sm:gap-4">
-        <div className="relative w-full aspect-[4/5] flex items-center justify-center overflow-hidden rounded-xl">
-          <div className="absolute inset-x-6 bottom-3 h-4 rounded-full blur-xl opacity-40 bg-black" />
+      <div className="group flex flex-col items-center gap-3 sm:gap-4 w-full">
+        <div className="relative w-full aspect-square overflow-hidden rounded-2xl border border-border/60 bg-secondary/40">
           <img
             src={imageUrl}
             alt={imageAlt ?? `${label} kit`}
             loading="lazy"
-            className="relative w-full h-full object-contain transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:scale-[1.02] drop-shadow-[0_18px_22px_rgba(0,0,0,0.45)]"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           />
         </div>
         <div className="text-center">
