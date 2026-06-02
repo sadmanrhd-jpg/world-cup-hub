@@ -58,13 +58,36 @@ const Jersey = ({
   number = 10,
   teamShort,
   playerName,
+  imageUrl,
+  imageAlt,
 }: {
   description: string;
   label: string;
   number?: number;
   teamShort?: string;
   playerName?: string;
+  imageUrl?: string;
+  imageAlt?: string;
 }) => {
+  if (imageUrl) {
+    return (
+      <div className="group flex flex-col items-center gap-3 sm:gap-4">
+        <div className="relative w-full aspect-[4/5] flex items-center justify-center overflow-hidden rounded-xl">
+          <div className="absolute inset-x-6 bottom-3 h-4 rounded-full blur-xl opacity-40 bg-black" />
+          <img
+            src={imageUrl}
+            alt={imageAlt ?? `${label} kit`}
+            loading="lazy"
+            className="relative w-full h-full object-contain transition-transform duration-500 group-hover:-translate-y-1.5 group-hover:scale-[1.02] drop-shadow-[0_18px_22px_rgba(0,0,0,0.45)]"
+          />
+        </div>
+        <div className="text-center">
+          <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">{label} Kit</div>
+          <div className="text-sm font-medium mt-1">{description}</div>
+        </div>
+      </div>
+    );
+  }
   const { primary, secondary, pattern } = pickColors(description);
   const sec = secondary ?? shade(primary, -40);
   const numFill = isLight(primary) ? "#0A0A0A" : "#FFFFFF";
