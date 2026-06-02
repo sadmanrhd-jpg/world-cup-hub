@@ -4,6 +4,7 @@ import { STADIUMS } from "@/data/stadiums";
 import StadiumImage from "@/components/StadiumImage";
 import Jersey from "@/components/Jersey";
 import { getTeamInfo } from "@/data/teamInfo";
+import { getKitImages } from "@/data/kitImages";
 import { getManager } from "@/data/managers";
 import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import { Heart } from "lucide-react";
