@@ -84,9 +84,10 @@ const FavoriteSpotlight = () => {
                 })();
                 return (
                   <li key={f.id} className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 px-4 py-3">
-                    <div className="text-xs text-muted-foreground w-16 shrink-0">
+                    <div className="text-xs text-muted-foreground w-14 shrink-0">
                       {new Date(f.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </div>
+                    <div className="text-xs font-mono text-muted-foreground w-10 shrink-0">{f.time}</div>
                     <div className="flex-1 text-sm font-medium truncate">
                       vs {opp}
                     </div>
