@@ -89,6 +89,7 @@ const Fixtures = () => {
                   <div className="text-xs uppercase tracking-wider px-2 py-1 rounded-full bg-secondary text-muted-foreground">
                     {f.stage === "Group" ? `Group ${f.group}` : STAGE_LABELS[f.stage]}
                   </div>
+                  <div className="text-xs font-mono text-muted-foreground w-14">{f.time}</div>
                   <div className="flex-1 min-w-[200px] font-semibold">
                     {f.label ? (
                       <span className="text-muted-foreground italic">{f.label}</span>

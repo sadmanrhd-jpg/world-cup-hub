@@ -196,6 +196,7 @@ const TeamPage = () => {
           {teamFixtures.map((f) => (
             <div key={f.id} className="card-elevated rounded-xl border border-border px-5 py-3 flex items-center gap-4">
               <div className="text-xs text-muted-foreground w-24">{new Date(f.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
+              <div className="text-xs font-mono text-muted-foreground w-14">{f.time}</div>
               <div className="flex-1 font-medium">{f.home} <span className="text-muted-foreground">vs</span> {f.away}</div>
               <div className="text-sm text-muted-foreground hidden sm:block">{f.stadium}</div>
             </div>

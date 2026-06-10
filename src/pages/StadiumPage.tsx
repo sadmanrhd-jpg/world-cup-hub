@@ -73,6 +73,7 @@ const StadiumPage = () => {
                 <div className="text-xs text-muted-foreground w-24">
                   {new Date(f.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </div>
+                <div className="text-xs font-mono text-muted-foreground w-14">{f.time}</div>
                 <div className="flex-1 font-medium">
                   {f.label ? <span className="text-muted-foreground italic">{f.label}</span> : (
                     <>{f.home} <span className="text-muted-foreground">vs</span> {f.away}</>
