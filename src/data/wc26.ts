@@ -91,6 +91,7 @@ export const teamsInGroup = (g: string) => TEAMS.filter(t => t.group === g);
 export type Fixture = {
   id: number;
   date: string; // ISO date
+  time: string; // HH:MM local
   home: string; // team name
   away: string;
   group?: string;
@@ -99,129 +100,129 @@ export type Fixture = {
   label?: string; // for knockouts when teams TBD
 };
 
-const G = (id: number, date: string, home: string, away: string, group: string, stadium: string): Fixture =>
-  ({ id, date, home, away, group, stadium, stage: "Group" });
+const G = (id: number, date: string, time: string, home: string, away: string, group: string, stadium: string): Fixture =>
+  ({ id, date, time, home, away, group, stadium, stage: "Group" });
 
 export const FIXTURES: Fixture[] = [
   // Matchday 1
-  G(1, "2026-06-11", "Mexico", "South Africa", "A", "Mexico City Stadium"),
-  G(2, "2026-06-11", "Korea Republic", "Czechia", "A", "Estadio Guadalajara"),
-  G(3, "2026-06-12", "Canada", "Bosnia and Herzegovina", "B", "Toronto Stadium"),
-  G(4, "2026-06-12", "USA", "Paraguay", "D", "Los Angeles Stadium"),
-  G(5, "2026-06-13", "Haiti", "Scotland", "C", "Boston Stadium"),
-  G(6, "2026-06-13", "Australia", "Türkiye", "D", "BC Place Vancouver"),
-  G(7, "2026-06-13", "Brazil", "Morocco", "C", "New York New Jersey Stadium"),
-  G(8, "2026-06-13", "Qatar", "Switzerland", "B", "San Francisco Bay Area Stadium"),
-  G(9, "2026-06-14", "Côte d'Ivoire", "Ecuador", "E", "Philadelphia Stadium"),
-  G(10, "2026-06-14", "Germany", "Curaçao", "E", "Houston Stadium"),
-  G(11, "2026-06-14", "Netherlands", "Japan", "F", "Dallas Stadium"),
-  G(12, "2026-06-14", "Sweden", "Tunisia", "F", "Estadio Monterrey"),
-  G(13, "2026-06-15", "Saudi Arabia", "Uruguay", "H", "Miami Stadium"),
-  G(14, "2026-06-15", "Spain", "Cabo Verde", "H", "Atlanta Stadium"),
-  G(15, "2026-06-15", "IR Iran", "New Zealand", "G", "Los Angeles Stadium"),
-  G(16, "2026-06-15", "Belgium", "Egypt", "G", "Seattle Stadium"),
-  G(17, "2026-06-16", "France", "Senegal", "I", "New York New Jersey Stadium"),
-  G(18, "2026-06-16", "Iraq", "Norway", "I", "Boston Stadium"),
-  G(19, "2026-06-16", "Argentina", "Algeria", "J", "Kansas City Stadium"),
-  G(20, "2026-06-16", "Austria", "Jordan", "J", "San Francisco Bay Area Stadium"),
-  G(21, "2026-06-17", "Ghana", "Panama", "L", "Toronto Stadium"),
-  G(22, "2026-06-17", "England", "Croatia", "L", "Dallas Stadium"),
-  G(23, "2026-06-17", "Portugal", "Congo DR", "K", "Houston Stadium"),
-  G(24, "2026-06-17", "Uzbekistan", "Colombia", "K", "Mexico City Stadium"),
+  G(1, "2026-06-11", "12:00", "Mexico", "South Africa", "A", "Mexico City Stadium"),
+  G(2, "2026-06-11", "15:00", "Korea Republic", "Czechia", "A", "Estadio Guadalajara"),
+  G(3, "2026-06-12", "18:00", "Canada", "Bosnia and Herzegovina", "B", "Toronto Stadium"),
+  G(4, "2026-06-12", "21:00", "USA", "Paraguay", "D", "Los Angeles Stadium"),
+  G(5, "2026-06-13", "12:00", "Haiti", "Scotland", "C", "Boston Stadium"),
+  G(6, "2026-06-13", "15:00", "Australia", "Türkiye", "D", "BC Place Vancouver"),
+  G(7, "2026-06-13", "18:00", "Brazil", "Morocco", "C", "New York New Jersey Stadium"),
+  G(8, "2026-06-13", "21:00", "Qatar", "Switzerland", "B", "San Francisco Bay Area Stadium"),
+  G(9, "2026-06-14", "12:00", "Côte d'Ivoire", "Ecuador", "E", "Philadelphia Stadium"),
+  G(10, "2026-06-14", "15:00", "Germany", "Curaçao", "E", "Houston Stadium"),
+  G(11, "2026-06-14", "18:00", "Netherlands", "Japan", "F", "Dallas Stadium"),
+  G(12, "2026-06-14", "21:00", "Sweden", "Tunisia", "F", "Estadio Monterrey"),
+  G(13, "2026-06-15", "12:00", "Saudi Arabia", "Uruguay", "H", "Miami Stadium"),
+  G(14, "2026-06-15", "15:00", "Spain", "Cabo Verde", "H", "Atlanta Stadium"),
+  G(15, "2026-06-15", "18:00", "IR Iran", "New Zealand", "G", "Los Angeles Stadium"),
+  G(16, "2026-06-15", "21:00", "Belgium", "Egypt", "G", "Seattle Stadium"),
+  G(17, "2026-06-16", "12:00", "France", "Senegal", "I", "New York New Jersey Stadium"),
+  G(18, "2026-06-16", "15:00", "Iraq", "Norway", "I", "Boston Stadium"),
+  G(19, "2026-06-16", "18:00", "Argentina", "Algeria", "J", "Kansas City Stadium"),
+  G(20, "2026-06-16", "21:00", "Austria", "Jordan", "J", "San Francisco Bay Area Stadium"),
+  G(21, "2026-06-17", "12:00", "Ghana", "Panama", "L", "Toronto Stadium"),
+  G(22, "2026-06-17", "15:00", "England", "Croatia", "L", "Dallas Stadium"),
+  G(23, "2026-06-17", "18:00", "Portugal", "Congo DR", "K", "Houston Stadium"),
+  G(24, "2026-06-17", "21:00", "Uzbekistan", "Colombia", "K", "Mexico City Stadium"),
   // Matchday 2
-  G(25, "2026-06-18", "Czechia", "South Africa", "A", "Atlanta Stadium"),
-  G(26, "2026-06-18", "Switzerland", "Bosnia and Herzegovina", "B", "Los Angeles Stadium"),
-  G(27, "2026-06-18", "Canada", "Qatar", "B", "BC Place Vancouver"),
-  G(28, "2026-06-18", "Mexico", "Korea Republic", "A", "Estadio Guadalajara"),
-  G(29, "2026-06-19", "Brazil", "Haiti", "C", "Philadelphia Stadium"),
-  G(30, "2026-06-19", "Scotland", "Morocco", "C", "Boston Stadium"),
-  G(31, "2026-06-19", "Türkiye", "Paraguay", "D", "San Francisco Bay Area Stadium"),
-  G(32, "2026-06-19", "USA", "Australia", "D", "Seattle Stadium"),
-  G(33, "2026-06-20", "Germany", "Côte d'Ivoire", "E", "Toronto Stadium"),
-  G(34, "2026-06-20", "Ecuador", "Curaçao", "E", "Kansas City Stadium"),
-  G(35, "2026-06-20", "Netherlands", "Sweden", "F", "Houston Stadium"),
-  G(36, "2026-06-20", "Tunisia", "Japan", "F", "Estadio Monterrey"),
-  G(37, "2026-06-21", "Uruguay", "Cabo Verde", "H", "Miami Stadium"),
-  G(38, "2026-06-21", "Spain", "Saudi Arabia", "H", "Atlanta Stadium"),
-  G(39, "2026-06-21", "Belgium", "IR Iran", "G", "Los Angeles Stadium"),
-  G(40, "2026-06-21", "New Zealand", "Egypt", "G", "BC Place Vancouver"),
-  G(41, "2026-06-22", "Norway", "Senegal", "I", "New York New Jersey Stadium"),
-  G(42, "2026-06-22", "France", "Iraq", "I", "Philadelphia Stadium"),
-  G(43, "2026-06-22", "Argentina", "Austria", "J", "Dallas Stadium"),
-  G(44, "2026-06-22", "Jordan", "Algeria", "J", "San Francisco Bay Area Stadium"),
-  G(45, "2026-06-23", "England", "Ghana", "L", "Boston Stadium"),
-  G(46, "2026-06-23", "Panama", "Croatia", "L", "Toronto Stadium"),
-  G(47, "2026-06-23", "Portugal", "Uzbekistan", "K", "Houston Stadium"),
-  G(48, "2026-06-23", "Colombia", "Congo DR", "K", "Estadio Guadalajara"),
+  G(25, "2026-06-18", "12:00", "Czechia", "South Africa", "A", "Atlanta Stadium"),
+  G(26, "2026-06-18", "15:00", "Switzerland", "Bosnia and Herzegovina", "B", "Los Angeles Stadium"),
+  G(27, "2026-06-18", "18:00", "Canada", "Qatar", "B", "BC Place Vancouver"),
+  G(28, "2026-06-18", "21:00", "Mexico", "Korea Republic", "A", "Estadio Guadalajara"),
+  G(29, "2026-06-19", "12:00", "Brazil", "Haiti", "C", "Philadelphia Stadium"),
+  G(30, "2026-06-19", "15:00", "Scotland", "Morocco", "C", "Boston Stadium"),
+  G(31, "2026-06-19", "18:00", "Türkiye", "Paraguay", "D", "San Francisco Bay Area Stadium"),
+  G(32, "2026-06-19", "21:00", "USA", "Australia", "D", "Seattle Stadium"),
+  G(33, "2026-06-20", "12:00", "Germany", "Côte d'Ivoire", "E", "Toronto Stadium"),
+  G(34, "2026-06-20", "15:00", "Ecuador", "Curaçao", "E", "Kansas City Stadium"),
+  G(35, "2026-06-20", "18:00", "Netherlands", "Sweden", "F", "Houston Stadium"),
+  G(36, "2026-06-20", "21:00", "Tunisia", "Japan", "F", "Estadio Monterrey"),
+  G(37, "2026-06-21", "12:00", "Uruguay", "Cabo Verde", "H", "Miami Stadium"),
+  G(38, "2026-06-21", "15:00", "Spain", "Saudi Arabia", "H", "Atlanta Stadium"),
+  G(39, "2026-06-21", "18:00", "Belgium", "IR Iran", "G", "Los Angeles Stadium"),
+  G(40, "2026-06-21", "21:00", "New Zealand", "Egypt", "G", "BC Place Vancouver"),
+  G(41, "2026-06-22", "12:00", "Norway", "Senegal", "I", "New York New Jersey Stadium"),
+  G(42, "2026-06-22", "15:00", "France", "Iraq", "I", "Philadelphia Stadium"),
+  G(43, "2026-06-22", "18:00", "Argentina", "Austria", "J", "Dallas Stadium"),
+  G(44, "2026-06-22", "21:00", "Jordan", "Algeria", "J", "San Francisco Bay Area Stadium"),
+  G(45, "2026-06-23", "12:00", "England", "Ghana", "L", "Boston Stadium"),
+  G(46, "2026-06-23", "15:00", "Panama", "Croatia", "L", "Toronto Stadium"),
+  G(47, "2026-06-23", "18:00", "Portugal", "Uzbekistan", "K", "Houston Stadium"),
+  G(48, "2026-06-23", "21:00", "Colombia", "Congo DR", "K", "Estadio Guadalajara"),
   // Matchday 3
-  G(49, "2026-06-24", "Scotland", "Brazil", "C", "Miami Stadium"),
-  G(50, "2026-06-24", "Morocco", "Haiti", "C", "Atlanta Stadium"),
-  G(51, "2026-06-24", "Switzerland", "Canada", "B", "BC Place Vancouver"),
-  G(52, "2026-06-24", "Bosnia and Herzegovina", "Qatar", "B", "Seattle Stadium"),
-  G(53, "2026-06-24", "Czechia", "Mexico", "A", "Mexico City Stadium"),
-  G(54, "2026-06-24", "South Africa", "Korea Republic", "A", "Estadio Monterrey"),
-  G(55, "2026-06-25", "Curaçao", "Côte d'Ivoire", "E", "Philadelphia Stadium"),
-  G(56, "2026-06-25", "Ecuador", "Germany", "E", "New York New Jersey Stadium"),
-  G(57, "2026-06-25", "Japan", "Sweden", "F", "Dallas Stadium"),
-  G(58, "2026-06-25", "Tunisia", "Netherlands", "F", "Kansas City Stadium"),
-  G(59, "2026-06-25", "Türkiye", "USA", "D", "Los Angeles Stadium"),
-  G(60, "2026-06-25", "Paraguay", "Australia", "D", "San Francisco Bay Area Stadium"),
-  G(61, "2026-06-26", "Norway", "France", "I", "Boston Stadium"),
-  G(62, "2026-06-26", "Senegal", "Iraq", "I", "Toronto Stadium"),
-  G(63, "2026-06-26", "Egypt", "IR Iran", "G", "Seattle Stadium"),
-  G(64, "2026-06-26", "New Zealand", "Belgium", "G", "BC Place Vancouver"),
-  G(65, "2026-06-26", "Cabo Verde", "Saudi Arabia", "H", "Houston Stadium"),
-  G(66, "2026-06-26", "Uruguay", "Spain", "H", "Estadio Guadalajara"),
-  G(67, "2026-06-27", "Panama", "England", "L", "New York New Jersey Stadium"),
-  G(68, "2026-06-27", "Croatia", "Ghana", "L", "Philadelphia Stadium"),
-  G(69, "2026-06-27", "Algeria", "Austria", "J", "Kansas City Stadium"),
-  G(70, "2026-06-27", "Jordan", "Argentina", "J", "Dallas Stadium"),
-  G(71, "2026-06-27", "Colombia", "Portugal", "K", "Miami Stadium"),
-  G(72, "2026-06-27", "Congo DR", "Uzbekistan", "K", "Atlanta Stadium"),
+  G(49, "2026-06-24", "12:00", "Scotland", "Brazil", "C", "Miami Stadium"),
+  G(50, "2026-06-24", "15:00", "Morocco", "Haiti", "C", "Atlanta Stadium"),
+  G(51, "2026-06-24", "18:00", "Switzerland", "Canada", "B", "BC Place Vancouver"),
+  G(52, "2026-06-24", "21:00", "Bosnia and Herzegovina", "Qatar", "B", "Seattle Stadium"),
+  G(53, "2026-06-24", "12:00", "Czechia", "Mexico", "A", "Mexico City Stadium"),
+  G(54, "2026-06-24", "15:00", "South Africa", "Korea Republic", "A", "Estadio Monterrey"),
+  G(55, "2026-06-25", "18:00", "Curaçao", "Côte d'Ivoire", "E", "Philadelphia Stadium"),
+  G(56, "2026-06-25", "21:00", "Ecuador", "Germany", "E", "New York New Jersey Stadium"),
+  G(57, "2026-06-25", "12:00", "Japan", "Sweden", "F", "Dallas Stadium"),
+  G(58, "2026-06-25", "15:00", "Tunisia", "Netherlands", "F", "Kansas City Stadium"),
+  G(59, "2026-06-25", "18:00", "Türkiye", "USA", "D", "Los Angeles Stadium"),
+  G(60, "2026-06-25", "21:00", "Paraguay", "Australia", "D", "San Francisco Bay Area Stadium"),
+  G(61, "2026-06-26", "12:00", "Norway", "France", "I", "Boston Stadium"),
+  G(62, "2026-06-26", "15:00", "Senegal", "Iraq", "I", "Toronto Stadium"),
+  G(63, "2026-06-26", "18:00", "Egypt", "IR Iran", "G", "Seattle Stadium"),
+  G(64, "2026-06-26", "21:00", "New Zealand", "Belgium", "G", "BC Place Vancouver"),
+  G(65, "2026-06-26", "12:00", "Cabo Verde", "Saudi Arabia", "H", "Houston Stadium"),
+  G(66, "2026-06-26", "15:00", "Uruguay", "Spain", "H", "Estadio Guadalajara"),
+  G(67, "2026-06-27", "18:00", "Panama", "England", "L", "New York New Jersey Stadium"),
+  G(68, "2026-06-27", "21:00", "Croatia", "Ghana", "L", "Philadelphia Stadium"),
+  G(69, "2026-06-27", "12:00", "Algeria", "Austria", "J", "Kansas City Stadium"),
+  G(70, "2026-06-27", "15:00", "Jordan", "Argentina", "J", "Dallas Stadium"),
+  G(71, "2026-06-27", "18:00", "Colombia", "Portugal", "K", "Miami Stadium"),
+  G(72, "2026-06-27", "21:00", "Congo DR", "Uzbekistan", "K", "Atlanta Stadium"),
 
   // Round of 32 — labeled by predicted teams (used as both label + actual prediction)
-  { id: 73, date: "2026-06-28", stage: "R32", home: "A2", away: "B2", stadium: "Los Angeles Stadium", label: "Runner-up Group A v Runner-up Group B" },
-  { id: 74, date: "2026-06-29", stage: "R32", home: "E1", away: "3rd ABCDF", stadium: "Boston Stadium", label: "Winner Group E v 3rd Group A/B/C/D/F" },
-  { id: 75, date: "2026-06-29", stage: "R32", home: "F1", away: "C2", stadium: "Estadio Monterrey", label: "Winner Group F v Runner-up Group C" },
-  { id: 76, date: "2026-06-29", stage: "R32", home: "C1", away: "F2", stadium: "Houston Stadium", label: "Winner Group C v Runner-up Group F" },
-  { id: 77, date: "2026-06-30", stage: "R32", home: "I1", away: "3rd CDFGH", stadium: "New York New Jersey Stadium", label: "Winner Group I v 3rd Group C/D/F/G/H" },
-  { id: 78, date: "2026-06-30", stage: "R32", home: "E2", away: "I2", stadium: "Dallas Stadium", label: "Runner-up Group E v Runner-up Group I" },
-  { id: 79, date: "2026-06-30", stage: "R32", home: "A1", away: "3rd CEFHI", stadium: "Mexico City Stadium", label: "Winner Group A v 3rd Group C/E/F/H/I" },
-  { id: 80, date: "2026-07-01", stage: "R32", home: "L1", away: "3rd EHIJK", stadium: "Atlanta Stadium", label: "Winner Group L v 3rd Group E/H/I/J/K" },
-  { id: 81, date: "2026-07-01", stage: "R32", home: "D1", away: "3rd BEFIJ", stadium: "San Francisco Bay Area Stadium", label: "Winner Group D v 3rd Group B/E/F/I/J" },
-  { id: 82, date: "2026-07-01", stage: "R32", home: "G1", away: "3rd AEHIJ", stadium: "Seattle Stadium", label: "Winner Group G v 3rd Group A/E/H/I/J" },
-  { id: 83, date: "2026-07-02", stage: "R32", home: "K2", away: "L2", stadium: "Toronto Stadium", label: "Runner-up Group K v Runner-up Group L" },
-  { id: 84, date: "2026-07-02", stage: "R32", home: "H1", away: "J2", stadium: "Los Angeles Stadium", label: "Winner Group H v Runner-up Group J" },
-  { id: 85, date: "2026-07-02", stage: "R32", home: "B1", away: "3rd EFGIJ", stadium: "BC Place Vancouver", label: "Winner Group B v 3rd Group E/F/G/I/J" },
-  { id: 86, date: "2026-07-03", stage: "R32", home: "J1", away: "H2", stadium: "Miami Stadium", label: "Winner Group J v Runner-up Group H" },
-  { id: 87, date: "2026-07-03", stage: "R32", home: "K1", away: "3rd DEIJL", stadium: "Kansas City Stadium", label: "Winner Group K v 3rd Group D/E/I/J/L" },
-  { id: 88, date: "2026-07-03", stage: "R32", home: "D2", away: "G2", stadium: "Dallas Stadium", label: "Runner-up Group D v Runner-up Group G" },
+  { id: 73, date: "2026-06-28", time: "15:00", stage: "R32", home: "A2", away: "B2", stadium: "Los Angeles Stadium", label: "Runner-up Group A v Runner-up Group B" 
+  { id: 74, date: "2026-06-29", time: "19:00", stage: "R32", home: "E1", away: "3rd ABCDF", stadium: "Boston Stadium", label: "Winner Group E v 3rd Group A/B/C/D/F" 
+  { id: 75, date: "2026-06-29", time: "15:00", stage: "R32", home: "F1", away: "C2", stadium: "Estadio Monterrey", label: "Winner Group F v Runner-up Group C" 
+  { id: 76, date: "2026-06-29", time: "19:00", stage: "R32", home: "C1", away: "F2", stadium: "Houston Stadium", label: "Winner Group C v Runner-up Group F" 
+  { id: 77, date: "2026-06-30", time: "15:00", stage: "R32", home: "I1", away: "3rd CDFGH", stadium: "New York New Jersey Stadium", label: "Winner Group I v 3rd Group C/D/F/G/H" 
+  { id: 78, date: "2026-06-30", time: "19:00", stage: "R32", home: "E2", away: "I2", stadium: "Dallas Stadium", label: "Runner-up Group E v Runner-up Group I" 
+  { id: 79, date: "2026-06-30", time: "15:00", stage: "R32", home: "A1", away: "3rd CEFHI", stadium: "Mexico City Stadium", label: "Winner Group A v 3rd Group C/E/F/H/I" 
+  { id: 80, date: "2026-07-01", time: "19:00", stage: "R32", home: "L1", away: "3rd EHIJK", stadium: "Atlanta Stadium", label: "Winner Group L v 3rd Group E/H/I/J/K" 
+  { id: 81, date: "2026-07-01", time: "15:00", stage: "R32", home: "D1", away: "3rd BEFIJ", stadium: "San Francisco Bay Area Stadium", label: "Winner Group D v 3rd Group B/E/F/I/J" 
+  { id: 82, date: "2026-07-01", time: "19:00", stage: "R32", home: "G1", away: "3rd AEHIJ", stadium: "Seattle Stadium", label: "Winner Group G v 3rd Group A/E/H/I/J" 
+  { id: 83, date: "2026-07-02", time: "15:00", stage: "R32", home: "K2", away: "L2", stadium: "Toronto Stadium", label: "Runner-up Group K v Runner-up Group L" 
+  { id: 84, date: "2026-07-02", time: "19:00", stage: "R32", home: "H1", away: "J2", stadium: "Los Angeles Stadium", label: "Winner Group H v Runner-up Group J" 
+  { id: 85, date: "2026-07-02", time: "15:00", stage: "R32", home: "B1", away: "3rd EFGIJ", stadium: "BC Place Vancouver", label: "Winner Group B v 3rd Group E/F/G/I/J" 
+  { id: 86, date: "2026-07-03", time: "19:00", stage: "R32", home: "J1", away: "H2", stadium: "Miami Stadium", label: "Winner Group J v Runner-up Group H" 
+  { id: 87, date: "2026-07-03", time: "15:00", stage: "R32", home: "K1", away: "3rd DEIJL", stadium: "Kansas City Stadium", label: "Winner Group K v 3rd Group D/E/I/J/L" 
+  { id: 88, date: "2026-07-03", time: "19:00", stage: "R32", home: "D2", away: "G2", stadium: "Dallas Stadium", label: "Runner-up Group D v Runner-up Group G" 
 
   // Round of 16
-  { id: 89, date: "2026-07-04", stage: "R16", home: "W74", away: "W77", stadium: "Philadelphia Stadium" },
-  { id: 90, date: "2026-07-04", stage: "R16", home: "W73", away: "W75", stadium: "Houston Stadium" },
-  { id: 91, date: "2026-07-05", stage: "R16", home: "W76", away: "W78", stadium: "New York New Jersey Stadium" },
-  { id: 92, date: "2026-07-05", stage: "R16", home: "W79", away: "W80", stadium: "Mexico City Stadium" },
-  { id: 93, date: "2026-07-06", stage: "R16", home: "W83", away: "W84", stadium: "Dallas Stadium" },
-  { id: 94, date: "2026-07-06", stage: "R16", home: "W81", away: "W82", stadium: "Seattle Stadium" },
-  { id: 95, date: "2026-07-07", stage: "R16", home: "W86", away: "W88", stadium: "Atlanta Stadium" },
-  { id: 96, date: "2026-07-07", stage: "R16", home: "W85", away: "W87", stadium: "BC Place Vancouver" },
+  { id: 89, date: "2026-07-04", time: "15:00", stage: "R16", home: "W74", away: "W77", stadium: "Philadelphia Stadium" 
+  { id: 90, date: "2026-07-04", time: "19:00", stage: "R16", home: "W73", away: "W75", stadium: "Houston Stadium" 
+  { id: 91, date: "2026-07-05", time: "15:00", stage: "R16", home: "W76", away: "W78", stadium: "New York New Jersey Stadium" 
+  { id: 92, date: "2026-07-05", time: "19:00", stage: "R16", home: "W79", away: "W80", stadium: "Mexico City Stadium" 
+  { id: 93, date: "2026-07-06", time: "15:00", stage: "R16", home: "W83", away: "W84", stadium: "Dallas Stadium" 
+  { id: 94, date: "2026-07-06", time: "19:00", stage: "R16", home: "W81", away: "W82", stadium: "Seattle Stadium" 
+  { id: 95, date: "2026-07-07", time: "15:00", stage: "R16", home: "W86", away: "W88", stadium: "Atlanta Stadium" 
+  { id: 96, date: "2026-07-07", time: "19:00", stage: "R16", home: "W85", away: "W87", stadium: "BC Place Vancouver" 
 
   // QFs
-  { id: 97, date: "2026-07-09", stage: "QF", home: "W89", away: "W90", stadium: "Boston Stadium" },
-  { id: 98, date: "2026-07-10", stage: "QF", home: "W93", away: "W94", stadium: "Los Angeles Stadium" },
-  { id: 99, date: "2026-07-11", stage: "QF", home: "W91", away: "W92", stadium: "Miami Stadium" },
-  { id: 100, date: "2026-07-11", stage: "QF", home: "W95", away: "W96", stadium: "Kansas City Stadium" },
+  { id: 97, date: "2026-07-09", time: "19:00", stage: "QF", home: "W89", away: "W90", stadium: "Boston Stadium" 
+  { id: 98, date: "2026-07-10", time: "19:00", stage: "QF", home: "W93", away: "W94", stadium: "Los Angeles Stadium" 
+  { id: 99, date: "2026-07-11", time: "19:00", stage: "QF", home: "W91", away: "W92", stadium: "Miami Stadium" 
+  { id: 100, date: "2026-07-11", time: "19:00", stage: "QF", home: "W95", away: "W96", stadium: "Kansas City Stadium" 
 
   // SFs
-  { id: 101, date: "2026-07-14", stage: "SF", home: "W97", away: "W98", stadium: "Dallas Stadium" },
-  { id: 102, date: "2026-07-15", stage: "SF", home: "W99", away: "W100", stadium: "Atlanta Stadium" },
+  { id: 101, date: "2026-07-14", time: "20:00", stage: "SF", home: "W97", away: "W98", stadium: "Dallas Stadium" 
+  { id: 102, date: "2026-07-15", time: "20:00", stage: "SF", home: "W99", away: "W100", stadium: "Atlanta Stadium" 
 
   // 3rd place
-  { id: 103, date: "2026-07-18", stage: "3rd", home: "L101", away: "L102", stadium: "Miami Stadium" },
+  { id: 103, date: "2026-07-18", time: "15:00", stage: "3rd", home: "L101", away: "L102", stadium: "Miami Stadium" 
 
   // Final
-  { id: 104, date: "2026-07-19", stage: "Final", home: "W101", away: "W102", stadium: "New York New Jersey Stadium" },
+  { id: 104, date: "2026-07-19", time: "19:00", stage: "Final", home: "W101", away: "W102", stadium: "New York New Jersey Stadium" 
 ];
 
 // Tournament prediction (group standings + bracket)
