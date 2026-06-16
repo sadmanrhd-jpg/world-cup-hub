@@ -87,6 +87,24 @@ export const GROUPS = ["A","B","C","D","E","F","G","H","I","J","K","L"] as const
 
 export const getTeam = (slug: string) => TEAMS.find(t => t.slug === slug);
 export const teamsInGroup = (g: string) => TEAMS.filter(t => t.group === g);
+export const getTeamByName = (name: string) => TEAMS.find(t => t.name === name);
+
+// Match status helpers — assume "now" against the fixture local time string
+const MATCH_DURATION_MS = 110 * 60 * 1000; // 90' + stoppage/HT
+
+export const fixtureKickoff = (f: { date: string; time: string }) =>
+  new Date(`${f.date}T${f.time}:00`);
+
+export const fixtureStatus = (
+  f: { date: string; time: string },
+  now: Date = new Date(),
+): "live" | "finished" | "upcoming" => {
+  const ko = fixtureKickoff(f).getTime();
+  const t = now.getTime();
+  if (t < ko) return "upcoming";
+  if (t < ko + MATCH_DURATION_MS) return "live";
+  return "finished";
+};
 
 export type Fixture = {
   id: number;
