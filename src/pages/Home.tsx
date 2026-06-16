@@ -4,6 +4,7 @@ import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import { getTeamInfo } from "@/data/teamInfo";
 import { getManager } from "@/data/managers";
 import { Heart, Star, Trophy, Bell } from "lucide-react";
+import LiveMatches from "@/components/LiveMatches";
 
 const FavoriteSpotlight = () => {
   const { slug } = useFavoriteTeam();
@@ -33,72 +34,68 @@ const FavoriteSpotlight = () => {
   const upcoming = FIXTURES.filter((f) => f.home === team.name || f.away === team.name).slice(0, 5);
 
   return (
-    <section className="container py-12">
-      <div className="flex items-center gap-2 mb-4 text-xs uppercase tracking-widest text-primary">
+    <section className="container py-6 sm:py-12">
+      <div className="flex items-center gap-2 mb-3 sm:mb-4 text-[10px] sm:text-xs uppercase tracking-widest text-primary">
         <Star className="h-3 w-3 fill-current" /> Your team
       </div>
-      <div className="card-elevated rounded-3xl border border-primary/30 overflow-hidden">
+      <div className="card-elevated rounded-2xl sm:rounded-3xl border border-primary/30 overflow-hidden">
         <div className="grid lg:grid-cols-3">
-          <div className="p-5 sm:p-8 lg:p-10 bg-gradient-to-br from-primary/15 via-transparent to-transparent">
-            <div className="text-7xl">{team.flag}</div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground mt-4">Group {team.group}</div>
-            <h2 className="text-4xl md:text-5xl font-bold mt-1">{team.name}</h2>
-            <p className="text-muted-foreground mt-3">{info.blurb}</p>
-            <Link to={`/teams/${team.slug}`} className="inline-block mt-5 text-sm text-primary hover:underline">
+          <div className="p-4 sm:p-8 lg:p-10 bg-gradient-to-br from-primary/15 via-transparent to-transparent">
+            <div className="text-4xl sm:text-7xl">{team.flag}</div>
+            <div className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground mt-2 sm:mt-4">Group {team.group}</div>
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mt-0.5 sm:mt-1">{team.name}</h2>
+            <p className="text-xs sm:text-base text-muted-foreground mt-2 sm:mt-3 line-clamp-3 sm:line-clamp-none">{info.blurb}</p>
+            <Link to={`/teams/${team.slug}`} className="inline-block mt-3 sm:mt-5 text-xs sm:text-sm text-primary hover:underline">
               View full team page →
             </Link>
           </div>
 
-          <div className="p-5 sm:p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border space-y-5">
+          <div className="p-4 sm:p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border space-y-3 sm:space-y-5">
             <div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">World Cup history</div>
-              <div className="flex items-baseline gap-3 mt-1">
-                <Trophy className="text-primary" />
-                <span className="text-3xl font-display font-bold gradient-gold-text">{info.titles}</span>
-                <span className="text-sm text-muted-foreground">titles · {info.appearances} apps</span>
+              <div className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground">World Cup history</div>
+              <div className="flex items-baseline gap-2 sm:gap-3 mt-1">
+                <Trophy className="text-primary h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-xl sm:text-3xl font-display font-bold gradient-gold-text">{info.titles}</span>
+                <span className="text-[11px] sm:text-sm text-muted-foreground">titles · {info.appearances} apps</span>
               </div>
-              <div className="text-sm mt-2"><span className="text-muted-foreground">Best:</span> {info.bestFinish}</div>
+              <div className="text-[11px] sm:text-sm mt-1 sm:mt-2"><span className="text-muted-foreground">Best:</span> {info.bestFinish}</div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">Head coach</div>
-              <div className="text-lg font-semibold mt-1">{getManager(team.name)}</div>
+              <div className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground">Head coach</div>
+              <div className="text-sm sm:text-lg font-semibold mt-0.5 sm:mt-1">{getManager(team.name)}</div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">Highlight player</div>
-              <div className="text-2xl font-bold mt-1">{info.highlightPlayer.name}</div>
-              <div className="text-xs text-muted-foreground">{info.highlightPlayer.role}</div>
+              <div className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground">Highlight player</div>
+              <div className="text-base sm:text-2xl font-bold mt-0.5 sm:mt-1">{info.highlightPlayer.name}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">{info.highlightPlayer.role}</div>
             </div>
-            <div className="flex items-center gap-2 text-xs text-primary border-t border-border pt-4">
-              <Bell className="h-3.5 w-3.5" /> You'll get important updates for {team.name}
+            <div className="flex items-center gap-2 text-[10px] sm:text-xs text-primary border-t border-border pt-2 sm:pt-4">
+              <Bell className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> You'll get important updates for {team.name}
             </div>
           </div>
 
-          <div className="p-5 sm:p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Upcoming matches</div>
-            <ul className="space-y-2">
+          <div className="p-4 sm:p-8 lg:p-10 border-t lg:border-t-0 lg:border-l border-border">
+            <div className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground mb-2 sm:mb-3">Upcoming matches</div>
+            <ul className="space-y-1.5 sm:space-y-2">
               {upcoming.map((f) => {
                 const opp = f.home === team.name ? f.away : f.home;
-                const oppFlag = (() => {
-                  const allTeams = (window as never) && undefined;
-                  return "";
-                })();
                 return (
-                  <li key={f.id} className="flex items-center gap-3 rounded-xl border border-border bg-secondary/30 px-4 py-3">
-                    <div className="text-xs text-muted-foreground w-14 shrink-0">
+                  <li key={f.id} className="flex items-center gap-2 sm:gap-3 rounded-lg sm:rounded-xl border border-border bg-secondary/30 px-3 sm:px-4 py-2 sm:py-3">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground w-12 sm:w-14 shrink-0">
                       {new Date(f.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </div>
-                    <div className="text-xs font-mono text-muted-foreground w-10 shrink-0">{f.time}</div>
-                    <div className="flex-1 text-sm font-medium truncate">
+                    <div className="text-[10px] sm:text-xs font-mono text-muted-foreground w-9 sm:w-10 shrink-0">{f.time}</div>
+                    <div className="flex-1 text-xs sm:text-sm font-medium truncate">
                       vs {opp}
                     </div>
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:block">
+                    <div className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:block">
                       {f.stage === "Group" ? `Group ${f.group}` : f.stage}
                     </div>
                   </li>
                 );
               })}
               {upcoming.length === 0 && (
-                <li className="text-sm text-muted-foreground">No upcoming matches scheduled.</li>
+                <li className="text-xs sm:text-sm text-muted-foreground">No upcoming matches scheduled.</li>
               )}
             </ul>
           </div>
@@ -164,6 +161,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Live or recent matches */}
+      <LiveMatches />
 
       {/* Favorite team spotlight */}
       <FavoriteSpotlight />
