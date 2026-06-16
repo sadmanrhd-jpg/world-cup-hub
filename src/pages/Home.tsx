@@ -4,6 +4,7 @@ import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import { getTeamInfo } from "@/data/teamInfo";
 import { getManager } from "@/data/managers";
 import { Heart, Star, Trophy, Bell } from "lucide-react";
+import LiveMatches from "@/components/LiveMatches";
 
 const FavoriteSpotlight = () => {
   const { slug } = useFavoriteTeam();
