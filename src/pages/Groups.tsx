@@ -8,15 +8,17 @@ const Groups = () => {
   const term = q.trim().toLowerCase();
 
   const visibleGroups = useMemo(() => {
-    if (!term) return GROUPS.map((g) => ({ g, teams: teamsInGroup(g) }));
-    return GROUPS.map((g) => {
-      const groupMatches = `group ${g}`.toLowerCase().includes(term) || g.toLowerCase() === term;
-      const teams = teamsInGroup(g);
-      const matched = teams.filter((t) => t.name.toLowerCase().includes(term));
-      if (groupMatches) return { g, teams };
-      if (matched.length) return { g, teams: matched };
-      return null;
-    }).filter((x): x is { g: string; teams: ReturnType<typeof teamsInGroup> } => !!x);
+    const all = GROUPS.map((g) => ({ g: g as string, teams: teamsInGroup(g) }));
+    if (!term) return all;
+    return all
+      .map(({ g, teams }) => {
+        const groupMatches = `group ${g}`.toLowerCase().includes(term) || g.toLowerCase() === term;
+        const matched = teams.filter((t) => t.name.toLowerCase().includes(term));
+        if (groupMatches) return { g, teams };
+        if (matched.length) return { g, teams: matched };
+        return null;
+      })
+      .filter((x): x is { g: string; teams: ReturnType<typeof teamsInGroup> } => !!x);
   }, [term]);
 
   return (
