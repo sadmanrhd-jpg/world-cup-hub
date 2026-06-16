@@ -162,6 +162,9 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Live or recent matches */}
+      <LiveMatches />
+
       {/* Favorite team spotlight */}
       <FavoriteSpotlight />
 
