@@ -37,16 +37,31 @@ const Teams = () => {
       {filtered.length === 0 ? (
         <div className="text-center text-muted-foreground py-20">No teams match "{q}".</div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
           {filtered.map((t) => (
             <Link
               key={t.slug}
               to={`/teams/${t.slug}`}
-              className="card-elevated rounded-2xl border border-border p-5 hover:border-primary/50 transition-all hover:-translate-y-1 text-center"
+              className="card-elevated rounded-2xl border border-border p-3 sm:p-4 hover:border-primary/50 transition-all hover:-translate-y-1 text-center"
             >
-              <div className="text-4xl mb-2">{t.flag}</div>
-              <div className="font-medium text-sm">{t.name}</div>
-              <div className="text-xs text-muted-foreground mt-1">Group {t.group}</div>
+              <div className="mx-auto w-full max-w-[200px] aspect-square rounded-xl overflow-hidden bg-white border border-border/60">
+                <img
+                  src={`/kits/${t.slug}.png`}
+                  alt={`${t.name} home and away kits`}
+                  width={200}
+                  height={200}
+                  loading="lazy"
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-center gap-1.5">
+                <span className="text-base sm:text-lg">{t.flag}</span>
+                <span className="font-medium text-xs sm:text-sm truncate">{t.name}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Group {t.group}</div>
             </Link>
           ))}
         </div>
