@@ -89,11 +89,11 @@ export const getTeam = (slug: string) => TEAMS.find(t => t.slug === slug);
 export const teamsInGroup = (g: string) => TEAMS.filter(t => t.group === g);
 export const getTeamByName = (name: string) => TEAMS.find(t => t.name === name);
 
-// Match status helpers — assume "now" against the fixture local time string
+// All stored fixture dates/times are in BST (Bangladesh Standard Time, UTC+6, no DST).
 const MATCH_DURATION_MS = 110 * 60 * 1000; // 90' + stoppage/HT
 
 export const fixtureKickoff = (f: { date: string; time: string }) =>
-  new Date(`${f.date}T${f.time}:00`);
+  new Date(`${f.date}T${f.time}:00+06:00`);
 
 export const fixtureStatus = (
   f: { date: string; time: string },
@@ -106,17 +106,64 @@ export const fixtureStatus = (
   return "finished";
 };
 
+export type TimezoneOption = { value: string; label: string; short: string };
+
+export const TIMEZONE_OPTIONS: TimezoneOption[] = [
+  { value: "Asia/Dhaka", label: "Bangladesh (BST)", short: "BST" },
+  { value: "Europe/London", label: "United Kingdom", short: "UK" },
+  { value: "Europe/Paris", label: "Central Europe", short: "CET" },
+  { value: "America/New_York", label: "US Eastern", short: "ET" },
+  { value: "America/Chicago", label: "US Central", short: "CT" },
+  { value: "America/Denver", label: "US Mountain", short: "MT" },
+  { value: "America/Los_Angeles", label: "US Pacific", short: "PT" },
+  { value: "America/Mexico_City", label: "Mexico City", short: "CDMX" },
+  { value: "America/Toronto", label: "Canada Eastern", short: "ET-CA" },
+  { value: "UTC", label: "UTC", short: "UTC" },
+];
+
+export const DEFAULT_TIMEZONE = "Asia/Dhaka";
+
+export const formatFixtureTime = (f: { date: string; time: string }, tz: string) =>
+  new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(fixtureKickoff(f));
+
+export const formatFixtureDateKey = (f: { date: string; time: string }, tz: string) => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(fixtureKickoff(f));
+  const y = parts.find((p) => p.type === "year")?.value;
+  const m = parts.find((p) => p.type === "month")?.value;
+  const d = parts.find((p) => p.type === "day")?.value;
+  return `${y}-${m}-${d}`;
+};
+
+export const formatFixtureDateLong = (f: { date: string; time: string }, tz: string) =>
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(fixtureKickoff(f));
+
 export type Fixture = {
   id: number;
-  date: string; // ISO date (yyyy-mm-dd)
-  time: string; // HH:MM local
-  home: string; // team name
+  date: string; // ISO date in BST (yyyy-mm-dd)
+  time: string; // HH:MM in BST
+  home: string;
   away: string;
   group?: string;
   stadium: string;
   stage: "Group" | "R32" | "R16" | "QF" | "SF" | "3rd" | "Final";
-  label?: string; // for knockouts when teams TBD
-  score?: { home: number; away: number }; // present when match has been played
+  label?: string;
+  score?: { home: number; away: number };
 };
 
 const G = (
@@ -131,31 +178,31 @@ const G = (
 ): Fixture => ({ id, date, time, home, away, group, stadium, stage: "Group", score });
 
 export const FIXTURES: Fixture[] = [
-  // Matchday 1 — dates & times per official FIFA schedule
-  G(1, "2026-06-12", "22:00", "Mexico", "South Africa", "A", "Mexico City Stadium", { home: 2, away: 0 }),
-  G(2, "2026-06-12", "01:00", "Korea Republic", "Czechia", "A", "Estadio Guadalajara", { home: 2, away: 1 }),
-  G(3, "2026-06-13", "22:00", "Canada", "Bosnia and Herzegovina", "B", "Toronto Stadium", { home: 1, away: 1 }),
-  G(4, "2026-06-13", "01:00", "USA", "Paraguay", "D", "Los Angeles Stadium", { home: 4, away: 1 }),
-  G(5, "2026-06-14", "22:00", "Qatar", "Switzerland", "B", "San Francisco Bay Area Stadium", { home: 1, away: 1 }),
-  G(6, "2026-06-14", "19:00", "Brazil", "Morocco", "C", "New York New Jersey Stadium", { home: 1, away: 1 }),
-  G(7, "2026-06-14", "01:00", "Haiti", "Scotland", "C", "Boston Stadium", { home: 0, away: 1 }),
-  G(8, "2026-06-14", "04:00", "Australia", "Türkiye", "D", "BC Place Vancouver", { home: 2, away: 0 }),
-  G(9, "2026-06-14", "07:00", "Germany", "Curaçao", "E", "Houston Stadium", { home: 7, away: 1 }),
-  G(10, "2026-06-15", "22:00", "Netherlands", "Japan", "F", "Dallas Stadium", { home: 2, away: 2 }),
-  G(11, "2026-06-15", "01:00", "Côte d'Ivoire", "Ecuador", "E", "Philadelphia Stadium", { home: 1, away: 0 }),
-  G(12, "2026-06-15", "04:00", "Sweden", "Tunisia", "F", "Estadio Monterrey", { home: 5, away: 1 }),
-  G(13, "2026-06-15", "19:00", "Spain", "Cabo Verde", "H", "Atlanta Stadium", { home: 0, away: 0 }),
-  G(14, "2026-06-16", "22:00", "Belgium", "Egypt", "G", "Seattle Stadium", { home: 1, away: 1 }),
-  G(15, "2026-06-16", "01:00", "Saudi Arabia", "Uruguay", "H", "Miami Stadium", { home: 1, away: 1 }),
-  G(16, "2026-06-16", "04:00", "IR Iran", "New Zealand", "G", "Los Angeles Stadium", { home: 2, away: 2 }),
+  // Matchday 1 — official BST kickoff times
+  G(1, "2026-06-12", "01:00", "Mexico", "South Africa", "A", "Mexico City Stadium", { home: 2, away: 0 }),
+  G(2, "2026-06-12", "08:00", "Korea Republic", "Czechia", "A", "Estadio Guadalajara", { home: 2, away: 1 }),
+  G(3, "2026-06-13", "01:00", "Canada", "Bosnia and Herzegovina", "B", "Toronto Stadium", { home: 1, away: 1 }),
+  G(4, "2026-06-13", "07:00", "USA", "Paraguay", "D", "Los Angeles Stadium", { home: 4, away: 1 }),
+  G(5, "2026-06-14", "01:00", "Qatar", "Switzerland", "B", "San Francisco Bay Area Stadium", { home: 1, away: 1 }),
+  G(6, "2026-06-14", "04:00", "Brazil", "Morocco", "C", "New York New Jersey Stadium", { home: 1, away: 1 }),
+  G(7, "2026-06-14", "07:00", "Haiti", "Scotland", "C", "Boston Stadium", { home: 0, away: 1 }),
+  G(8, "2026-06-14", "10:00", "Australia", "Türkiye", "D", "BC Place Vancouver", { home: 2, away: 0 }),
+  G(9, "2026-06-14", "23:00", "Germany", "Curaçao", "E", "Houston Stadium", { home: 7, away: 1 }),
+  G(10, "2026-06-15", "02:00", "Netherlands", "Japan", "F", "Dallas Stadium", { home: 2, away: 2 }),
+  G(11, "2026-06-15", "05:00", "Côte d'Ivoire", "Ecuador", "E", "Philadelphia Stadium", { home: 1, away: 0 }),
+  G(12, "2026-06-15", "08:00", "Sweden", "Tunisia", "F", "Estadio Monterrey", { home: 5, away: 1 }),
+  G(13, "2026-06-15", "22:00", "Spain", "Cabo Verde", "H", "Atlanta Stadium", { home: 0, away: 0 }),
+  G(14, "2026-06-16", "01:00", "Belgium", "Egypt", "G", "Seattle Stadium", { home: 1, away: 1 }),
+  G(15, "2026-06-16", "04:00", "Saudi Arabia", "Uruguay", "H", "Miami Stadium", { home: 1, away: 1 }),
+  G(16, "2026-06-16", "07:00", "IR Iran", "New Zealand", "G", "Los Angeles Stadium", { home: 2, away: 2 }),
   G(17, "2026-06-17", "01:00", "France", "Senegal", "I", "New York New Jersey Stadium"),
-  G(18, "2026-06-17", "10:00", "Austria", "Jordan", "J", "San Francisco Bay Area Stadium"),
-  G(19, "2026-06-17", "23:00", "Portugal", "Congo DR", "K", "Houston Stadium"),
-  G(20, "2026-06-18", "02:00", "England", "Croatia", "L", "Dallas Stadium"),
-  G(21, "2026-06-18", "05:00", "Ghana", "Panama", "L", "Toronto Stadium"),
-  G(22, "2026-06-18", "08:00", "Uzbekistan", "Colombia", "K", "Mexico City Stadium"),
-  G(23, "2026-06-17", "13:00", "Iraq", "Norway", "I", "Boston Stadium"),
-  G(24, "2026-06-17", "16:00", "Argentina", "Algeria", "J", "Kansas City Stadium"),
+  G(18, "2026-06-17", "04:00", "Iraq", "Norway", "I", "Boston Stadium"),
+  G(19, "2026-06-17", "07:00", "Argentina", "Algeria", "J", "Kansas City Stadium"),
+  G(20, "2026-06-17", "10:00", "Austria", "Jordan", "J", "San Francisco Bay Area Stadium"),
+  G(21, "2026-06-17", "23:00", "Portugal", "Congo DR", "K", "Houston Stadium"),
+  G(22, "2026-06-18", "02:00", "England", "Croatia", "L", "Dallas Stadium"),
+  G(23, "2026-06-18", "05:00", "Ghana", "Panama", "L", "Toronto Stadium"),
+  G(24, "2026-06-18", "08:00", "Uzbekistan", "Colombia", "K", "Mexico City Stadium"),
 
   // Matchday 2
   G(25, "2026-06-18", "22:00", "Czechia", "South Africa", "A", "Atlanta Stadium"),
@@ -164,8 +211,8 @@ export const FIXTURES: Fixture[] = [
   G(28, "2026-06-19", "07:00", "Mexico", "Korea Republic", "A", "Estadio Guadalajara"),
   G(29, "2026-06-20", "01:00", "USA", "Australia", "D", "Seattle Stadium"),
   G(30, "2026-06-20", "04:00", "Scotland", "Morocco", "C", "Boston Stadium"),
-  G(31, "2026-06-20", "06:30", "Brazil", "Haiti", "C", "Philadelphia Stadium"),
-  G(32, "2026-06-20", "09:00", "Türkiye", "Paraguay", "D", "San Francisco Bay Area Stadium"),
+  G(31, "2026-06-20", "07:00", "Brazil", "Haiti", "C", "Philadelphia Stadium"),
+  G(32, "2026-06-20", "10:00", "Türkiye", "Paraguay", "D", "San Francisco Bay Area Stadium"),
   G(33, "2026-06-20", "23:00", "Netherlands", "Sweden", "F", "Houston Stadium"),
   G(34, "2026-06-21", "02:00", "Germany", "Côte d'Ivoire", "E", "Toronto Stadium"),
   G(35, "2026-06-21", "06:00", "Ecuador", "Curaçao", "E", "Kansas City Stadium"),
