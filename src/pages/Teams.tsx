@@ -44,21 +44,10 @@ const Teams = () => {
               to={`/teams/${t.slug}`}
               className="card-elevated rounded-2xl border border-border p-3 sm:p-4 hover:border-primary/50 transition-all hover:-translate-y-1 text-center"
             >
-              <div className="mx-auto w-full max-w-[200px] aspect-square rounded-xl overflow-hidden bg-white border border-border/60">
-                <img
-                  src={`/kits/${t.slug}.png`}
-                  alt={`${t.name} home and away kits`}
-                  width={200}
-                  height={200}
-                  loading="lazy"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
-                />
+              <div className="mx-auto w-full max-w-[160px] aspect-[4/3] rounded-xl overflow-hidden bg-white border border-border/60 flex items-center justify-center text-[72px] sm:text-[96px] leading-none">
+                {t.flag}
               </div>
               <div className="mt-2 flex items-center justify-center gap-1.5">
-                <span className="text-base sm:text-lg">{t.flag}</span>
                 <span className="font-medium text-xs sm:text-sm truncate">{t.name}</span>
               </div>
               <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Group {t.group}</div>
