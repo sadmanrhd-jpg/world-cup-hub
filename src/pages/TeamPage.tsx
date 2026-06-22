@@ -24,7 +24,6 @@ const TeamPage = () => {
   const info = getTeamInfo(team.name);
   const { slug: favSlug, set: setFav } = useFavoriteTeam();
   const isFav = favSlug === team.slug;
-  const teamShort = team.name.slice(0, 3).toUpperCase();
 
   return (
     <div className="container py-12 space-y-12">
