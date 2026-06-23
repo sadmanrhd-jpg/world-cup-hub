@@ -22,6 +22,10 @@ type Row = {
   badge?: string | null;
 };
 
+type LiveMatchesProps = {
+  showAllFixturesLink?: boolean;
+};
+
 const MatchFlag = ({ name }: { name: string }) => {
   const team = getTeamByName(name);
 
@@ -75,7 +79,7 @@ const MatchRow = ({ row }: { row: Row }) => {
   );
 };
 
-const LiveMatches = () => {
+const LiveMatches = ({ showAllFixturesLink = true }: LiveMatchesProps) => {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -190,12 +194,14 @@ const LiveMatches = () => {
               })}
             </span>
           )}
-          <Link
-            to="/fixtures"
-            className="text-xs text-muted-foreground hover:text-primary"
-          >
-            All fixtures →
-          </Link>
+          {showAllFixturesLink && (
+            <Link
+              to="/fixtures"
+              className="text-xs text-muted-foreground hover:text-primary"
+            >
+              All fixtures →
+            </Link>
+          )}
         </div>
       </div>
 

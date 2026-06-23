@@ -4,48 +4,102 @@ type ApiResponse = {
   json: (body: unknown) => void;
 };
 
+type EspnEvent = { id?: string };
+
 type EspnPayload = {
-  events?: Array<{ id?: string }>;
+  events?: EspnEvent[];
 };
+
+const TOURNAMENT_START = new Date("2026-06-11T00:00:00.000Z");
+const FALLBACK_HISTORY_DAYS = 14;
 
 const formatDate = (date: Date) =>
   date.toISOString().slice(0, 10).replaceAll("-", "");
 
-const datesAroundToday = () => {
-  const today = new Date();
-  return [-1, 0, 1].map((offset) => {
-    const date = new Date(today);
-    date.setUTCDate(date.getUTCDate() + offset);
-    return formatDate(date);
-  });
+const startOfUtcDay = (date: Date) =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+
+const addUtcDays = (date: Date, amount: number) => {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + amount);
+  return next;
 };
 
-const endpoint = (date: string) =>
-  `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${date}&limit=100`;
+const laterDate = (a: Date, b: Date) => (a.getTime() > b.getTime() ? a : b);
+
+const datesBetween = (start: Date, end: Date) => {
+  const dates: string[] = [];
+  for (let cursor = new Date(start); cursor <= end; cursor = addUtcDays(cursor, 1)) {
+    dates.push(formatDate(cursor));
+  }
+  return dates;
+};
+
+const endpoint = (dates: string) =>
+  `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dates}&limit=500`;
+
+async function fetchPayload(dates: string): Promise<EspnPayload> {
+  const upstream = await fetch(endpoint(dates), {
+    headers: { Accept: "application/json" },
+  });
+
+  if (!upstream.ok) {
+    throw new Error(`ESPN returned ${upstream.status}`);
+  }
+
+  return (await upstream.json()) as EspnPayload;
+}
+
+const mergeEvents = (payloads: EspnPayload[]) => {
+  const eventMap = new Map<string, EspnEvent>();
+
+  for (const payload of payloads) {
+    for (const event of payload.events ?? []) {
+      if (event.id) eventMap.set(event.id, event);
+    }
+  }
+
+  return Array.from(eventMap.values());
+};
+
+async function fetchTournamentWindow(): Promise<EspnEvent[]> {
+  const today = startOfUtcDay(new Date());
+  const end = addUtcDays(today, 1);
+  const range = `${formatDate(TOURNAMENT_START)}-${formatDate(end)}`;
+
+  try {
+    const payload = await fetchPayload(range);
+    if ((payload.events?.length ?? 0) > 0) {
+      return mergeEvents([payload]);
+    }
+  } catch {
+    // Some ESPN scoreboards do not accept ranges consistently.
+    // Fall back to one request per day for the recent history window.
+  }
+
+  const recentStart = laterDate(
+    TOURNAMENT_START,
+    addUtcDays(today, -FALLBACK_HISTORY_DAYS),
+  );
+
+  const settled = await Promise.allSettled(
+    datesBetween(recentStart, end).map((date) => fetchPayload(date)),
+  );
+
+  const payloads = settled
+    .filter((result): result is PromiseFulfilledResult<EspnPayload> => result.status === "fulfilled")
+    .map((result) => result.value);
+
+  if (payloads.length === 0) {
+    throw new Error("No live score requests succeeded");
+  }
+
+  return mergeEvents(payloads);
+}
 
 export default async function handler(_request: unknown, response: ApiResponse) {
   try {
-    const payloads = await Promise.all(
-      datesAroundToday().map(async (date) => {
-        const upstream = await fetch(endpoint(date), {
-          headers: { Accept: "application/json" },
-        });
-
-        if (!upstream.ok) {
-          throw new Error(`ESPN returned ${upstream.status}`);
-        }
-
-        return (await upstream.json()) as EspnPayload;
-      }),
-    );
-
-    const eventMap = new Map<string, NonNullable<EspnPayload["events"]>[number]>();
-
-    for (const payload of payloads) {
-      for (const event of payload.events ?? []) {
-        if (event.id) eventMap.set(event.id, event);
-      }
-    }
+    const events = await fetchTournamentWindow();
 
     response.setHeader(
       "Cache-Control",
@@ -54,7 +108,7 @@ export default async function handler(_request: unknown, response: ApiResponse) 
     response.status(200).json({
       source: "ESPN",
       fetchedAt: new Date().toISOString(),
-      events: Array.from(eventMap.values()),
+      events,
     });
   } catch (error) {
     response.setHeader("Cache-Control", "no-store");
