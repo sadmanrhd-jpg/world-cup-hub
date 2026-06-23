@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import LiveMatches from "@/components/LiveMatches";
+import { teamKey, useLiveScores } from "@/hooks/useLiveScores";
 import {
   FIXTURES,
   Fixture,
@@ -31,6 +32,13 @@ const Fixtures = () => {
     if (typeof window === "undefined") return DEFAULT_TIMEZONE;
     return localStorage.getItem(TZ_STORAGE_KEY) || DEFAULT_TIMEZONE;
   });
+
+  const {
+    data: liveScores,
+    refreshing,
+    error: liveScoreError,
+    pairKey,
+  } = useLiveScores(60_000);
 
   useEffect(() => {
     localStorage.setItem(TZ_STORAGE_KEY, tz);
@@ -117,6 +125,11 @@ const Fixtures = () => {
           </div>
         </div>
 
+        <div className="mb-4 flex items-center justify-end gap-2 text-[10px] text-muted-foreground">
+          {refreshing && <span>Refreshing scores...</span>}
+          {liveScoreError && <span>Using stored scores while the live feed reconnects.</span>}
+        </div>
+
         {byDate.length === 0 && (
           <div className="text-center text-muted-foreground py-20">No matches found.</div>
         )}
@@ -128,32 +141,70 @@ const Fixtures = () => {
                 {formatFixtureDateLong(list[0], tz)}
               </h3>
               <div className="space-y-2">
-                {list.map((f) => (
-                  <div key={f.id} className="card-elevated rounded-xl border border-border p-4 flex flex-wrap items-center gap-4">
-                    <div className="text-xs font-mono text-muted-foreground w-12">#{f.id}</div>
-                    <div className="text-xs uppercase tracking-wider px-2 py-1 rounded-full bg-secondary text-muted-foreground">
-                      {f.stage === "Group" ? `Group ${f.group}` : STAGE_LABELS[f.stage]}
-                    </div>
-                    <div className="text-xs font-mono text-muted-foreground w-20 whitespace-nowrap">
-                      {formatFixtureTime(f, tz)} <span className="opacity-60">{tzShort}</span>
-                    </div>
-                    <div className="flex-1 min-w-[200px] font-semibold">
-                      {f.label ? (
-                        <span className="text-muted-foreground italic">{f.label}</span>
-                      ) : (
-                        <>
-                          {f.home} <span className="text-muted-foreground font-normal">vs</span> {f.away}
-                          {f.score && (
-                            <span className="ml-2 text-primary font-mono">
-                              {f.score.home}–{f.score.away}
+                {list.map((f) => {
+                  const event = liveScores.get(pairKey(f.home, f.away));
+                  const useEventScore = event != null && (event.live || event.finished);
+                  const sameOrder = event != null && teamKey(event.home) === teamKey(f.home);
+
+                  const eventHomeScore = useEventScore
+                    ? sameOrder
+                      ? event?.homeScore
+                      : event?.awayScore
+                    : null;
+                  const eventAwayScore = useEventScore
+                    ? sameOrder
+                      ? event?.awayScore
+                      : event?.homeScore
+                    : null;
+
+                  const homeScore = eventHomeScore ?? f.score?.home;
+                  const awayScore = eventAwayScore ?? f.score?.away;
+                  const hasScore = homeScore != null && awayScore != null;
+                  const statusLabel = event?.live
+                    ? event.progress ?? "LIVE"
+                    : event?.finished
+                      ? "FT"
+                      : null;
+
+                  return (
+                    <div key={f.id} className="card-elevated rounded-xl border border-border p-4 flex flex-wrap items-center gap-4">
+                      <div className="text-xs font-mono text-muted-foreground w-12">#{f.id}</div>
+                      <div className="text-xs uppercase tracking-wider px-2 py-1 rounded-full bg-secondary text-muted-foreground">
+                        {f.stage === "Group" ? `Group ${f.group}` : STAGE_LABELS[f.stage]}
+                      </div>
+                      <div className="text-xs font-mono text-muted-foreground w-20 whitespace-nowrap">
+                        {formatFixtureTime(f, tz)} <span className="opacity-60">{tzShort}</span>
+                      </div>
+                      <div className="flex-1 min-w-[200px] font-semibold">
+                        {f.label ? (
+                          <span className="text-muted-foreground italic">{f.label}</span>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span>{f.home}</span>
+                            <span
+                              className={`rounded-md px-2 py-0.5 font-mono font-bold tabular-nums ${
+                                event?.live
+                                  ? "bg-primary text-primary-foreground"
+                                  : hasScore
+                                    ? "bg-secondary text-foreground"
+                                    : "text-muted-foreground font-normal"
+                              }`}
+                            >
+                              {hasScore ? `${homeScore}-${awayScore}` : "vs"}
                             </span>
-                          )}
-                        </>
-                      )}
+                            <span>{f.away}</span>
+                            {statusLabel && (
+                              <span className={`text-[10px] font-semibold ${event?.live ? "text-red-500" : "text-muted-foreground"}`}>
+                                {statusLabel}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">📍 {f.stadium}</div>
                     </div>
-                    <div className="text-sm text-muted-foreground">📍 {f.stadium}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
