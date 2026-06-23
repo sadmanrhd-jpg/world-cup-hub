@@ -87,17 +87,31 @@ const pairKey = (a: string, b: string) =>
 const formatEspnDate = (date: Date) =>
   date.toISOString().slice(0, 10).replaceAll("-", "");
 
-const datesAroundToday = () => {
-  const today = new Date();
-  return [-1, 0, 1].map((offset) => {
-    const date = new Date(today);
-    date.setUTCDate(date.getUTCDate() + offset);
-    return formatEspnDate(date);
-  });
+const TOURNAMENT_START = new Date("2026-06-11T00:00:00.000Z");
+const FALLBACK_HISTORY_DAYS = 14;
+
+const startOfUtcDay = (date: Date) =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+
+const addUtcDays = (date: Date, amount: number) => {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + amount);
+  return next;
 };
 
-const espnEndpoint = (date: string) =>
-  `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${date}&limit=100`;
+const laterDate = (a: Date, b: Date) =>
+  a.getTime() > b.getTime() ? a : b;
+
+const datesBetween = (start: Date, end: Date) => {
+  const dates: string[] = [];
+  for (let cursor = new Date(start); cursor <= end; cursor = addUtcDays(cursor, 1)) {
+    dates.push(formatEspnDate(cursor));
+  }
+  return dates;
+};
+
+const espnEndpoint = (dates: string) =>
+  `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dates}&limit=500`;
 
 const getTeamName = (competitor?: EspnCompetitor) =>
   competitor?.team?.displayName ??
@@ -172,11 +186,7 @@ async function fetchJson(url: string, signal: AbortSignal): Promise<EspnPayload>
   return (await response.json()) as EspnPayload;
 }
 
-async function fetchDirect(signal: AbortSignal): Promise<EspnPayload> {
-  const payloads = await Promise.all(
-    datesAroundToday().map((date) => fetchJson(espnEndpoint(date), signal)),
-  );
-
+const mergePayloads = (payloads: EspnPayload[]): EspnPayload => {
   const eventMap = new Map<string, EspnEvent>();
 
   for (const payload of payloads) {
@@ -186,6 +196,42 @@ async function fetchDirect(signal: AbortSignal): Promise<EspnPayload> {
   }
 
   return { events: Array.from(eventMap.values()) };
+};
+
+async function fetchDirect(signal: AbortSignal): Promise<EspnPayload> {
+  const today = startOfUtcDay(new Date());
+  const end = addUtcDays(today, 1);
+  const range = `${formatEspnDate(TOURNAMENT_START)}-${formatEspnDate(end)}`;
+
+  try {
+    const payload = await fetchJson(espnEndpoint(range), signal);
+    if ((payload.events?.length ?? 0) > 0) return payload;
+  } catch {
+    // Fall back to recent daily requests when range requests are unavailable.
+  }
+
+  const recentStart = laterDate(
+    TOURNAMENT_START,
+    addUtcDays(today, -FALLBACK_HISTORY_DAYS),
+  );
+
+  const settled = await Promise.allSettled(
+    datesBetween(recentStart, end).map((date) =>
+      fetchJson(espnEndpoint(date), signal),
+    ),
+  );
+
+  const payloads = settled
+    .filter((result): result is PromiseFulfilledResult<EspnPayload> =>
+      result.status === "fulfilled",
+    )
+    .map((result) => result.value);
+
+  if (payloads.length === 0) {
+    throw new Error("No live score requests succeeded");
+  }
+
+  return mergePayloads(payloads);
 }
 
 async function fetchLiveEvents(signal: AbortSignal): Promise<LiveEvent[]> {
