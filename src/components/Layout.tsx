@@ -4,6 +4,7 @@ import logo from "@/assets/wc26-logo.avif";
 const navItems = [
   { to: "/", label: "Home", end: true },
   { to: "/groups", label: "Groups" },
+  { to: "/table", label: "Table" },
   { to: "/teams", label: "Teams" },
   { to: "/stadiums", label: "Stadiums" },
   { to: "/fixtures", label: "Fixtures" },
