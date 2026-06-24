@@ -12,8 +12,10 @@ import {
 import TeamFlag from "@/components/TeamFlag";
 import { teamKey, useLiveScores } from "@/hooks/useLiveScores";
 import { useMatchDetails } from "@/hooks/useMatchDetails";
+import { buildPlayerRatingTeams, ratingTone } from "@/utils/playerRatings";
 import {
   Activity,
+  Award,
   CalendarDays,
   Clock3,
   MapPin,
@@ -36,19 +38,6 @@ type TimelineEvent = {
   clock: string;
   text: string;
   team: string;
-};
-
-type LineupPlayer = {
-  id: string;
-  name: string;
-  position: string;
-  jersey: string;
-  starter: boolean;
-};
-
-type LineupTeam = {
-  team: string;
-  players: LineupPlayer[];
 };
 
 const STAGE_LABELS: Record<Fixture["stage"], string> = {
@@ -215,38 +204,6 @@ const buildTimeline = (summary: AnyRecord | undefined): TimelineEvent[] => {
     .slice(0, 40);
 };
 
-const buildLineups = (summary: AnyRecord | undefined): LineupTeam[] =>
-  asArray<AnyRecord>(summary?.rosters)
-    .map((roster, teamIndex) => {
-      const rawPlayers = asArray<AnyRecord>(
-        roster.roster ?? roster.entries ?? roster.athletes,
-      );
-      const players = rawPlayers
-        .map((entry, playerIndex) => {
-          const athlete = entry.athlete ?? entry.player ?? entry;
-          const name = teamName(athlete);
-          if (!name) return null;
-          return {
-            id: stringValue(athlete.id, entry.id, `${teamIndex}-${playerIndex}`),
-            name,
-            position: stringValue(
-              entry.position?.abbreviation,
-              entry.position?.displayName,
-              athlete.position?.abbreviation,
-            ),
-            jersey: stringValue(entry.jersey, athlete.jersey),
-            starter: entry.starter === true,
-          } satisfies LineupPlayer;
-        })
-        .filter((player): player is LineupPlayer => player !== null);
-
-      return {
-        team: teamName(roster.team) || `Team ${teamIndex + 1}`,
-        players,
-      };
-    })
-    .filter((lineup) => lineup.players.length > 0);
-
 const MatchPage = () => {
   const { fixtureId } = useParams();
   const fixture = FIXTURES.find((item) => String(item.id) === fixtureId);
@@ -339,7 +296,17 @@ const MatchPage = () => {
     [summary, fixture],
   );
   const timeline = useMemo(() => buildTimeline(summary), [summary]);
-  const lineups = useMemo(() => buildLineups(summary), [summary]);
+  const lineups = useMemo(() => buildPlayerRatingTeams(summary), [summary]);
+  const playerOfMatch = useMemo(() => {
+    const rated = lineups
+      .flatMap((lineup) =>
+        lineup.players
+          .filter((player) => player.rating != null)
+          .map((player) => ({ ...player, team: lineup.team })),
+      )
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    return rated[0] ?? null;
+  }, [lineups]);
 
   if (!fixture) {
     return (
@@ -526,11 +493,43 @@ const MatchPage = () => {
         </section>
       )}
 
+      {playerOfMatch && (
+        <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-primary/10 p-5 sm:p-6">
+          <div className="absolute right-4 top-4 opacity-10">
+            <Award className="h-20 w-20" />
+          </div>
+          <div className="relative flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-primary">
+                <Award className="h-4 w-4" />
+                Player of the Match
+              </div>
+              <div className="mt-2 text-2xl sm:text-3xl font-bold">{playerOfMatch.name}</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {playerOfMatch.team}
+                {playerOfMatch.position ? ` · ${playerOfMatch.position}` : ""}
+              </div>
+            </div>
+            <div className={`min-w-[82px] rounded-2xl border px-4 py-3 text-center ${ratingTone(playerOfMatch.rating)}`}>
+              <div className="font-mono text-3xl font-bold tabular-nums">
+                {playerOfMatch.rating?.toFixed(1)}
+              </div>
+              <div className="mt-0.5 text-[9px] uppercase tracking-widest">
+                {playerOfMatch.ratingSource === "provider" ? "Provider" : "Fan26"}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {lineups.length > 0 && (
         <section>
           <div className="mb-4 flex items-center gap-3">
             <Shield className="h-5 w-5 text-primary" />
-            <h2 className="text-2xl font-bold">Lineups</h2>
+            <div>
+              <h2 className="text-2xl font-bold">Player Ratings & Lineups</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Provider ratings are used when available. Fan26 ratings are calculated from published player statistics and update automatically.</p>
+            </div>
           </div>
           <div className="grid lg:grid-cols-2 gap-5">
             {lineups.map((lineup) => {
@@ -545,10 +544,29 @@ const MatchPage = () => {
                         <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">Starting XI</div>
                         <div className="space-y-2">
                           {starters.map((player) => (
-                            <div key={player.id} className="flex items-center gap-3 text-sm">
+                            <div key={player.id} className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-secondary/30">
                               <span className="w-7 font-mono text-muted-foreground">{player.jersey || "—"}</span>
-                              <span className="flex-1 font-medium">{player.name}</span>
-                              <span className="text-xs text-muted-foreground">{player.position}</span>
+                              <span className="min-w-0 flex-1 font-medium">
+                                <span className="block truncate">{player.name}</span>
+                                {player.ratingSource && (
+                                  <span className="block text-[9px] uppercase tracking-wider text-muted-foreground">
+                                    {player.ratingSource === "provider" ? "Provider rating" : "Fan26 rating"}
+                                  </span>
+                                )}
+                              </span>
+                              <span className="hidden sm:inline text-xs text-muted-foreground">{player.position}</span>
+                              <span
+                                title={
+                                  player.ratingSource === "provider"
+                                    ? "Rating supplied by the match data provider"
+                                    : player.ratingSource === "fan26"
+                                      ? "Fan26 rating calculated from available individual match statistics"
+                                      : "Rating unavailable"
+                                }
+                                className={`w-12 shrink-0 rounded-lg border px-2 py-1 text-center font-mono font-bold tabular-nums ${ratingTone(player.rating)}`}
+                              >
+                                {player.rating != null ? player.rating.toFixed(1) : "—"}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -559,10 +577,29 @@ const MatchPage = () => {
                         <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">Substitutes</div>
                         <div className="space-y-2">
                           {substitutes.map((player) => (
-                            <div key={player.id} className="flex items-center gap-3 text-sm">
+                            <div key={player.id} className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-secondary/30">
                               <span className="w-7 font-mono text-muted-foreground">{player.jersey || "—"}</span>
-                              <span className="flex-1">{player.name}</span>
-                              <span className="text-xs text-muted-foreground">{player.position}</span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate">{player.name}</span>
+                                {player.ratingSource && (
+                                  <span className="block text-[9px] uppercase tracking-wider text-muted-foreground">
+                                    {player.ratingSource === "provider" ? "Provider rating" : "Fan26 rating"}
+                                  </span>
+                                )}
+                              </span>
+                              <span className="hidden sm:inline text-xs text-muted-foreground">{player.position}</span>
+                              <span
+                                title={
+                                  player.ratingSource === "provider"
+                                    ? "Rating supplied by the match data provider"
+                                    : player.ratingSource === "fan26"
+                                      ? "Fan26 rating calculated from available individual match statistics"
+                                      : "Rating unavailable"
+                                }
+                                className={`w-12 shrink-0 rounded-lg border px-2 py-1 text-center font-mono font-bold tabular-nums ${ratingTone(player.rating)}`}
+                              >
+                                {player.rating != null ? player.rating.toFixed(1) : "—"}
+                              </span>
                             </div>
                           ))}
                         </div>
