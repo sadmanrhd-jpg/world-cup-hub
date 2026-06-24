@@ -10,18 +10,15 @@ import {
   getTeamByName,
 } from "@/data/wc26";
 import TeamFlag from "@/components/TeamFlag";
+import MatchInfoGrid from "@/components/MatchInfoGrid";
 import { teamKey, useLiveScores } from "@/hooks/useLiveScores";
 import { useMatchDetails } from "@/hooks/useMatchDetails";
 import { buildPlayerRatingTeams, ratingTone } from "@/utils/playerRatings";
 import {
   Activity,
   Award,
-  CalendarDays,
-  Clock3,
-  MapPin,
   RefreshCw,
   Shield,
-  Users,
 } from "lucide-react";
 
 type AnyRecord = Record<string, any>;
@@ -624,33 +621,13 @@ const MatchPage = () => {
         </div>
       </section>
 
-      <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card-elevated rounded-2xl border border-border p-5">
-          <CalendarDays className="h-5 w-5 text-primary" />
-          <div className="mt-3 text-xs uppercase tracking-widest text-muted-foreground">Date</div>
-          <div className="mt-1 font-semibold">{formatFixtureDateLong(fixture, tz)}</div>
-        </div>
-        <div className="card-elevated rounded-2xl border border-border p-5">
-          <Clock3 className="h-5 w-5 text-primary" />
-          <div className="mt-3 text-xs uppercase tracking-widest text-muted-foreground">Kickoff</div>
-          <div className="mt-1 font-semibold">
-            {formatFixtureTime(fixture, tz)} {tzShort}
-          </div>
-        </div>
-        <div className="card-elevated rounded-2xl border border-border p-5">
-          <MapPin className="h-5 w-5 text-primary" />
-          <div className="mt-3 text-xs uppercase tracking-widest text-muted-foreground">Venue</div>
-          <div className="mt-1 font-semibold">{venue}</div>
-        </div>
-        <div className="card-elevated rounded-2xl border border-border p-5">
-          <Users className="h-5 w-5 text-primary" />
-          <div className="mt-3 text-xs uppercase tracking-widest text-muted-foreground">Attendance</div>
-          <div className="mt-1 font-semibold">
-            {attendanceLabel}
-          </div>
-          {weather && <div className="mt-1 text-xs text-muted-foreground">{weather}</div>}
-        </div>
-      </section>
+     <MatchInfoGrid
+  date={formatFixtureDateLong(fixture, tz)}
+  kickoff={`${formatFixtureTime(fixture, tz)} ${tzShort}`}
+  venue={venue}
+  attendance={attendanceLabel}
+  weather={weather}
+/>
 
       {(liveError || detailsError) && (
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-sm">
