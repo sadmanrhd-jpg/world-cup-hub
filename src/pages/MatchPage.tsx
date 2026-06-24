@@ -296,7 +296,25 @@ const MatchPage = () => {
     [summary, fixture],
   );
   const timeline = useMemo(() => buildTimeline(summary), [summary]);
-  const lineups = useMemo(() => buildPlayerRatingTeams(summary), [summary]);
+  const competitionState = stringValue(competition?.status?.type?.state);
+  const matchStarted = Boolean(
+    liveEvent?.live ||
+      liveEvent?.finished ||
+      competitionState === "in" ||
+      competitionState === "post" ||
+      fixture?.score,
+  );
+  const lineups = useMemo(
+    () =>
+      buildPlayerRatingTeams(summary, {
+        homeTeam: fixture?.home,
+        awayTeam: fixture?.away,
+        homeScore,
+        awayScore,
+        matchStarted,
+      }),
+    [summary, fixture?.home, fixture?.away, homeScore, awayScore, matchStarted],
+  );
   const playerOfMatch = useMemo(() => {
     const rated = lineups
       .flatMap((lineup) =>
@@ -515,7 +533,7 @@ const MatchPage = () => {
                 {playerOfMatch.rating?.toFixed(1)}
               </div>
               <div className="mt-0.5 text-[9px] uppercase tracking-widest">
-                {playerOfMatch.ratingSource === "provider" ? "Provider" : "Fan26"}
+                {playerOfMatch.ratingSource === "provider" ? "Provider" : playerOfMatch.ratingSource === "estimated" ? "Estimated" : "Fan26"}
               </div>
             </div>
           </div>
@@ -528,7 +546,7 @@ const MatchPage = () => {
             <Shield className="h-5 w-5 text-primary" />
             <div>
               <h2 className="text-2xl font-bold">Player Ratings & Lineups</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Provider ratings are used when available. Fan26 ratings are calculated from published player statistics and update automatically.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Provider ratings are used when available. Fan26 ratings use published player data; estimated ratings use lineups, match result and recorded events when individual statistics are missing. All values refresh automatically.</p>
             </div>
           </div>
           <div className="grid lg:grid-cols-2 gap-5">
@@ -550,7 +568,7 @@ const MatchPage = () => {
                                 <span className="block truncate">{player.name}</span>
                                 {player.ratingSource && (
                                   <span className="block text-[9px] uppercase tracking-wider text-muted-foreground">
-                                    {player.ratingSource === "provider" ? "Provider rating" : "Fan26 rating"}
+                                    {player.ratingSource === "provider" ? "Provider rating" : player.ratingSource === "estimated" ? "Estimated Fan26 rating" : "Fan26 rating"}
                                   </span>
                                 )}
                               </span>
@@ -561,11 +579,15 @@ const MatchPage = () => {
                                     ? "Rating supplied by the match data provider"
                                     : player.ratingSource === "fan26"
                                       ? "Fan26 rating calculated from available individual match statistics"
-                                      : "Rating unavailable"
+                                      : player.ratingSource === "estimated"
+                                        ? "Estimated Fan26 rating based on lineup status, match result and recorded match events"
+                                        : player.didNotPlay || !player.played
+                                          ? "Did not play"
+                                          : "Rating unavailable"
                                 }
                                 className={`w-12 shrink-0 rounded-lg border px-2 py-1 text-center font-mono font-bold tabular-nums ${ratingTone(player.rating)}`}
                               >
-                                {player.rating != null ? player.rating.toFixed(1) : "—"}
+                                {player.rating != null ? player.rating.toFixed(1) : player.didNotPlay || !player.played ? "DNP" : "—"}
                               </span>
                             </div>
                           ))}
@@ -583,7 +605,7 @@ const MatchPage = () => {
                                 <span className="block truncate">{player.name}</span>
                                 {player.ratingSource && (
                                   <span className="block text-[9px] uppercase tracking-wider text-muted-foreground">
-                                    {player.ratingSource === "provider" ? "Provider rating" : "Fan26 rating"}
+                                    {player.ratingSource === "provider" ? "Provider rating" : player.ratingSource === "estimated" ? "Estimated Fan26 rating" : "Fan26 rating"}
                                   </span>
                                 )}
                               </span>
@@ -594,11 +616,15 @@ const MatchPage = () => {
                                     ? "Rating supplied by the match data provider"
                                     : player.ratingSource === "fan26"
                                       ? "Fan26 rating calculated from available individual match statistics"
-                                      : "Rating unavailable"
+                                      : player.ratingSource === "estimated"
+                                        ? "Estimated Fan26 rating based on lineup status, match result and recorded match events"
+                                        : player.didNotPlay || !player.played
+                                          ? "Did not play"
+                                          : "Rating unavailable"
                                 }
                                 className={`w-12 shrink-0 rounded-lg border px-2 py-1 text-center font-mono font-bold tabular-nums ${ratingTone(player.rating)}`}
                               >
-                                {player.rating != null ? player.rating.toFixed(1) : "—"}
+                                {player.rating != null ? player.rating.toFixed(1) : player.didNotPlay || !player.played ? "DNP" : "—"}
                               </span>
                             </div>
                           ))}
