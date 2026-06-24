@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import LiveMatches from "@/components/LiveMatches";
 import { teamKey, useLiveScores } from "@/hooks/useLiveScores";
 import {
@@ -167,7 +168,12 @@ const Fixtures = () => {
                       : null;
 
                   return (
-                    <div key={f.id} className="card-elevated rounded-xl border border-border p-4 flex flex-wrap items-center gap-4">
+                    <Link
+                      key={f.id}
+                      to={`/matches/${f.id}`}
+                      aria-label={`View ${f.home} versus ${f.away} match details`}
+                      className="card-elevated rounded-xl border border-border p-4 flex flex-wrap items-center gap-4 transition-all hover:border-primary/50 hover:-translate-y-0.5 group"
+                    >
                       <div className="text-xs font-mono text-muted-foreground w-12">#{f.id}</div>
                       <div className="text-xs uppercase tracking-wider px-2 py-1 rounded-full bg-secondary text-muted-foreground">
                         {f.stage === "Group" ? `Group ${f.group}` : STAGE_LABELS[f.stage]}
@@ -202,7 +208,10 @@ const Fixtures = () => {
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">📍 {f.stadium}</div>
-                    </div>
+                      <div className="text-xs font-semibold text-primary opacity-70 transition-opacity group-hover:opacity-100">
+                        Match info →
+                      </div>
+                    </Link>
                   );
                 })}
               </div>
