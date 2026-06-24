@@ -40,6 +40,19 @@ type TimelineEvent = {
   team: string;
 };
 
+type GoalEvent = {
+  id: string;
+  scorer: string;
+  clock: string;
+  team: string;
+  qualifier: string;
+};
+
+type MatchGoals = {
+  home: GoalEvent[];
+  away: GoalEvent[];
+};
+
 const STAGE_LABELS: Record<Fixture["stage"], string> = {
   Group: "Group Stage",
   R32: "Round of 32",
@@ -204,6 +217,141 @@ const buildTimeline = (summary: AnyRecord | undefined): TimelineEvent[] => {
     .slice(0, 40);
 };
 
+const playerName = (value?: AnyRecord) =>
+  stringValue(
+    value?.displayName,
+    value?.fullName,
+    value?.shortName,
+    value?.name,
+    value?.athlete?.displayName,
+    value?.athlete?.fullName,
+    value?.player?.displayName,
+    value?.player?.fullName,
+  );
+
+const eventTypeText = (event: AnyRecord) =>
+  stringValue(
+    event.type?.text,
+    event.type?.displayName,
+    event.type?.name,
+    event.playType?.text,
+    event.playType?.displayName,
+  );
+
+const isGoalEvent = (event: AnyRecord) => {
+  const type = eventTypeText(event).toLowerCase();
+  const text = stringValue(event.text, event.description).toLowerCase();
+  const combined = `${type} ${text}`;
+
+  if (/goal kick|disallowed|ruled out|no goal/.test(combined)) return false;
+  if (event.scoringPlay === true) return true;
+  return /(^|\s)(own goal|penalty goal|goal)(!|\s|$)/.test(combined);
+};
+
+const goalClock = (event: AnyRecord) => {
+  const raw = stringValue(
+    event.clock?.displayValue,
+    event.time?.displayValue,
+    event.time,
+    event.minute,
+  );
+  if (!raw) return "";
+  if (/['′]/.test(raw)) return raw;
+  if (/^\d+(?:\+\d+)?$/.test(raw)) return `${raw}′`;
+  return raw;
+};
+
+const goalSortValue = (clock: string) => {
+  const numbers = clock.match(/\d+/g)?.map(Number) ?? [];
+  return (numbers[0] ?? 0) * 100 + (numbers[1] ?? 0);
+};
+
+const buildGoals = (
+  summary: AnyRecord | undefined,
+  homeName: string,
+  awayName: string,
+): MatchGoals => {
+  if (!summary) return { home: [], away: [] };
+
+  const competition = asArray<AnyRecord>(summary?.header?.competitions)[0];
+  const competitors = asArray<AnyRecord>(competition?.competitors);
+  const homeCompetitor =
+    competitors.find((item) => item.homeAway === "home") ??
+    findTeamBlock(competitors, homeName, 0);
+  const awayCompetitor =
+    competitors.find((item) => item.homeAway === "away") ??
+    findTeamBlock(competitors, awayName, 1);
+  const homeId = stringValue(homeCompetitor?.team?.id, homeCompetitor?.id);
+  const awayId = stringValue(awayCompetitor?.team?.id, awayCompetitor?.id);
+
+  const source = [
+    ...asArray<AnyRecord>(summary?.details),
+    ...asArray<AnyRecord>(summary?.keyEvents),
+    ...asArray<AnyRecord>(summary?.commentary),
+  ];
+
+  const seen = new Set<string>();
+  const result: MatchGoals = { home: [], away: [] };
+
+  for (const event of source) {
+    if (!isGoalEvent(event)) continue;
+
+    const participants = asArray<AnyRecord>(event.participants);
+    const scorerParticipant =
+      participants.find((participant) => {
+        const role = stringValue(
+          participant.type?.text,
+          participant.type?.displayName,
+          participant.type?.name,
+          participant.role,
+        ).toLowerCase();
+        return /scorer|goal/.test(role);
+      }) ?? participants[0];
+
+    const scorer =
+      playerName(scorerParticipant?.athlete ?? scorerParticipant?.player ?? scorerParticipant) ||
+      playerName(event.athlete ?? event.player) ||
+      "Goal";
+    const clock = goalClock(event);
+    const eventTeam =
+      teamName(event.team) ||
+      teamName(scorerParticipant?.team) ||
+      teamName(event.competitor);
+    const eventTeamId = stringValue(
+      event.team?.id,
+      scorerParticipant?.team?.id,
+      event.competitor?.id,
+    );
+
+    let side: "home" | "away" | null = null;
+    if (eventTeamId && homeId && eventTeamId === homeId) side = "home";
+    else if (eventTeamId && awayId && eventTeamId === awayId) side = "away";
+    else if (eventTeam && teamKey(eventTeam) === teamKey(homeName)) side = "home";
+    else if (eventTeam && teamKey(eventTeam) === teamKey(awayName)) side = "away";
+    else if (event.homeAway === "home") side = "home";
+    else if (event.homeAway === "away") side = "away";
+
+    if (!side) continue;
+
+    const combined = `${eventTypeText(event)} ${stringValue(event.text, event.description)}`.toLowerCase();
+    const qualifier = /own goal/.test(combined)
+      ? "OG"
+      : /penalty/.test(combined)
+        ? "P"
+        : "";
+    const id = stringValue(event.id, event.sequenceNumber, `${side}-${scorer}-${clock}`);
+    const duplicateKey = `${side}|${scorer}|${clock}|${qualifier}`;
+    if (seen.has(duplicateKey)) continue;
+    seen.add(duplicateKey);
+
+    result[side].push({ id, scorer, clock, team: eventTeam, qualifier });
+  }
+
+  result.home.sort((a, b) => goalSortValue(a.clock) - goalSortValue(b.clock));
+  result.away.sort((a, b) => goalSortValue(a.clock) - goalSortValue(b.clock));
+  return result;
+};
+
 const MatchPage = () => {
   const { fixtureId } = useParams();
   const fixture = FIXTURES.find((item) => String(item.id) === fixtureId);
@@ -296,6 +444,13 @@ const MatchPage = () => {
     [summary, fixture],
   );
   const timeline = useMemo(() => buildTimeline(summary), [summary]);
+  const goals = useMemo(
+    () =>
+      fixture
+        ? buildGoals(summary, fixture.home, fixture.away)
+        : { home: [], away: [] },
+    [summary, fixture],
+  );
   const competitionState = stringValue(competition?.status?.type?.state);
   const matchStarted = Boolean(
     liveEvent?.live ||
@@ -427,6 +582,45 @@ const MatchPage = () => {
               </div>
             </Link>
           </div>
+
+          {(goals.home.length > 0 || goals.away.length > 0) && (
+            <div className="mx-auto mt-5 grid max-w-2xl grid-cols-2 gap-5 sm:gap-10 text-xs sm:text-sm">
+              <div className="space-y-1.5 text-right">
+                {goals.home.map((goal) => (
+                  <div key={goal.id} className="font-medium leading-tight">
+                    <span>{goal.scorer}</span>
+                    {goal.qualifier && (
+                      <span className="ml-1 text-[10px] font-semibold text-muted-foreground">
+                        ({goal.qualifier})
+                      </span>
+                    )}
+                    {goal.clock && (
+                      <span className="ml-2 font-mono text-muted-foreground">
+                        {goal.clock}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-1.5 text-left">
+                {goals.away.map((goal) => (
+                  <div key={goal.id} className="font-medium leading-tight">
+                    {goal.clock && (
+                      <span className="mr-2 font-mono text-muted-foreground">
+                        {goal.clock}
+                      </span>
+                    )}
+                    <span>{goal.scorer}</span>
+                    {goal.qualifier && (
+                      <span className="ml-1 text-[10px] font-semibold text-muted-foreground">
+                        ({goal.qualifier})
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
