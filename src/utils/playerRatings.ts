@@ -1,6 +1,6 @@
 type AnyRecord = Record<string, any>;
 
-export type RatingSource = "provider" | "fan26" | null;
+export type RatingSource = "provider" | "fan26" | "estimated" | null;
 
 export type RatedPlayer = {
   id: string;
@@ -9,6 +9,7 @@ export type RatedPlayer = {
   jersey: string;
   starter: boolean;
   played: boolean;
+  didNotPlay: boolean;
   rating: number | null;
   ratingSource: RatingSource;
 };
@@ -18,10 +19,22 @@ export type RatedTeam = {
   players: RatedPlayer[];
 };
 
+export type RatingContext = {
+  homeTeam?: string;
+  awayTeam?: string;
+  homeScore?: number | string | null;
+  awayScore?: number | string | null;
+  matchStarted?: boolean;
+};
+
 type WorkingPlayer = RatedPlayer & {
-  didNotPlay: boolean;
   stats: Map<string, number>;
   providerRating: number | null;
+};
+
+type WorkingTeam = {
+  team: string;
+  players: Map<string, WorkingPlayer>;
 };
 
 const asArray = <T,>(value: T[] | undefined | null): T[] =>
@@ -34,6 +47,14 @@ const stringValue = (...values: unknown[]) => {
   }
   return "";
 };
+
+const boolValue = (...values: unknown[]) =>
+  values.some(
+    (value) =>
+      value === true ||
+      value === 1 ||
+      (typeof value === "string" && ["true", "yes", "1", "active"].includes(value.toLowerCase())),
+  );
 
 const normalize = (value: string) =>
   value
@@ -137,9 +158,8 @@ const clamp = (value: number, min: number, max: number) =>
 
 const ratingValue = (value: unknown): number | null => {
   const parsed = parseNumber(value);
-  if (parsed == null) return null;
-  if (parsed >= 0 && parsed <= 10) return Math.round(parsed * 10) / 10;
-  return null;
+  if (parsed == null || parsed < 0 || parsed > 10) return null;
+  return Math.round(parsed * 10) / 10;
 };
 
 const setStat = (
@@ -151,6 +171,11 @@ const setStat = (
   const numeric = parseNumber(value);
   if (!key || numeric == null) return;
   stats.set(key, numeric);
+};
+
+const addStat = (stats: Map<string, number>, label: string, amount = 1) => {
+  const key = canonicalStatKey(label);
+  stats.set(key, (stats.get(key) ?? 0) + amount);
 };
 
 const readObjectStats = (value: unknown, stats: Map<string, number>) => {
@@ -202,22 +227,8 @@ const providerRatingFrom = (
     if (rating != null) return rating;
   }
 
-  const ratingKeys = [
-    "rating",
-    "playerrating",
-    "ratingvalue",
-    "matchrating",
-    "rtg",
-    "grade",
-  ];
-
-  for (const key of ratingKeys) {
-    const rating = ratingValue(stats.get(key));
-    if (rating != null) return rating;
-  }
-
   for (const [key, value] of stats) {
-    if (key.includes("rating") || key === "rtg") {
+    if (key.includes("rating") || key === "rtg" || key === "grade") {
       const rating = ratingValue(value);
       if (rating != null) return rating;
     }
@@ -246,94 +257,6 @@ const hasAnyStat = (stats: Map<string, number>, keys: string[]) =>
     return Array.from(stats.keys()).some((key) => key.includes(normalized));
   });
 
-const calculateFan26Rating = (
-  stats: Map<string, number>,
-  position: string,
-  starter: boolean,
-  didNotPlay: boolean,
-): number | null => {
-  if (didNotPlay) return null;
-
-  const minutes = stat(stats, "minutes", "min", "mins");
-  const performanceKeys = [
-    "goals",
-    "assists",
-    "shotsontarget",
-    "shots",
-    "keypasses",
-    "chancescreated",
-    "successfuldribbles",
-    "tackleswon",
-    "tackles",
-    "interceptions",
-    "clearances",
-    "saves",
-    "passaccuracy",
-    "yellowcards",
-    "redcards",
-    "foulscommitted",
-  ];
-
-  const hasPerformanceData = hasAnyStat(stats, performanceKeys);
-  const played = starter || minutes > 0 || hasPerformanceData;
-  if (!played || (!hasPerformanceData && minutes <= 0)) return null;
-
-  let rating = 6.0;
-
-  const goals = stat(stats, "goals", "goal");
-  const assists = stat(stats, "assists", "assist");
-  const shotsOnTarget = stat(stats, "shotsontarget", "shotsongoal");
-  const shots = stat(stats, "totalshots", "shots");
-  const keyPasses = stat(stats, "keypasses", "chancescreated");
-  const dribbles = stat(stats, "successfuldribbles", "dribblescompleted");
-  const tackles = stat(stats, "tackleswon", "totaltackles", "tackles");
-  const interceptions = stat(stats, "interceptions");
-  const clearances = stat(stats, "clearances");
-  const saves = stat(stats, "saves", "goalkeepersaves");
-  const passAccuracy = stat(stats, "passaccuracy", "passingaccuracy");
-  const yellowCards = stat(stats, "yellowcards", "yellowcard");
-  const redCards = stat(stats, "redcards", "redcard");
-  const fouls = stat(stats, "foulscommitted", "fouls");
-  const ownGoals = stat(stats, "owngoals", "owngoal");
-  const penaltiesMissed = stat(stats, "penaltiesmissed", "penaltymissed");
-  const errors = stat(stats, "errorsleadingtogoal", "errorleadingtogoal");
-  const goalsConceded = stat(stats, "goalsconceded");
-
-  rating += goals * 1.05;
-  rating += assists * 0.65;
-  rating += shotsOnTarget * 0.08;
-  rating += Math.max(0, shots - shotsOnTarget) * 0.015;
-  rating += keyPasses * 0.08;
-  rating += dribbles * 0.05;
-  rating += tackles * 0.055;
-  rating += interceptions * 0.06;
-  rating += clearances * 0.025;
-  rating += saves * 0.12;
-
-  if (passAccuracy > 0) {
-    if (passAccuracy >= 90) rating += 0.2;
-    else if (passAccuracy >= 80) rating += 0.1;
-    else if (passAccuracy < 60) rating -= 0.15;
-  }
-
-  rating -= yellowCards * 0.3;
-  rating -= redCards * 1.15;
-  rating -= fouls * 0.025;
-  rating -= ownGoals * 0.9;
-  rating -= penaltiesMissed * 0.55;
-  rating -= errors * 0.75;
-
-  const normalizedPosition = normalize(position);
-  const isGoalkeeper = normalizedPosition === "g" || normalizedPosition.includes("goalkeeper") || normalizedPosition === "gk";
-  if (isGoalkeeper) rating -= goalsConceded * 0.18;
-
-  if (minutes > 0 && minutes < 15 && goals === 0 && assists === 0) {
-    rating -= 0.15;
-  }
-
-  return Math.round(clamp(rating, 3, 10) * 10) / 10;
-};
-
 const playerKey = (id: string, name: string) => id || normalize(name);
 
 const emptyPlayer = (
@@ -342,6 +265,21 @@ const emptyPlayer = (
   fallbackId: string,
 ): WorkingPlayer => {
   const name = athleteName(athlete) || athleteName(entry);
+  const starter = boolValue(entry.starter, entry.isStarter, athlete.starter);
+  const didNotPlay = boolValue(
+    entry.didNotPlay,
+    entry.inactive,
+    athlete.didNotPlay,
+    entry.status?.type === "inactive",
+  );
+  const entered = boolValue(
+    entry.subbedIn,
+    entry.didEnter,
+    entry.entered,
+    entry.active,
+    athlete.subbedIn,
+  );
+
   return {
     id: stringValue(athlete.id, entry.id, fallbackId),
     name,
@@ -351,10 +289,10 @@ const emptyPlayer = (
       athlete.position?.abbreviation,
       athlete.position?.displayName,
     ),
-    jersey: stringValue(entry.jersey, athlete.jersey),
-    starter: entry.starter === true,
-    played: entry.didNotPlay !== true,
-    didNotPlay: entry.didNotPlay === true,
+    jersey: stringValue(entry.jersey, entry.jerseyNumber, athlete.jersey, athlete.jerseyNumber),
+    starter,
+    played: !didNotPlay && (starter || entered),
+    didNotPlay,
     stats: new Map<string, number>(),
     providerRating: null,
     rating: null,
@@ -395,7 +333,9 @@ const parsePlayerEntry = (
   if (!player.name) return null;
 
   const rawStats = asArray<unknown>(entry.stats ?? entry.statValues);
-  rawStats.forEach((value, index) => setStat(player.stats, labels[index] ?? `stat-${index}`, value));
+  rawStats.forEach((value, index) =>
+    setStat(player.stats, labels[index] ?? `stat-${index}`, value),
+  );
 
   readObjectStats(entry.statistics, player.stats);
   readObjectStats(entry.statsMap, player.stats);
@@ -408,26 +348,54 @@ const parsePlayerEntry = (
   player.providerRating = providerRatingFrom(entry, athlete, player.stats);
   player.played =
     !player.didNotPlay &&
-    (player.starter || stat(player.stats, "minutes", "min") > 0 || player.stats.size > 0);
+    (player.played ||
+      player.starter ||
+      stat(player.stats, "minutes", "min") > 0 ||
+      player.stats.size > 0);
 
   return player;
 };
 
-const collectRosterTeams = (summary: AnyRecord): Map<string, { team: string; players: Map<string, WorkingPlayer> }> => {
-  const teams = new Map<string, { team: string; players: Map<string, WorkingPlayer> }>();
+const findExistingPlayerKey = (
+  players: Map<string, WorkingPlayer>,
+  parsed: WorkingPlayer,
+) => {
+  const exactKey = playerKey(parsed.id, parsed.name);
+  const nameKey = normalize(parsed.name);
+  return Array.from(players.entries()).find(
+    ([storedKey, stored]) =>
+      storedKey === exactKey ||
+      normalize(stored.name) === nameKey ||
+      (parsed.id && stored.id === parsed.id),
+  )?.[0];
+};
+
+const upsertPlayer = (team: WorkingTeam, parsed: WorkingPlayer) => {
+  const existingKey = findExistingPlayerKey(team.players, parsed);
+  if (existingKey) {
+    team.players.set(existingKey, mergePlayer(team.players.get(existingKey)!, parsed));
+  } else {
+    team.players.set(playerKey(parsed.id, parsed.name), parsed);
+  }
+};
+
+const collectRosterTeams = (summary: AnyRecord): Map<string, WorkingTeam> => {
+  const teams = new Map<string, WorkingTeam>();
 
   asArray<AnyRecord>(summary?.rosters).forEach((roster, teamIndex) => {
     const name = teamName(roster.team) || `Team ${teamIndex + 1}`;
     const key = normalize(name);
-    const team = teams.get(key) ?? { team: name, players: new Map<string, WorkingPlayer>() };
-    const rawPlayers = asArray<AnyRecord>(roster.roster ?? roster.entries ?? roster.athletes);
+    const team = teams.get(key) ?? {
+      team: name,
+      players: new Map<string, WorkingPlayer>(),
+    };
+    const rawPlayers = asArray<AnyRecord>(
+      roster.roster ?? roster.entries ?? roster.athletes,
+    );
 
     rawPlayers.forEach((entry, playerIndex) => {
       const parsed = parsePlayerEntry(entry, `roster-${teamIndex}-${playerIndex}`);
-      if (!parsed) return;
-      const keyValue = playerKey(parsed.id, parsed.name);
-      const previous = team.players.get(keyValue);
-      team.players.set(keyValue, previous ? mergePlayer(previous, parsed) : parsed);
+      if (parsed) upsertPlayer(team, parsed);
     });
 
     teams.set(key, team);
@@ -438,12 +406,15 @@ const collectRosterTeams = (summary: AnyRecord): Map<string, { team: string; pla
 
 const mergeBoxscorePlayers = (
   summary: AnyRecord,
-  teams: Map<string, { team: string; players: Map<string, WorkingPlayer> }>,
+  teams: Map<string, WorkingTeam>,
 ) => {
   asArray<AnyRecord>(summary?.boxscore?.players).forEach((block, teamIndex) => {
     const name = teamName(block.team) || `Team ${teamIndex + 1}`;
     const key = normalize(name);
-    const team = teams.get(key) ?? { team: name, players: new Map<string, WorkingPlayer>() };
+    const team = teams.get(key) ?? {
+      team: name,
+      players: new Map<string, WorkingPlayer>(),
+    };
 
     asArray<AnyRecord>(block.statistics).forEach((group, groupIndex) => {
       const labels = asArray<unknown>(
@@ -457,22 +428,7 @@ const mergeBoxscorePlayers = (
           `box-${teamIndex}-${groupIndex}-${playerIndex}`,
           labels,
         );
-        if (!parsed) return;
-
-        const exactKey = playerKey(parsed.id, parsed.name);
-        const nameKey = normalize(parsed.name);
-        const existingKey = Array.from(team.players.entries()).find(
-          ([storedKey, stored]) =>
-            storedKey === exactKey ||
-            normalize(stored.name) === nameKey ||
-            (parsed.id && stored.id === parsed.id),
-        )?.[0];
-
-        if (existingKey) {
-          team.players.set(existingKey, mergePlayer(team.players.get(existingKey)!, parsed));
-        } else {
-          team.players.set(exactKey, parsed);
-        }
+        if (parsed) upsertPlayer(team, parsed);
       });
     });
 
@@ -480,15 +436,215 @@ const mergeBoxscorePlayers = (
   });
 };
 
-const finalizePlayer = (player: WorkingPlayer): RatedPlayer => {
-  const fanRating = calculateFan26Rating(
-    player.stats,
-    player.position,
-    player.starter,
-    player.didNotPlay,
-  );
-  const rating = player.providerRating ?? fanRating;
+const allEvents = (summary: AnyRecord) => [
+  ...asArray<AnyRecord>(summary?.details),
+  ...asArray<AnyRecord>(summary?.keyEvents),
+  ...asArray<AnyRecord>(summary?.scoringPlays),
+];
 
+const findPlayerAcrossTeams = (
+  teams: Map<string, WorkingTeam>,
+  participant: AnyRecord,
+) => {
+  const athlete = participant.athlete ?? participant.player ?? participant;
+  const id = stringValue(athlete.id, participant.id);
+  const name = athleteName(athlete) || athleteName(participant);
+  const normalizedName = normalize(name);
+
+  for (const team of teams.values()) {
+    const entry = Array.from(team.players.entries()).find(
+      ([, player]) =>
+        (id && player.id === id) ||
+        (normalizedName && normalize(player.name) === normalizedName),
+    );
+    if (entry) return { team, key: entry[0], player: entry[1] };
+  }
+
+  return null;
+};
+
+const applyEventData = (
+  summary: AnyRecord,
+  teams: Map<string, WorkingTeam>,
+) => {
+  for (const event of allEvents(summary)) {
+    const text = stringValue(
+      event.type?.text,
+      event.type?.displayName,
+      event.type?.name,
+      event.playType?.text,
+      event.text,
+      event.description,
+    );
+    const eventKey = normalize(text);
+    const participants = asArray<AnyRecord>(event.participants);
+
+    participants.forEach((participant, index) => {
+      const found = findPlayerAcrossTeams(teams, participant);
+      if (!found) return;
+
+      const player = found.player;
+      const role = normalize(
+        stringValue(
+          participant.type,
+          participant.type?.text,
+          participant.type?.name,
+          participant.role,
+          participant.role?.text,
+          participant.role?.name,
+        ),
+      );
+
+      player.played = true;
+      player.didNotPlay = false;
+
+      const isOwnGoal = eventKey.includes("owngoal");
+      const isGoal =
+        !eventKey.includes("goalkick") &&
+        (event.scoringPlay === true || eventKey.includes("goal"));
+      const isAssist = role.includes("assist") || eventKey.includes("assist");
+
+      if (isGoal && !isAssist) {
+        if (isOwnGoal) addStat(player.stats, "owngoals");
+        else if (index === 0 || role.includes("scorer") || role.includes("goal")) {
+          addStat(player.stats, "goals");
+        }
+      }
+      if (isAssist) addStat(player.stats, "assists");
+      if (eventKey.includes("yellowcard")) addStat(player.stats, "yellowcards");
+      if (eventKey.includes("redcard")) addStat(player.stats, "redcards");
+      if (eventKey.includes("penaltymiss")) addStat(player.stats, "penaltiesmissed");
+    });
+  }
+};
+
+const resultForTeam = (
+  team: string,
+  context: RatingContext,
+): { scored: number; conceded: number } | null => {
+  const homeScore = parseNumber(context.homeScore);
+  const awayScore = parseNumber(context.awayScore);
+  if (homeScore == null || awayScore == null) return null;
+
+  const key = normalize(team);
+  if (key === normalize(context.homeTeam ?? "")) {
+    return { scored: homeScore, conceded: awayScore };
+  }
+  if (key === normalize(context.awayTeam ?? "")) {
+    return { scored: awayScore, conceded: homeScore };
+  }
+  return null;
+};
+
+const calculateRating = (
+  player: WorkingPlayer,
+  team: string,
+  context: RatingContext,
+): { rating: number | null; source: RatingSource } => {
+  if (player.providerRating != null) {
+    return { rating: player.providerRating, source: "provider" };
+  }
+
+  if (!context.matchStarted || player.didNotPlay || !player.played) {
+    return { rating: null, source: null };
+  }
+
+  const performanceKeys = [
+    "goals",
+    "assists",
+    "shotsontarget",
+    "shots",
+    "keypasses",
+    "chancescreated",
+    "successfuldribbles",
+    "tackleswon",
+    "tackles",
+    "interceptions",
+    "clearances",
+    "saves",
+    "passaccuracy",
+    "yellowcards",
+    "redcards",
+    "foulscommitted",
+    "owngoals",
+    "penaltiesmissed",
+  ];
+  const hasPerformanceData = hasAnyStat(player.stats, performanceKeys);
+  const minutes = stat(player.stats, "minutes", "min", "mins");
+
+  let rating = player.starter ? 6.3 : 6.0;
+  const result = resultForTeam(team, context);
+  if (result) {
+    const difference = result.scored - result.conceded;
+    if (difference > 0) rating += 0.25;
+    else if (difference < 0) rating -= 0.2;
+    rating += clamp(difference, -4, 4) * 0.04;
+
+    const position = normalize(player.position);
+    const goalkeeper = position === "gk" || position === "g" || position.includes("goalkeeper");
+    const defender = position === "d" || position.includes("def") || position.includes("back");
+    if (result.conceded === 0) {
+      if (goalkeeper) rating += 0.35;
+      else if (defender) rating += 0.15;
+    }
+  }
+
+  const goals = stat(player.stats, "goals", "goal");
+  const assists = stat(player.stats, "assists", "assist");
+  const shotsOnTarget = stat(player.stats, "shotsontarget", "shotsongoal");
+  const shots = stat(player.stats, "totalshots", "shots");
+  const keyPasses = stat(player.stats, "keypasses", "chancescreated");
+  const dribbles = stat(player.stats, "successfuldribbles", "dribblescompleted");
+  const tackles = stat(player.stats, "tackleswon", "totaltackles", "tackles");
+  const interceptions = stat(player.stats, "interceptions");
+  const clearances = stat(player.stats, "clearances");
+  const saves = stat(player.stats, "saves", "goalkeepersaves");
+  const passAccuracy = stat(player.stats, "passaccuracy", "passingaccuracy");
+  const yellowCards = stat(player.stats, "yellowcards", "yellowcard");
+  const redCards = stat(player.stats, "redcards", "redcard");
+  const fouls = stat(player.stats, "foulscommitted", "fouls");
+  const ownGoals = stat(player.stats, "owngoals", "owngoal");
+  const penaltiesMissed = stat(player.stats, "penaltiesmissed", "penaltymissed");
+  const errors = stat(player.stats, "errorsleadingtogoal", "errorleadingtogoal");
+
+  rating += goals * 1.05;
+  rating += assists * 0.65;
+  rating += shotsOnTarget * 0.08;
+  rating += Math.max(0, shots - shotsOnTarget) * 0.015;
+  rating += keyPasses * 0.08;
+  rating += dribbles * 0.05;
+  rating += tackles * 0.055;
+  rating += interceptions * 0.06;
+  rating += clearances * 0.025;
+  rating += saves * 0.12;
+
+  if (passAccuracy >= 90) rating += 0.2;
+  else if (passAccuracy >= 80) rating += 0.1;
+  else if (passAccuracy > 0 && passAccuracy < 60) rating -= 0.15;
+
+  rating -= yellowCards * 0.3;
+  rating -= redCards * 1.15;
+  rating -= fouls * 0.025;
+  rating -= ownGoals * 0.9;
+  rating -= penaltiesMissed * 0.55;
+  rating -= errors * 0.75;
+
+  if (minutes > 0 && minutes < 15 && goals === 0 && assists === 0) {
+    rating -= 0.15;
+  }
+
+  return {
+    rating: Math.round(clamp(rating, 3, 10) * 10) / 10,
+    source: hasPerformanceData ? "fan26" : "estimated",
+  };
+};
+
+const finalizePlayer = (
+  player: WorkingPlayer,
+  team: string,
+  context: RatingContext,
+): RatedPlayer => {
+  const calculated = calculateRating(player, team, context);
   return {
     id: player.id,
     name: player.name,
@@ -496,32 +652,31 @@ const finalizePlayer = (player: WorkingPlayer): RatedPlayer => {
     jersey: player.jersey,
     starter: player.starter,
     played: player.played,
-    rating,
-    ratingSource:
-      player.providerRating != null
-        ? "provider"
-        : fanRating != null
-          ? "fan26"
-          : null,
+    didNotPlay: player.didNotPlay,
+    rating: calculated.rating,
+    ratingSource: calculated.source,
   };
 };
 
 export const buildPlayerRatingTeams = (
   summary: AnyRecord | undefined,
+  context: RatingContext = {},
 ): RatedTeam[] => {
   if (!summary) return [];
 
   const teams = collectRosterTeams(summary);
   mergeBoxscorePlayers(summary, teams);
+  applyEventData(summary, teams);
 
   return Array.from(teams.values())
     .map((team) => ({
       team: team.team,
       players: Array.from(team.players.values())
-        .map(finalizePlayer)
+        .map((player) => finalizePlayer(player, team.team, context))
         .filter((player) => player.name)
         .sort((a, b) => {
           if (a.starter !== b.starter) return a.starter ? -1 : 1;
+          if (a.played !== b.played) return a.played ? -1 : 1;
           if (a.rating != null && b.rating != null && a.rating !== b.rating) {
             return b.rating - a.rating;
           }
