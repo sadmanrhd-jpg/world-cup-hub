@@ -10,6 +10,7 @@ import Table from "./pages/Table";
 import Teams from "./pages/Teams";
 import TeamPage from "./pages/TeamPage";
 import Fixtures from "./pages/Fixtures";
+import MatchPage from "./pages/MatchPage";
 import Prediction from "./pages/Prediction";
 import Stadiums from "./pages/Stadiums";
 import StadiumPage from "./pages/StadiumPage";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/:slug" element={<TeamPage />} />
             <Route path="/fixtures" element={<Fixtures />} />
+            <Route path="/matches/:fixtureId" element={<MatchPage />} />
             <Route path="/stadiums" element={<Stadiums />} />
             <Route path="/stadiums/:id" element={<StadiumPage />} />
             <Route path="/prediction" element={<Prediction />} />
