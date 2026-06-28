@@ -37,7 +37,7 @@ const TieBreakBadge = ({ third = false }: { third?: boolean }) => (
 const MobileRow = ({ row, position }: { row: StandingRow; position: number }) => {
   const team = getTeamByName(row.team);
   return (
-    <div className="grid grid-cols-[26px_minmax(0,1fr)_42px_34px_42px] items-center gap-1 border-t border-border/70 px-3 py-3 text-xs">
+    <div className="grid grid-cols-[26px_minmax(0,1fr)_42px_34px_42px] items-center gap-1 border-t border-border/70 px-3 py-3 text-xs md:hidden">
       <div className="text-center font-mono text-muted-foreground">{position}</div>
       <Link to={team ? `/teams/${team.slug}` : "/teams"} className="flex min-w-0 items-center gap-2 font-semibold hover:text-primary">
         <TeamFlag name={row.team} slug={team?.slug} className="h-6 w-6 shrink-0 rounded-md" />
