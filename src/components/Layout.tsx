@@ -7,7 +7,6 @@ import {
   MapPin,
   Menu,
   Sparkles,
-  Table2,
   UsersRound,
   X,
 } from "lucide-react";
@@ -16,7 +15,6 @@ import logo from "@/assets/wc26-logo.avif";
 const navItems = [
   { to: "/", label: "Home", end: true, icon: Home },
   { to: "/groups", label: "Groups", icon: LayoutGrid },
-  { to: "/table", label: "Table", icon: Table2 },
   { to: "/teams", label: "Teams", icon: UsersRound },
   { to: "/stadiums", label: "Stadiums", icon: MapPin },
   { to: "/fixtures", label: "Fixtures", icon: CalendarDays },
@@ -121,11 +119,7 @@ const Layout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-2"
               >
-                <img
-                  src={logo}
-                  alt="FIFA World Cup 2026 logo"
-                  className="h-9 w-auto"
-                />
+                <img src={logo} alt="FIFA World Cup 2026 logo" className="h-9 w-auto" />
                 <div className="leading-tight">
                   <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                     FIFA World Cup
