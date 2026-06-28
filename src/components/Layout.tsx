@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   CalendarDays,
   Home,
-  LayoutGrid,
+  Table2,
   MapPin,
   Menu,
   Sparkles,
@@ -14,7 +14,7 @@ import logo from "@/assets/wc26-logo.avif";
 
 const navItems = [
   { to: "/", label: "Home", end: true, icon: Home },
-  { to: "/groups", label: "Groups", icon: LayoutGrid },
+  { to: "/groups", label: "Table", icon: Table2 },
   { to: "/teams", label: "Teams", icon: UsersRound },
   { to: "/stadiums", label: "Stadiums", icon: MapPin },
   { to: "/fixtures", label: "Fixtures", icon: CalendarDays },
