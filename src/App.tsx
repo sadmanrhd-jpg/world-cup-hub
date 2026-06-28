@@ -7,6 +7,7 @@ import Layout from "./components/Layout";
 import TournamentFixtureSync from "./components/TournamentFixtureSync";
 import Home from "./pages/Home";
 import Groups from "./pages/Groups";
+import Table from "./pages/Table";
 import Teams from "./pages/Teams";
 import TeamPage from "./pages/TeamPage";
 import Fixtures from "./pages/Fixtures";
