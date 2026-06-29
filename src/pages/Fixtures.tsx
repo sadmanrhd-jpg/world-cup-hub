@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Clock3, Radio, RefreshCw } from "lucide-react";
+import { Clock3, Gamepad2, Radio, RefreshCw } from "lucide-react";
 import { useAnnexC } from "@/hooks/useAnnexC";
 import { teamKey, useLiveScores } from "@/hooks/useLiveScores";
 import TeamFlag from "@/components/TeamFlag";
@@ -104,34 +104,43 @@ const UpcomingFixtureCard = ({
   row: MatchFeedRow;
   now: Date;
 }) => (
-  <Link
-    to={`/matches/${row.fixture.id}`}
-    className="group flex items-center gap-3 rounded-xl border border-border p-4 transition-all hover:border-primary/50 card-elevated"
-  >
-    <div className="w-20 shrink-0">
-      <div className="text-xs font-semibold text-primary">
-        {relativeMatchDay(row.fixture, now)}
+  <div className="rounded-xl border border-border p-4 transition-all hover:border-primary/50 card-elevated">
+    <Link
+      to={`/matches/${row.fixture.id}`}
+      className="group flex items-center gap-3"
+      aria-label={`View ${row.fixture.home} versus ${row.fixture.away} match details`}
+    >
+      <div className="w-20 shrink-0">
+        <div className="text-xs font-semibold text-primary">
+          {relativeMatchDay(row.fixture, now)}
+        </div>
+        <div className="mt-1 font-mono text-[11px] text-muted-foreground">
+          {row.fixture.time} BST
+        </div>
       </div>
-      <div className="mt-1 font-mono text-[11px] text-muted-foreground">
-        {row.fixture.time} BST
+      <div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div className="flex min-w-0 items-center justify-end gap-2">
+          <span className="truncate text-right text-xs font-semibold sm:text-sm">
+            {row.fixture.home}
+          </span>
+          <MatchFlag name={row.fixture.home} />
+        </div>
+        <span className="text-[10px] uppercase text-muted-foreground">vs</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <MatchFlag name={row.fixture.away} />
+          <span className="truncate text-xs font-semibold sm:text-sm">
+            {row.fixture.away}
+          </span>
+        </div>
       </div>
-    </div>
-    <div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2">
-      <div className="flex min-w-0 items-center justify-end gap-2">
-        <span className="truncate text-right text-xs font-semibold sm:text-sm">
-          {row.fixture.home}
-        </span>
-        <MatchFlag name={row.fixture.home} />
-      </div>
-      <span className="text-[10px] uppercase text-muted-foreground">vs</span>
-      <div className="flex min-w-0 items-center gap-2">
-        <MatchFlag name={row.fixture.away} />
-        <span className="truncate text-xs font-semibold sm:text-sm">
-          {row.fixture.away}
-        </span>
-      </div>
-    </div>
-  </Link>
+    </Link>
+    <Link
+      to={`/mini-game?match=${row.fixture.id}`}
+      className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-primary/35 bg-primary/10 px-4 py-2 text-xs font-bold text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+    >
+      <Gamepad2 className="h-4 w-4" /> Play Penalty Challenge
+    </Link>
+  </div>
 );
 
 const Fixtures = () => {

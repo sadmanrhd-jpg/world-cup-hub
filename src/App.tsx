@@ -7,12 +7,12 @@ import Layout from "./components/Layout";
 import TournamentFixtureSync from "./components/TournamentFixtureSync";
 import Home from "./pages/Home";
 import Groups from "./pages/Groups";
-import Table from "./pages/Table";
 import Teams from "./pages/Teams";
 import TeamPage from "./pages/TeamPage";
 import Fixtures from "./pages/Fixtures";
 import MatchPage from "./pages/MatchPage";
 import Prediction from "./pages/Prediction";
+import MiniGame from "./pages/MiniGame";
 import Stadiums from "./pages/Stadiums";
 import StadiumPage from "./pages/StadiumPage";
 import NotFound from "./pages/NotFound";
@@ -38,6 +38,7 @@ const App = () => (
             <Route path="/stadiums" element={<Stadiums />} />
             <Route path="/stadiums/:id" element={<StadiumPage />} />
             <Route path="/prediction" element={<Prediction />} />
+            <Route path="/mini-game" element={<MiniGame />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

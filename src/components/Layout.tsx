@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   CalendarDays,
+  Gamepad2,
   Home,
   Table2,
   MapPin,
@@ -19,6 +20,7 @@ const navItems = [
   { to: "/stadiums", label: "Stadiums", icon: MapPin },
   { to: "/fixtures", label: "Fixtures", icon: CalendarDays },
   { to: "/prediction", label: "Predict", icon: Sparkles },
+  { to: "/mini-game", label: "Mini Game", icon: Gamepad2 },
 ];
 
 const Layout = () => {
@@ -67,14 +69,14 @@ const Layout = () => {
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-2 md:flex" aria-label="Main navigation">
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                  `whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-all ${
                     isActive
                       ? "bg-primary text-primary-foreground glow"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
