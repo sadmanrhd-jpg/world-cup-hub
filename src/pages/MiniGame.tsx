@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Gamepad2, RefreshCw } from "lucide-react";
 import PenaltyShootoutGame from "@/components/PenaltyShootoutGame";
@@ -28,6 +28,7 @@ const MiniGame = () => {
     Number.isFinite(requestedMatch) && requestedMatch > 0 ? requestedMatch : null,
   );
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const gameSectionRef = useRef<HTMLElement | null>(null);
 
   const { data: liveScores, loading, refreshing, pairKey } = useLiveScores(60_000);
   const annex = useAnnexC();
@@ -85,6 +86,19 @@ const MiniGame = () => {
       ? selectedRow.fixture.away
       : selectedRow.fixture.home
     : null;
+
+  useEffect(() => {
+    if (!selectedTeam || !opponent) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      gameSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedTeam, opponent, selectedMatchId]);
 
   return (
     <div className="container py-10 md:py-12">
@@ -202,7 +216,7 @@ const MiniGame = () => {
           )}
 
           {selectedRow && selectedTeam && opponent && (
-            <section className="mt-8">
+            <section ref={gameSectionRef} className="mt-8 scroll-mt-24 md:scroll-mt-28">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="text-xs uppercase tracking-wider text-muted-foreground">
