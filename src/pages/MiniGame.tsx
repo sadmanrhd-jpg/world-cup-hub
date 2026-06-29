@@ -28,6 +28,7 @@ const MiniGame = () => {
     Number.isFinite(requestedMatch) && requestedMatch > 0 ? requestedMatch : null,
   );
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const teamSectionRef = useRef<HTMLElement | null>(null);
   const gameSectionRef = useRef<HTMLElement | null>(null);
 
   const { data: liveScores, loading, refreshing, pairKey } = useLiveScores(60_000);
@@ -79,6 +80,13 @@ const MiniGame = () => {
     const next = new URLSearchParams(searchParams);
     next.set("match", String(matchId));
     setSearchParams(next, { replace: true });
+
+    window.requestAnimationFrame(() => {
+      teamSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   };
 
   const opponent = selectedRow && selectedTeam
@@ -182,7 +190,7 @@ const MiniGame = () => {
           </section>
 
           {selectedRow && (
-            <section className="mt-7">
+            <section ref={teamSectionRef} className="mt-7 scroll-mt-24 md:scroll-mt-28">
               <h2 className="text-xl font-bold sm:text-2xl">Choose your team</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 The other team becomes the goalkeeper side.
