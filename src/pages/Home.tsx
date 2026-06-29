@@ -225,6 +225,12 @@ const Home = () => (
               Latest Matches
             </Link>
             <Link
+              to="/mini-game"
+              className="rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15"
+            >
+              Mini Game
+            </Link>
+            <Link
               to="/prediction"
               className="rounded-full border border-border bg-secondary/50 px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-secondary"
             >
