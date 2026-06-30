@@ -5,10 +5,13 @@ import {
   Crown,
   Gamepad2,
   Home,
+  LogIn,
   MapPin,
   Menu,
   Sparkles,
   Table2,
+  UserPlus,
+  UserRound,
   UsersRound,
   X,
 } from "lucide-react";
@@ -16,6 +19,7 @@ import logo from "@/assets/wc26-logo.avif";
 import GuestSessionNotice from "@/components/GuestSessionNotice";
 import ProfileMenu from "@/components/profile/ProfileMenu";
 import UserDataSync from "@/components/UserDataSync";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { to: "/", label: "Home", end: true, icon: Home },
@@ -28,13 +32,28 @@ const navItems = [
   { to: "/best-xi", label: "Best XI", icon: Crown },
 ];
 
+const mobileActionItems = [
+  { to: "/prediction", label: "Prediction", icon: Sparkles },
+  { to: "/best-xi", label: "Best XI", icon: Crown },
+  { to: "/mini-game", label: "Mini Game", icon: Gamepad2 },
+];
+
+const mobileExploreItems = [
+  { to: "/", label: "Home", end: true, icon: Home },
+  { to: "/fixtures", label: "Fixtures", icon: CalendarDays },
+  { to: "/groups", label: "Table", icon: Table2 },
+  { to: "/teams", label: "Teams", icon: UsersRound },
+  { to: "/stadiums", label: "Stadiums", icon: MapPin },
+];
+
 const Layout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { loading, user } = useAuth();
 
   useEffect(() => {
     setMobileMenuOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -137,9 +156,77 @@ const Layout = () => {
               </button>
             </div>
 
+            <div className="border-b border-border p-4">
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                Account
+              </div>
+              {loading ? (
+                <div className="rounded-xl border border-border bg-secondary/30 px-4 py-3 text-sm text-muted-foreground">
+                  Loading account…
+                </div>
+              ) : user ? (
+                <ProfileMenu mobile />
+              ) : (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link
+                      to="/profile?mode=login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-black text-primary-foreground"
+                    >
+                      <LogIn className="h-4 w-4" /> Log in
+                    </Link>
+                    <Link
+                      to="/profile?mode=signup"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2.5 text-sm font-black text-primary"
+                    >
+                      <UserPlus className="h-4 w-4" /> Create account
+                    </Link>
+                  </div>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  >
+                    <UserRound className="h-4 w-4" /> Continue as guest
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <nav className="flex-1 overflow-y-auto p-4" aria-label="Mobile main navigation">
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                Play & participate
+              </div>
               <div className="space-y-1.5">
-                {navItems.map((item) => {
+                {mobileActionItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all ${
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-lg"
+                            : "text-foreground hover:bg-secondary"
+                        }`
+                      }
+                    >
+                      <Icon className="h-5 w-5 shrink-0" />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  );
+                })}
+              </div>
+
+              <div className="mb-2 mt-5 border-t border-border pt-5 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                Explore
+              </div>
+              <div className="space-y-1.5">
+                {mobileExploreItems.map((item) => {
                   const Icon = item.icon;
                   return (
                     <NavLink
@@ -160,7 +247,6 @@ const Layout = () => {
                     </NavLink>
                   );
                 })}
-                <ProfileMenu mobile />
               </div>
             </nav>
 
