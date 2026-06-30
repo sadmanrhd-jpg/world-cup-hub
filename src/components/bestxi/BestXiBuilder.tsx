@@ -224,15 +224,11 @@ const BestXiBuilder = () => {
     setDraft({ ...emptyDraft, name: `My Best XI ${Math.min(savedSquads.length + 1, 5)}` });
   };
 
-  const validate = () => {
-    if (draft.starters.length !== 11) return "Select all 11 starters.";
-    if (draft.substitutes.length !== 8) return "Select all 8 substitutes.";
-    const substitutePlayers = draft.substitutes.map((id) => playersById.get(id));
-    if (!substitutePlayers.some((player) => player?.position === "GK")) {
-      return "The substitute bench must include at least one goalkeeper.";
-    }
-    if (!draft.managerId) return "Select a manager.";
+  const validateSave = () => {
     if (!draft.name.trim()) return "Give the squad a name.";
+    if (draft.starters.length + draft.substitutes.length < 1) {
+      return "Select at least one player before saving.";
+    }
     if (!draft.editingId && savedSquads.length >= 5) {
       return "You can save a maximum of five Best XI teams.";
     }
@@ -244,7 +240,7 @@ const BestXiBuilder = () => {
       toast.error("Log in to save this Best XI to your profile.");
       return;
     }
-    const validation = validate();
+    const validation = validateSave();
     if (validation) {
       toast.error(validation);
       return;
@@ -265,7 +261,18 @@ const BestXiBuilder = () => {
       });
       setSavedSquads((current) => [saved, ...current.filter((item) => item.id !== saved.id)]);
       setDraft((current) => ({ ...current, editingId: saved.id }));
-      toast.success("Best XI saved to your profile.");
+      const substitutePlayers = draft.substitutes.map((id) => playersById.get(id));
+      const isComplete =
+        draft.starters.length === 11 &&
+        draft.substitutes.length === 8 &&
+        Boolean(draft.managerId) &&
+        substitutePlayers.some((player) => player?.position === "GK");
+
+      toast.success(
+        isComplete
+          ? "Best XI saved to your profile."
+          : "Team progress saved. You can continue it later.",
+      );
     } catch (error: any) {
       toast.error(error?.message ?? "Could not save the squad.");
     } finally {
@@ -295,6 +302,11 @@ const BestXiBuilder = () => {
   const benchGoalkeeper = draft.substitutes.some(
     (id) => playersById.get(id)?.position === "GK",
   );
+  const draftIsComplete =
+    draft.starters.length === 11 &&
+    draft.substitutes.length === 8 &&
+    Boolean(draft.managerId) &&
+    benchGoalkeeper;
 
 
   const downloadCurrentTeam = async () => {
@@ -429,6 +441,9 @@ const BestXiBuilder = () => {
               className="mt-4 w-full rounded-xl border border-border bg-input px-4 py-3 text-lg font-bold outline-none focus:border-primary"
               placeholder="Squad name"
             />
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              Select at least one player to save this team. You can return and finish it later.
+            </p>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
               <div className="rounded-xl bg-secondary/50 p-2.5">
                 <div className="font-mono text-lg font-black">{starterComplete}/11</div>
@@ -557,7 +572,7 @@ const BestXiBuilder = () => {
               className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-base font-black text-primary-foreground disabled:opacity-60"
             >
               {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-              {user ? "Save Best XI" : "Log in to save"}
+              {user ? (draftIsComplete ? "Save Best XI" : "Save progress") : "Log in to save"}
             </button>
           </div>
         </div>
@@ -575,33 +590,55 @@ const BestXiBuilder = () => {
         {user ? (
           savedSquads.length > 0 ? (
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {savedSquads.map((squad) => (
-                <div key={squad.id} className="rounded-2xl border border-border p-4 card-elevated">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-black">{squad.name}</h3>
-                      <div className="text-xs text-muted-foreground">{squad.formation} · 11 starters · 8 subs</div>
+              {savedSquads.map((squad) => {
+                const starterCount = squad.payload.starters.length;
+                const substituteCount = squad.payload.substitutes.length;
+                const complete =
+                  starterCount === 11 &&
+                  substituteCount === 8 &&
+                  Boolean(squad.payload.managerId);
+
+                return (
+                  <div key={squad.id} className="rounded-2xl border border-border p-4 card-elevated">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-black">{squad.name}</h3>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                              complete
+                                ? "bg-emerald-500/15 text-emerald-500"
+                                : "bg-amber-500/15 text-amber-500"
+                            }`}
+                          >
+                            {complete ? "Complete" : "In progress"}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {squad.formation} · {starterCount}/11 starters · {substituteCount}/8 subs
+                        </div>
+                      </div>
+                      {draft.editingId === squad.id && <CheckCircle2 className="h-5 w-5 text-emerald-500" />}
                     </div>
-                    {draft.editingId === squad.id && <CheckCircle2 className="h-5 w-5 text-emerald-500" />}
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => loadSquad(squad)}
+                        className="flex-1 rounded-full bg-secondary px-3 py-2 text-xs font-bold hover:bg-primary hover:text-primary-foreground"
+                      >
+                        Continue building
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void removeSaved(squad)}
+                        className="grid h-9 w-9 place-items-center rounded-full border border-border text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="mt-4 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => loadSquad(squad)}
-                      className="flex-1 rounded-full bg-secondary px-3 py-2 text-xs font-bold hover:bg-primary hover:text-primary-foreground"
-                    >
-                      Open
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void removeSaved(squad)}
-                      className="grid h-9 w-9 place-items-center rounded-full border border-border text-red-400 hover:bg-red-500/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="mt-4 rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
