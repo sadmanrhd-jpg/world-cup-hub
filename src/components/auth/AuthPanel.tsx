@@ -1,17 +1,22 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Loader2, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { GUEST_INITIAL_DAYS, useAuth } from "@/contexts/AuthContext";
 
 type Mode = "login" | "signup";
 
 const AuthPanel = ({ compact = false }: { compact?: boolean }) => {
+  const [searchParams] = useSearchParams();
+  const requestedMode = searchParams.get("mode");
   const {
     configured,
     signInAsGuest,
     signInWithPassword,
     signUpWithPassword,
   } = useAuth();
-  const [mode, setMode] = useState<Mode>("login");
+  const [mode, setMode] = useState<Mode>(
+    requestedMode === "signup" ? "signup" : "login",
+  );
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +26,12 @@ const AuthPanel = ({ compact = false }: { compact?: boolean }) => {
       ? "Your previous guest access period ended. Start a new guest session or log in."
       : null,
   );
+
+  useEffect(() => {
+    if (requestedMode !== "login" && requestedMode !== "signup") return;
+    setMode(requestedMode);
+    setMessage(null);
+  }, [requestedMode]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
