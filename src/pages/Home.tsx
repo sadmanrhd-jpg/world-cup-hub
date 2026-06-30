@@ -3,9 +3,10 @@ import { FIXTURES, GROUPS, TEAMS, getTeam, teamsInGroup } from "@/data/wc26";
 import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import { getTeamInfo } from "@/data/teamInfo";
 import { getManager } from "@/data/managers";
-import { Bell, Heart, Star, Trophy } from "lucide-react";
+import { Bell, Heart, LogIn, Star, Trophy, UsersRound } from "lucide-react";
 import HomeMatchUpdates from "@/components/HomeMatchUpdates";
 import TeamFlag from "@/components/TeamFlag";
+import { useAuth } from "@/contexts/AuthContext";
 
 const FavoriteSpotlight = () => {
   const { slug } = useFavoriteTeam();
@@ -199,8 +200,11 @@ const InteractiveTeams = () => (
   </section>
 );
 
-const Home = () => (
-  <div>
+const Home = () => {
+  const { user } = useAuth();
+
+  return (
+    <div>
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 grid-bg opacity-40" />
       <div className="container relative grid items-start gap-8 py-10 md:py-16 lg:grid-cols-[0.8fr_1.2fr]">
@@ -225,6 +229,12 @@ const Home = () => (
               Latest Matches
             </Link>
             <Link
+              to="/best-xi"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15"
+            >
+              <UsersRound className="h-4 w-4" /> Build Team
+            </Link>
+            <Link
               to="/mini-game"
               className="rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15"
             >
@@ -235,6 +245,13 @@ const Home = () => (
               className="rounded-full border border-border bg-secondary/50 px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-secondary"
             >
               Make Your Prediction
+            </Link>
+            <Link
+              to="/profile"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-5 py-2.5 text-sm font-semibold transition-all hover:border-primary/50 hover:bg-secondary"
+            >
+              <LogIn className="h-4 w-4" />
+              {user ? "View Saved Progress" : "Log in & Save Progress"}
             </Link>
           </div>
         </div>
@@ -310,7 +327,8 @@ const Home = () => (
         ))}
       </div>
     </section>
-  </div>
-);
+    </div>
+  );
+};
 
 export default Home;
