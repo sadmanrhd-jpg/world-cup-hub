@@ -3,6 +3,12 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Clock3, Gamepad2, Radio, RefreshCw } from "lucide-react";
 import { useAnnexC } from "@/hooks/useAnnexC";
 import { teamKey, useLiveScores } from "@/hooks/useLiveScores";
+import {
+  shootoutLabel,
+  shootoutPairKey,
+  usePenaltyShootouts,
+} from "@/hooks/usePenaltyShootouts";
+import type { PenaltyShootoutResult } from "@/hooks/usePenaltyShootouts";
 import TeamFlag from "@/components/TeamFlag";
 import {
   Fixture,
@@ -57,15 +63,21 @@ const MatchFlag = ({ name }: { name: string }) => {
   );
 };
 
-const LatestResultCard = ({ row }: { row: MatchFeedRow }) => (
+const LatestResultCard = ({
+  row,
+  shootout,
+}: {
+  row: MatchFeedRow;
+  shootout?: PenaltyShootoutResult;
+}) => (
   <Link
     to={`/matches/${row.fixture.id}`}
     className="group rounded-2xl border border-border p-4 transition-all hover:-translate-y-0.5 hover:border-primary/50 card-elevated"
   >
     <div className="mb-3 flex items-center justify-between gap-3 text-[10px] uppercase tracking-wider text-muted-foreground">
       <span>{stageLabel(row.fixture)}</span>
-      <span className={row.live ? "font-bold text-red-500" : ""}>
-        {row.live ? row.badge ?? "LIVE" : "FT"}
+      <span className={row.live ? "font-bold text-red-500" : shootout ? "font-bold text-primary" : ""}>
+        {row.live ? row.badge ?? "LIVE" : shootout ? "PEN" : "FT"}
       </span>
     </div>
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
@@ -91,6 +103,11 @@ const LatestResultCard = ({ row }: { row: MatchFeedRow }) => (
         </span>
       </div>
     </div>
+    {shootout && (
+      <div className="mt-3 rounded-xl bg-primary/10 px-3 py-2 text-center text-[11px] font-bold text-primary">
+        {shootoutLabel(shootout)}
+      </div>
+    )}
     <div className="mt-3 text-center text-[10px] font-semibold text-primary opacity-80 transition-opacity group-hover:opacity-100">
       Open match details →
     </div>
@@ -160,6 +177,7 @@ const Fixtures = () => {
     error: liveScoreError,
     pairKey,
   } = useLiveScores(60_000);
+  const shootouts = usePenaltyShootouts(60_000);
   const annex = useAnnexC();
   const tournament = useMemo(
     () => buildTournamentState(liveScores, pairKey, annex.options),
@@ -305,7 +323,13 @@ const Fixtures = () => {
             {latestRows.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {latestRows.map((row) => (
-                  <LatestResultCard key={row.fixture.id} row={row} />
+                  <LatestResultCard
+                    key={row.fixture.id}
+                    row={row}
+                    shootout={shootouts.get(
+                      shootoutPairKey(row.fixture.home, row.fixture.away),
+                    )}
+                  />
                 ))}
               </div>
             ) : (
@@ -401,6 +425,9 @@ const Fixtures = () => {
                     const event = liveScores.get(
                       pairKey(fixture.home, fixture.away),
                     );
+                    const shootout = shootouts.get(
+                      shootoutPairKey(fixture.home, fixture.away),
+                    );
                     const useEventScore =
                       event != null && (event.live || event.finished);
                     const sameOrder =
@@ -421,9 +448,11 @@ const Fixtures = () => {
                     const hasScore = homeScore != null && awayScore != null;
                     const statusLabel = event?.live
                       ? event.progress ?? "LIVE"
-                      : event?.finished
-                        ? "FT"
-                        : null;
+                      : shootout
+                        ? "PEN"
+                        : event?.finished
+                          ? "FT"
+                          : null;
                     const hasResolvedTeams = !fixture.label;
 
                     return (
@@ -471,10 +500,17 @@ const Fixtures = () => {
                                   className={`text-[10px] font-semibold ${
                                     event?.live
                                       ? "text-red-500"
-                                      : "text-muted-foreground"
+                                      : shootout
+                                        ? "text-primary"
+                                        : "text-muted-foreground"
                                   }`}
                                 >
                                   {statusLabel}
+                                </span>
+                              )}
+                              {shootout && (
+                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                  {shootoutLabel(shootout)}
                                 </span>
                               )}
                             </div>
