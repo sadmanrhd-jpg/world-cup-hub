@@ -59,6 +59,7 @@ export type BestXiStarter = {
 export type BestXiPayload = {
   starters: BestXiStarter[];
   substitutes: string[];
+  captainId?: string | null;
   managerId: string | null;
 };
 
