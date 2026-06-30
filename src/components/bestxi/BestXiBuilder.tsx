@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   ChevronRight,
+  Download,
   Loader2,
   Plus,
   Save,
@@ -18,6 +19,7 @@ import TeamFlag from "@/components/TeamFlag";
 import { useAuth } from "@/contexts/AuthContext";
 import { FORMATIONS, getFormation } from "@/data/formations";
 import { getTeamByName } from "@/data/wc26";
+import { downloadBestXiImage } from "@/utils/downloadBestXiImage";
 import {
   deleteBestXi,
   fetchSavedBestXi,
@@ -81,6 +83,7 @@ const BestXiBuilder = () => {
   const [savedSquads, setSavedSquads] = useState<SavedBestXi[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const [addingSubstitute, setAddingSubstitute] = useState(false);
   const [managerSearch, setManagerSearch] = useState("");
@@ -293,6 +296,57 @@ const BestXiBuilder = () => {
     (id) => playersById.get(id)?.position === "GK",
   );
 
+
+  const downloadCurrentTeam = async () => {
+    if (draft.starters.length !== 11) {
+      toast.error("Select all 11 starters before downloading.");
+      return;
+    }
+    if (draft.substitutes.length !== 8) {
+      toast.error("Select all 8 substitutes before downloading.");
+      return;
+    }
+    if (!selectedManager) {
+      toast.error("Select a manager before downloading.");
+      return;
+    }
+    if (!draft.name.trim()) {
+      toast.error("Give the squad a name before downloading.");
+      return;
+    }
+
+    const starterRows = formation.slots.flatMap((slot) => {
+      const starter = draft.starters.find((item) => item.slotId === slot.id);
+      const player = starter ? playersById.get(starter.playerId) : undefined;
+      return player ? [{ slot, player }] : [];
+    });
+    const substitutePlayers = draft.substitutes.flatMap((id) => {
+      const player = playersById.get(id);
+      return player ? [player] : [];
+    });
+
+    if (starterRows.length !== 11 || substitutePlayers.length !== 8) {
+      toast.error("Some selected players are unavailable. Reload the squads and try again.");
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      await downloadBestXiImage({
+        name: draft.name,
+        formation,
+        starters: starterRows,
+        substitutes: substitutePlayers,
+        manager: selectedManager,
+      });
+      toast.success("Current team game plan downloaded.");
+    } catch (error: any) {
+      toast.error(error?.message ?? "Could not download the team image.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   if (loadingData) {
     return (
       <div className="flex min-h-[420px] items-center justify-center gap-2 rounded-3xl border border-border card-elevated">
@@ -482,15 +536,30 @@ const BestXiBuilder = () => {
             )}
           </section>
 
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="sticky bottom-3 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-base font-black text-primary-foreground shadow-xl disabled:opacity-60"
-          >
-            {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-            {user ? "Save Best XI" : "Log in to save"}
-          </button>
+          <div className="sticky bottom-3 grid gap-2 rounded-3xl border border-border bg-background/90 p-2 shadow-xl backdrop-blur-xl sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => void downloadCurrentTeam()}
+              disabled={downloading}
+              className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-full border border-primary/50 bg-primary/10 px-5 py-3 text-sm font-black text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-60"
+            >
+              {downloading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Download className="h-5 w-5" />
+              )}
+              {downloading ? "Preparing image" : "Download current team"}
+            </button>
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-base font-black text-primary-foreground disabled:opacity-60"
+            >
+              {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+              {user ? "Save Best XI" : "Log in to save"}
+            </button>
+          </div>
         </div>
       </div>
 
