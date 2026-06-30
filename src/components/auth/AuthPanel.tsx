@@ -1,13 +1,13 @@
 import { FormEvent, useState } from "react";
-import { Loader2, LockKeyhole, Mail } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { Loader2, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { GUEST_INITIAL_DAYS, useAuth } from "@/contexts/AuthContext";
 
 type Mode = "login" | "signup";
 
 const AuthPanel = ({ compact = false }: { compact?: boolean }) => {
   const {
     configured,
-    signInWithGoogle,
+    signInAsGuest,
     signInWithPassword,
     signUpWithPassword,
   } = useAuth();
@@ -16,7 +16,11 @@ const AuthPanel = ({ compact = false }: { compact?: boolean }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(
+    localStorage.getItem("fan26.guest-session-expired")
+      ? "Your previous guest access period ended. Start a new guest session or log in."
+      : null,
+  );
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -33,10 +37,11 @@ const AuthPanel = ({ compact = false }: { compact?: boolean }) => {
     }
   };
 
-  const google = async () => {
+  const guest = async () => {
     setBusy(true);
     setMessage(null);
-    const error = await signInWithGoogle();
+    localStorage.removeItem("fan26.guest-session-expired");
+    const error = await signInAsGuest();
     if (error) setMessage(error);
     setBusy(false);
   };
@@ -51,6 +56,23 @@ const AuthPanel = ({ compact = false }: { compact?: boolean }) => {
 
   return (
     <div className={compact ? "" : "rounded-3xl border border-border p-5 card-elevated sm:p-7"}>
+      <button
+        type="button"
+        onClick={guest}
+        disabled={busy}
+        className="flex min-h-14 w-full items-center justify-center gap-3 rounded-full border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-black text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
+      >
+        {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <UserRound className="h-5 w-5" />}
+        Continue as guest
+      </button>
+      <p className="mt-2 text-center text-[11px] leading-relaxed text-muted-foreground">
+        Guest access starts with {GUEST_INITIAL_DAYS} days and can be extended. Data stays tied to this browser.
+      </p>
+
+      <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
+        <span className="h-px flex-1 bg-border" /> or use an account <span className="h-px flex-1 bg-border" />
+      </div>
+
       <div className="flex rounded-full border border-border bg-secondary/40 p-1">
         {(["login", "signup"] as Mode[]).map((item) => (
           <button
@@ -71,21 +93,7 @@ const AuthPanel = ({ compact = false }: { compact?: boolean }) => {
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={google}
-        disabled={busy}
-        className="mt-5 flex min-h-12 w-full items-center justify-center gap-3 rounded-full border border-border bg-background px-4 py-3 text-sm font-bold transition-colors hover:bg-secondary disabled:opacity-60"
-      >
-        <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black text-blue-600">G</span>
-        Continue with Google
-      </button>
-
-      <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
-        <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
-      </div>
-
-      <form onSubmit={submit} className="space-y-3">
+      <form onSubmit={submit} className="mt-5 space-y-3">
         {mode === "signup" && (
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">Display name</span>
