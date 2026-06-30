@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import logo from "@/assets/wc26-logo.avif";
+import GuestSessionNotice from "@/components/GuestSessionNotice";
 import ProfileMenu from "@/components/profile/ProfileMenu";
 import UserDataSync from "@/components/UserDataSync";
 
@@ -102,6 +103,8 @@ const Layout = () => {
           </button>
         </div>
       </header>
+
+      <GuestSessionNotice />
 
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[70] lg:hidden">
