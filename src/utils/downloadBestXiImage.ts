@@ -15,12 +15,13 @@ type DownloadBestXiInput = {
   formation: FormationDefinition;
   starters: StarterExport[];
   substitutes: WorldCupPlayer[];
+  captain: WorldCupPlayer;
   manager: WorldCupManager;
 };
 
 const WIDTH = 1600;
 const HEIGHT = 2000;
-const FONT = 'Inter, Arial, sans-serif';
+const FONT = "Inter, Arial, sans-serif";
 
 const roundedRect = (
   context: CanvasRenderingContext2D,
@@ -111,6 +112,7 @@ const drawPitch = (
   context.beginPath();
   context.arc(x + width / 2, middleY, 128, 0, Math.PI * 2);
   context.stroke();
+
   context.fillStyle = "rgba(255,255,255,0.7)";
   context.beginPath();
   context.arc(x + width / 2, middleY, 7, 0, Math.PI * 2);
@@ -135,11 +137,6 @@ const drawPitch = (
     sixWidth,
     sixHeight,
   );
-
-  context.beginPath();
-  context.arc(x + width / 2, y + 144, 7, 0, Math.PI * 2);
-  context.arc(x + width / 2, y + height - 144, 7, 0, Math.PI * 2);
-  context.fill();
 };
 
 const drawStarter = (
@@ -148,6 +145,7 @@ const drawStarter = (
   centerY: number,
   slot: FormationSlot,
   player: WorldCupPlayer,
+  isCaptain: boolean,
 ) => {
   const width = 232;
   const height = 104;
@@ -164,8 +162,10 @@ const drawStarter = (
   context.restore();
 
   roundedRect(context, x, y, width, height, 22);
-  context.strokeStyle = "rgba(249,199,79,0.78)";
-  context.lineWidth = 2;
+  context.strokeStyle = isCaptain
+    ? "rgba(249,199,79,1)"
+    : "rgba(249,199,79,0.78)";
+  context.lineWidth = isCaptain ? 4 : 2;
   context.stroke();
 
   context.fillStyle = "#f9c74f";
@@ -178,11 +178,22 @@ const drawStarter = (
   context.font = `700 15px ${FONT}`;
   context.fillText(countryCode(player.teamName), x + width - 16, y + 28);
 
+  if (isCaptain) {
+    context.beginPath();
+    context.arc(x + width - 22, y + height - 22, 18, 0, Math.PI * 2);
+    context.fillStyle = "#f9c74f";
+    context.fill();
+    context.fillStyle = "#071613";
+    context.textAlign = "center";
+    context.font = `900 17px ${FONT}`;
+    context.fillText("C", x + width - 22, y + height - 16);
+  }
+
   context.fillStyle = "#ffffff";
   context.textAlign = "center";
   context.font = `800 25px ${FONT}`;
   context.fillText(
-    truncateText(context, player.name, width - 26),
+    truncateText(context, player.name, width - 34),
     centerX,
     y + 64,
   );
@@ -190,7 +201,7 @@ const drawStarter = (
   context.fillStyle = "rgba(255,255,255,0.7)";
   context.font = `600 16px ${FONT}`;
   context.fillText(
-    truncateText(context, player.teamName, width - 28),
+    truncateText(context, player.teamName, width - 34),
     centerX,
     y + 89,
   );
@@ -238,6 +249,33 @@ const drawBenchPlayer = (
   );
 };
 
+const drawLeaderRow = (
+  context: CanvasRenderingContext2D,
+  label: string,
+  name: string,
+  detail: string,
+  x: number,
+  y: number,
+) => {
+  context.fillStyle = "#f9c74f";
+  context.font = `900 32px ${FONT}`;
+  context.textAlign = "center";
+  context.fillText(initials(name), x + 58, y + 60);
+
+  context.textAlign = "left";
+  context.fillStyle = "rgba(255,255,255,0.55)";
+  context.font = `700 14px ${FONT}`;
+  context.fillText(label, x + 112, y + 28);
+
+  context.fillStyle = "#ffffff";
+  context.font = `900 23px ${FONT}`;
+  context.fillText(truncateText(context, name, 260), x + 112, y + 60);
+
+  context.fillStyle = "rgba(255,255,255,0.68)";
+  context.font = `600 15px ${FONT}`;
+  context.fillText(truncateText(context, detail, 260), x + 112, y + 84);
+};
+
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -262,6 +300,7 @@ export const downloadBestXiImage = async ({
   formation,
   starters,
   substitutes,
+  captain,
   manager,
 }: DownloadBestXiInput) => {
   if (document.fonts?.ready) {
@@ -285,6 +324,7 @@ export const downloadBestXiImage = async ({
   context.beginPath();
   context.arc(1460, 80, 260, 0, Math.PI * 2);
   context.fill();
+
   context.fillStyle = "rgba(34,197,94,0.08)";
   context.beginPath();
   context.arc(90, 1920, 320, 0, Math.PI * 2);
@@ -320,59 +360,61 @@ export const downloadBestXiImage = async ({
   for (const { slot, player } of starters) {
     const centerX = pitch.x + (slot.x / 100) * pitch.width;
     const centerY = pitch.y + (slot.y / 100) * pitch.height;
-    drawStarter(context, centerX, centerY, slot, player);
+    drawStarter(context, centerX, centerY, slot, player, player.id === captain.id);
   }
 
   context.textAlign = "left";
   context.fillStyle = "#f9c74f";
   context.font = `800 19px ${FONT}`;
-  context.fillText("TEAM STAFF", 90, 1350);
+  context.fillText("TEAM LEADERS", 90, 1350);
   context.fillText("SUBSTITUTES", 555, 1350);
 
-  roundedRect(context, 90, 1382, 420, 184, 28);
+  roundedRect(context, 90, 1382, 420, 220, 28);
   context.fillStyle = "rgba(255,255,255,0.055)";
   context.fill();
   context.strokeStyle = "rgba(249,199,79,0.36)";
   context.lineWidth = 2;
   context.stroke();
 
-  context.fillStyle = "#f9c74f";
-  context.font = `900 44px ${FONT}`;
-  context.textAlign = "center";
-  context.fillText(initials(manager.name), 155, 1476);
-
-  context.textAlign = "left";
-  context.fillStyle = "rgba(255,255,255,0.55)";
-  context.font = `700 15px ${FONT}`;
-  context.fillText("MANAGER", 218, 1432);
-  context.fillStyle = "#ffffff";
-  context.font = `900 26px ${FONT}`;
-  context.fillText(
-    truncateText(context, manager.name, 260),
-    218,
-    1474,
-  );
-  context.fillStyle = "rgba(255,255,255,0.68)";
-  context.font = `600 17px ${FONT}`;
-  context.fillText(
-    truncateText(context, manager.teamName, 260),
-    218,
-    1510,
+  drawLeaderRow(
+    context,
+    "CAPTAIN",
+    captain.name,
+    `${captain.position} · ${captain.teamName}`,
+    104,
+    1394,
   );
 
-  roundedRect(context, 90, 1594, 420, 244, 28);
+  context.strokeStyle = "rgba(255,255,255,0.1)";
+  context.beginPath();
+  context.moveTo(116, 1492);
+  context.lineTo(484, 1492);
+  context.stroke();
+
+  drawLeaderRow(
+    context,
+    "MANAGER",
+    manager.name,
+    manager.teamName,
+    104,
+    1500,
+  );
+
+  roundedRect(context, 90, 1624, 420, 214, 28);
   context.fillStyle = "rgba(255,255,255,0.035)";
   context.fill();
+
   context.fillStyle = "#ffffff";
   context.textAlign = "left";
   context.font = `900 26px ${FONT}`;
-  context.fillText("GAME PLAN", 122, 1640);
+  context.fillText("GAME PLAN", 122, 1668);
+
   context.fillStyle = "rgba(255,255,255,0.65)";
-  context.font = `600 18px ${FONT}`;
-  context.fillText(`Formation  ${formation.name}`, 122, 1690);
-  context.fillText("Starting XI  11 players", 122, 1730);
-  context.fillText("Bench  8 substitutes", 122, 1770);
-  context.fillText(`Coach  ${manager.name}`, 122, 1810);
+  context.font = `600 17px ${FONT}`;
+  context.fillText(`Formation  ${formation.name}`, 122, 1712);
+  context.fillText(`Captain  ${captain.name}`, 122, 1750);
+  context.fillText(`Coach  ${manager.name}`, 122, 1788);
+  context.fillText("Starting XI  11 · Bench  8", 122, 1826);
 
   const benchX = 555;
   const benchY = 1382;
@@ -397,6 +439,7 @@ export const downloadBestXiImage = async ({
   context.textAlign = "left";
   context.font = `600 16px ${FONT}`;
   context.fillText("Built on Fan26", 90, 1935);
+
   context.textAlign = "right";
   context.fillText(
     new Intl.DateTimeFormat(undefined, {

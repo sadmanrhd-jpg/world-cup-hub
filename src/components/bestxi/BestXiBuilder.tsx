@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   ChevronRight,
+  Crown,
   Download,
   Loader2,
   Plus,
@@ -43,6 +44,7 @@ type Draft = {
   formation: string;
   starters: BestXiStarter[];
   substitutes: string[];
+  captainId: string | null;
   managerId: string | null;
   editingId: string | null;
 };
@@ -52,6 +54,7 @@ const emptyDraft: Draft = {
   formation: "4-3-3",
   starters: [],
   substitutes: [],
+  captainId: null,
   managerId: null,
   editingId: null,
 };
@@ -66,6 +69,7 @@ const readDraft = (): Draft => {
           formation: parsed.formation ?? emptyDraft.formation,
           starters: parsed.starters ?? [],
           substitutes: parsed.substitutes ?? [],
+          captainId: parsed.captainId ?? null,
           managerId: parsed.managerId ?? null,
           editingId: parsed.editingId ?? null,
         }
@@ -86,6 +90,8 @@ const BestXiBuilder = () => {
   const [downloading, setDownloading] = useState(false);
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const [addingSubstitute, setAddingSubstitute] = useState(false);
+  const [captainSearch, setCaptainSearch] = useState("");
+  const [captainPanelOpen, setCaptainPanelOpen] = useState(false);
   const [managerSearch, setManagerSearch] = useState("");
   const [managerPanelOpen, setManagerPanelOpen] = useState(false);
 
@@ -131,6 +137,20 @@ const BestXiBuilder = () => {
   useEffect(() => {
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
   }, [draft]);
+
+  useEffect(() => {
+    if (!draft.captainId) return;
+    const captainStillStarts = draft.starters.some(
+      (starter) => starter.playerId === draft.captainId,
+    );
+    if (!captainStillStarts) {
+      setDraft((current) =>
+        current.captainId === draft.captainId
+          ? { ...current, captainId: null }
+          : current,
+      );
+    }
+  }, [draft.captainId, draft.starters]);
 
   useEffect(() => {
     if (!user) {
@@ -213,6 +233,7 @@ const BestXiBuilder = () => {
       formation: squad.formation,
       starters: squad.payload.starters,
       substitutes: squad.payload.substitutes,
+      captainId: squad.payload.captainId ?? null,
       managerId: squad.payload.managerId,
       editingId: squad.id,
     });
@@ -256,6 +277,7 @@ const BestXiBuilder = () => {
         payload: {
           starters: draft.starters,
           substitutes: draft.substitutes,
+          captainId: draft.captainId,
           managerId: draft.managerId,
         },
       });
@@ -265,6 +287,7 @@ const BestXiBuilder = () => {
       const isComplete =
         draft.starters.length === 11 &&
         draft.substitutes.length === 8 &&
+        Boolean(draft.captainId) &&
         Boolean(draft.managerId) &&
         substitutePlayers.some((player) => player?.position === "GK");
 
@@ -291,6 +314,19 @@ const BestXiBuilder = () => {
     }
   };
 
+  const selectedCaptain = draft.captainId
+    ? playersById.get(draft.captainId) ?? null
+    : null;
+  const captainCandidates = draft.starters.flatMap((starter) => {
+    const player = playersById.get(starter.playerId);
+    return player ? [player] : [];
+  });
+  const filteredCaptains = captainCandidates.filter((player) =>
+    [player.name, player.teamName, player.position]
+      .join(" ")
+      .toLowerCase()
+      .includes(captainSearch.trim().toLowerCase()),
+  );
   const selectedManager = draft.managerId ? managersById.get(draft.managerId) : null;
   const filteredManagers = managers.filter((manager) =>
     [manager.name, manager.teamName]
@@ -305,6 +341,7 @@ const BestXiBuilder = () => {
   const draftIsComplete =
     draft.starters.length === 11 &&
     draft.substitutes.length === 8 &&
+    Boolean(selectedCaptain) &&
     Boolean(draft.managerId) &&
     benchGoalkeeper;
 
@@ -316,6 +353,10 @@ const BestXiBuilder = () => {
     }
     if (draft.substitutes.length !== 8) {
       toast.error("Select all 8 substitutes before downloading.");
+      return;
+    }
+    if (!selectedCaptain) {
+      toast.error("Select a captain before downloading.");
       return;
     }
     if (!selectedManager) {
@@ -349,6 +390,7 @@ const BestXiBuilder = () => {
         formation,
         starters: starterRows,
         substitutes: substitutePlayers,
+        captain: selectedCaptain,
         manager: selectedManager,
       });
       toast.success("Current team game plan downloaded.");
@@ -444,7 +486,7 @@ const BestXiBuilder = () => {
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
               Select at least one player to save this team. You can return and finish it later.
             </p>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+            <div className="mt-3 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
               <div className="rounded-xl bg-secondary/50 p-2.5">
                 <div className="font-mono text-lg font-black">{starterComplete}/11</div>
                 <div className="text-[9px] uppercase text-muted-foreground">Starters</div>
@@ -452,6 +494,10 @@ const BestXiBuilder = () => {
               <div className="rounded-xl bg-secondary/50 p-2.5">
                 <div className="font-mono text-lg font-black">{draft.substitutes.length}/8</div>
                 <div className="text-[9px] uppercase text-muted-foreground">Subs</div>
+              </div>
+              <div className="rounded-xl bg-secondary/50 p-2.5">
+                <div className="font-mono text-lg font-black">{selectedCaptain ? 1 : 0}/1</div>
+                <div className="text-[9px] uppercase text-muted-foreground">Captain</div>
               </div>
               <div className="rounded-xl bg-secondary/50 p-2.5">
                 <div className="font-mono text-lg font-black">{selectedManager ? 1 : 0}/1</div>
@@ -519,6 +565,43 @@ const BestXiBuilder = () => {
                 </button>
               )}
             </div>
+          </section>
+
+          <section className="rounded-3xl border border-border p-4 card-elevated sm:p-5">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-primary">
+              <Crown className="h-4 w-4" /> Captain
+            </div>
+            {selectedCaptain ? (
+              <button
+                type="button"
+                onClick={() => setCaptainPanelOpen(true)}
+                className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-left"
+              >
+                <TeamFlag
+                  name={selectedCaptain.teamName}
+                  slug={getTeamByName(selectedCaptain.teamName)?.slug}
+                  className="h-11 w-11 rounded-xl"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-black">{selectedCaptain.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {selectedCaptain.position} · {selectedCaptain.teamName}
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={captainCandidates.length === 0}
+                onClick={() => setCaptainPanelOpen(true)}
+                className="mt-3 w-full rounded-2xl border border-dashed border-border p-5 text-sm font-semibold text-muted-foreground hover:border-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {captainCandidates.length > 0
+                  ? "Select captain from the Starting XI"
+                  : "Select at least one starter first"}
+              </button>
+            )}
           </section>
 
           <section className="rounded-3xl border border-border p-4 card-elevated sm:p-5">
@@ -593,10 +676,15 @@ const BestXiBuilder = () => {
               {savedSquads.map((squad) => {
                 const starterCount = squad.payload.starters.length;
                 const substituteCount = squad.payload.substitutes.length;
+                const savedBenchHasGoalkeeper = squad.payload.substitutes.some(
+                  (id) => playersById.get(id)?.position === "GK",
+                );
                 const complete =
                   starterCount === 11 &&
                   substituteCount === 8 &&
-                  Boolean(squad.payload.managerId);
+                  Boolean(squad.payload.captainId) &&
+                  Boolean(squad.payload.managerId) &&
+                  savedBenchHasGoalkeeper;
 
                 return (
                   <div key={squad.id} className="rounded-2xl border border-border p-4 card-elevated">
@@ -671,6 +759,72 @@ const BestXiBuilder = () => {
         onSelect={addSubstitute}
         onClose={() => setAddingSubstitute(false)}
       />
+
+      {captainPanelOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 backdrop-blur-sm md:items-center md:p-6">
+          <button
+            className="absolute inset-0"
+            onClick={() => setCaptainPanelOpen(false)}
+            aria-label="Close captain picker"
+          />
+          <div className="relative flex h-[72vh] w-full max-w-2xl flex-col rounded-t-3xl border border-border bg-background md:rounded-3xl">
+            <div className="flex items-center justify-between border-b border-border p-4">
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-primary">Starting XI players</div>
+                <h2 className="text-xl font-black">Choose captain</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCaptainPanelOpen(false)}
+                className="grid h-10 w-10 place-items-center rounded-full border border-border"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="border-b border-border p-4">
+              <input
+                value={captainSearch}
+                onChange={(event) => setCaptainSearch(event.target.value)}
+                placeholder="Search selected player or country"
+                className="w-full rounded-full border border-border bg-input px-4 py-2.5 outline-none focus:border-primary"
+              />
+            </div>
+            <div className="flex-1 space-y-2 overflow-y-auto p-3">
+              {filteredCaptains.map((player) => (
+                <button
+                  key={player.id}
+                  type="button"
+                  onClick={() => {
+                    setDraft((current) => ({ ...current, captainId: player.id }));
+                    setCaptainPanelOpen(false);
+                  }}
+                  className="flex w-full items-center gap-3 rounded-2xl border border-border p-3 text-left hover:border-primary/50 hover:bg-secondary/40"
+                >
+                  <TeamFlag
+                    name={player.teamName}
+                    slug={getTeamByName(player.teamName)?.slug}
+                    className="h-10 w-10 rounded-lg"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-bold">{player.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {player.position} · {player.teamName}
+                    </div>
+                  </div>
+                  {draft.captainId === player.id && (
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  )}
+                </button>
+              ))}
+              {filteredCaptains.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                  No selected starter matches this search.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {managerPanelOpen && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 backdrop-blur-sm md:items-center md:p-6">
