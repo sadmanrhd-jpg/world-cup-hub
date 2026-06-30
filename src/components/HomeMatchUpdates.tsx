@@ -5,6 +5,12 @@ import { FIXTURES, getTeamByName } from "@/data/wc26";
 import TeamFlag from "@/components/TeamFlag";
 import { useLiveScores } from "@/hooks/useLiveScores";
 import {
+  shootoutLabel,
+  shootoutPairKey,
+  usePenaltyShootouts,
+} from "@/hooks/usePenaltyShootouts";
+import type { PenaltyShootoutResult } from "@/hooks/usePenaltyShootouts";
+import {
   enrichMatchFeed,
   MatchFeedRow,
   relativeMatchDay,
@@ -24,15 +30,21 @@ const MatchFlag = ({ name }: { name: string }) => {
   );
 };
 
-const ResultCard = ({ row }: { row: MatchFeedRow }) => (
+const ResultCard = ({
+  row,
+  shootout,
+}: {
+  row: MatchFeedRow;
+  shootout?: PenaltyShootoutResult;
+}) => (
   <Link
     to={`/matches/${row.fixture.id}`}
     className="group block rounded-xl border border-border bg-secondary/30 p-3 transition-all hover:border-primary/40 hover:bg-secondary/50"
   >
     <div className="mb-2 flex items-center justify-between gap-2 text-[9px] uppercase tracking-wider text-muted-foreground">
       <span>{stageLabel(row.fixture)}</span>
-      <span className={row.live ? "font-bold text-red-500" : ""}>
-        {row.live ? row.badge ?? "LIVE" : "FT"}
+      <span className={row.live ? "font-bold text-red-500" : shootout ? "font-bold text-primary" : ""}>
+        {row.live ? row.badge ?? "LIVE" : shootout ? "PEN" : "FT"}
       </span>
     </div>
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
@@ -58,6 +70,11 @@ const ResultCard = ({ row }: { row: MatchFeedRow }) => (
         </span>
       </div>
     </div>
+    {shootout && (
+      <div className="mt-2 rounded-lg bg-primary/10 px-2.5 py-1.5 text-center text-[10px] font-bold text-primary">
+        {shootoutLabel(shootout)}
+      </div>
+    )}
   </Link>
 );
 
@@ -123,6 +140,7 @@ const SectionHeading = ({
 const HomeMatchUpdates = () => {
   const [now, setNow] = useState(() => new Date());
   const { data, loading, refreshing, error } = useLiveScores(60_000);
+  const shootouts = usePenaltyShootouts(60_000);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60_000);
@@ -147,7 +165,13 @@ const HomeMatchUpdates = () => {
         />
         <div className="space-y-2">
           {latest.map((row) => (
-            <ResultCard key={row.fixture.id} row={row} />
+            <ResultCard
+              key={row.fixture.id}
+              row={row}
+              shootout={shootouts.get(
+                shootoutPairKey(row.fixture.home, row.fixture.away),
+              )}
+            />
           ))}
           {latest.length === 0 && loading && (
             <div className="flex items-center gap-2 rounded-xl border border-border bg-background/30 px-4 py-4 text-xs text-muted-foreground">
