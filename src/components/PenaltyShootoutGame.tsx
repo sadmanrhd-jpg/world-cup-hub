@@ -6,12 +6,15 @@ import { getTeamPalette } from "@/data/teamColors";
 type Phase = "ready" | "countdown" | "playing" | "finished";
 type ShotResult = "goal" | "save" | "miss" | null;
 
-type Stats = {
+export type PenaltyGameResult = {
   goals: number;
   shots: number;
   saves: number;
   misses: number;
+  accuracy: number;
 };
+
+type Stats = Omit<PenaltyGameResult, "accuracy">;
 
 type Point = {
   x: number;
@@ -31,6 +34,7 @@ type BallState = {
 type PenaltyShootoutGameProps = {
   selectedTeam: string;
   opponent: string;
+  onFinished?: (result: PenaltyGameResult) => void;
 };
 
 const GAME_SECONDS = 30;
@@ -47,6 +51,7 @@ const initialStats: Stats = {
 const PenaltyShootoutGame = ({
   selectedTeam,
   opponent,
+  onFinished,
 }: PenaltyShootoutGameProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -56,6 +61,7 @@ const PenaltyShootoutGame = ({
   const gameStartedAtRef = useRef(0);
   const lastFrameRef = useRef(0);
   const displayedSecondRef = useRef(GAME_SECONDS);
+  const resultReportedRef = useRef(false);
   const keeperRef = useRef({ x: 0.5, direction: 1 });
   const pointerStartRef = useRef<Point | null>(null);
   const pointerCurrentRef = useRef<Point | null>(null);
@@ -93,6 +99,15 @@ const PenaltyShootoutGame = ({
     updatePhase("finished");
     setTimeLeft(0);
 
+    if (!resultReportedRef.current) {
+      resultReportedRef.current = true;
+      const current = statsRef.current;
+      onFinished?.({
+        ...current,
+        accuracy: current.shots > 0 ? Math.round((current.goals / current.shots) * 100) : 0,
+      });
+    }
+
     if (statsRef.current.goals > 0) {
       confetti({
         particleCount: 120,
@@ -115,6 +130,7 @@ const PenaltyShootoutGame = ({
     setTimeLeft(GAME_SECONDS);
     setLastResult(null);
     displayedSecondRef.current = GAME_SECONDS;
+    resultReportedRef.current = false;
     keeperRef.current = { x: 0.5, direction: 1 };
     pointerStartRef.current = null;
     pointerCurrentRef.current = null;
@@ -384,7 +400,7 @@ const PenaltyShootoutGame = ({
       context.restore();
     };
 
-    const drawSwipeGuide = (width: number, height: number) => {
+    const drawSwipeGuide = () => {
       const start = pointerStartRef.current;
       const current = pointerCurrentRef.current;
       if (!start || !current) return;
@@ -478,7 +494,7 @@ const PenaltyShootoutGame = ({
       drawKeeper(width, height, now);
       drawPlayer(width, height);
       drawBall(width, height, now);
-      drawSwipeGuide(width, height);
+      drawSwipeGuide();
 
       animationFrameRef.current = window.requestAnimationFrame(draw);
     };

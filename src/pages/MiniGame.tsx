@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Gamepad2, RefreshCw } from "lucide-react";
-import PenaltyShootoutGame from "@/components/PenaltyShootoutGame";
+import PenaltyShootoutGame, { PenaltyGameResult } from "@/components/PenaltyShootoutGame";
+import { useAuth } from "@/contexts/AuthContext";
+import { recordMiniGameResult } from "@/services/progressService";
 import TeamFlag from "@/components/TeamFlag";
 import { fixtureKickoff, getTeamByName } from "@/data/wc26";
 import { useAnnexC } from "@/hooks/useAnnexC";
@@ -22,6 +24,7 @@ const MatchFlag = ({ name }: { name: string }) => {
 
 const MiniGame = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
   const requestedMatch = Number(searchParams.get("match"));
   const [now, setNow] = useState(() => new Date());
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(
@@ -94,6 +97,19 @@ const MiniGame = () => {
       ? selectedRow.fixture.away
       : selectedRow.fixture.home
     : null;
+
+  const saveResult = useCallback(
+    (result: PenaltyGameResult) => {
+      if (!user || !selectedRow || !selectedTeam || !opponent) return;
+      void recordMiniGameResult(user.id, {
+        fixtureId: selectedRow.fixture.id,
+        selectedTeam,
+        opponent,
+        ...result,
+      }).catch((error) => console.error("Could not save mini-game result", error));
+    },
+    [opponent, selectedRow, selectedTeam, user],
+  );
 
   useEffect(() => {
     if (!selectedTeam || !opponent) return;
@@ -244,6 +260,7 @@ const MiniGame = () => {
                 key={`${selectedRow.fixture.id}-${selectedTeam}`}
                 selectedTeam={selectedTeam}
                 opponent={opponent}
+                onFinished={saveResult}
               />
             </section>
           )}

@@ -2,16 +2,20 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   CalendarDays,
+  Crown,
   Gamepad2,
   Home,
-  Table2,
   MapPin,
   Menu,
   Sparkles,
+  Table2,
   UsersRound,
   X,
 } from "lucide-react";
 import logo from "@/assets/wc26-logo.avif";
+import GuestSessionNotice from "@/components/GuestSessionNotice";
+import ProfileMenu from "@/components/profile/ProfileMenu";
+import UserDataSync from "@/components/UserDataSync";
 
 const navItems = [
   { to: "/", label: "Home", end: true, icon: Home },
@@ -21,6 +25,7 @@ const navItems = [
   { to: "/fixtures", label: "Fixtures", icon: CalendarDays },
   { to: "/prediction", label: "Predict", icon: Sparkles },
   { to: "/mini-game", label: "Mini Game", icon: Gamepad2 },
+  { to: "/best-xi", label: "Best XI", icon: Crown },
 ];
 
 const Layout = () => {
@@ -33,16 +38,12 @@ const Layout = () => {
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
-
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMobileMenuOpen(false);
     };
-
     window.addEventListener("keydown", closeOnEscape);
-
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
@@ -51,6 +52,7 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <UserDataSync />
       <header className="sticky top-0 z-50 border-b border-border bg-background/75 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between gap-3 sm:h-20">
           <Link to="/" className="group flex shrink-0 items-center gap-2 sm:gap-3">
@@ -63,35 +65,36 @@ const Layout = () => {
               <div className="hidden text-xs uppercase tracking-[0.25em] text-muted-foreground sm:block">
                 FIFA World Cup
               </div>
-              <div className="font-display text-base font-bold gradient-gold-text sm:text-lg">
-                2026
-              </div>
+              <div className="font-display text-base font-bold gradient-gold-text sm:text-lg">2026</div>
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-all ${
-                    isActive
-                      ? "bg-primary text-primary-foreground glow"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  }`
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
+          <div className="hidden min-w-0 items-center gap-2 lg:flex">
+            <nav className="flex min-w-0 items-center gap-0.5" aria-label="Main navigation">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `whitespace-nowrap rounded-full px-2.5 py-2 text-xs font-semibold transition-all xl:px-3 xl:text-sm ${
+                      isActive
+                        ? "bg-primary text-primary-foreground glow"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+            <ProfileMenu />
+          </div>
 
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary/60 text-foreground transition-colors hover:bg-secondary md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary/60 text-foreground transition-colors hover:bg-secondary lg:hidden"
             aria-label="Open navigation menu"
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
@@ -101,39 +104,33 @@ const Layout = () => {
         </div>
       </header>
 
+      <GuestSessionNotice />
+
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[70] md:hidden">
+        <div className="fixed inset-0 z-[70] lg:hidden">
           <button
             type="button"
             className="absolute inset-0 bg-black/65 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close navigation menu"
           />
-
           <aside
             id="mobile-navigation"
-            className="relative flex h-full w-[84%] max-w-xs flex-col border-r border-border bg-background shadow-2xl"
+            className="relative flex h-full w-[86%] max-w-xs flex-col border-r border-border bg-background shadow-2xl"
             aria-label="Mobile navigation"
           >
             <div className="flex h-16 items-center justify-between border-b border-border px-4">
-              <Link
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2"
-              >
+              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
                 <img src={logo} alt="FIFA World Cup 2026 logo" className="h-9 w-auto" />
                 <div className="leading-tight">
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                    FIFA World Cup
-                  </div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">FIFA World Cup</div>
                   <div className="font-display font-bold gradient-gold-text">2026</div>
                 </div>
               </Link>
-
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary/60 transition-colors hover:bg-secondary"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary/60"
                 aria-label="Close navigation menu"
               >
                 <X className="h-5 w-5" />
@@ -144,7 +141,6 @@ const Layout = () => {
               <div className="space-y-1.5">
                 {navItems.map((item) => {
                   const Icon = item.icon;
-
                   return (
                     <NavLink
                       key={item.to}
@@ -164,6 +160,7 @@ const Layout = () => {
                     </NavLink>
                   );
                 })}
+                <ProfileMenu mobile />
               </div>
             </nav>
 
@@ -176,9 +173,7 @@ const Layout = () => {
         </div>
       )}
 
-      <main className="flex-1">
-        <Outlet />
-      </main>
+      <main className="flex-1"><Outlet /></main>
 
       <footer className="mt-20 border-t border-border">
         <div className="container py-8 text-center text-sm text-muted-foreground">
