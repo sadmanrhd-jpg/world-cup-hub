@@ -1,0 +1,31 @@
+const PERSON_WIKIPEDIA_TITLES: Record<string, string> = {
+  "Chris Wood": "Chris Wood (footballer, born 1991)",
+  "Hossam Hassan": "Hossam Hassan",
+  "Mathew Ryan": "Mathew Ryan",
+  "Miroslav Koubek": "Miroslav Koubek",
+  "Mohamed Ouahbi": "Mohamed Ouahbi",
+  "Georgios Donis": "Georgios Donis",
+  "Carlos Queiroz": "Carlos Queiroz",
+  "Fabio Cannavaro": "Fabio Cannavaro",
+  "Hervé Renard": "Hervé Renard",
+  "Florian Wirtz": "Florian Wirtz",
+  "Vinícius Júnior": "Vinícius Júnior",
+  "Kylian Mbappé": "Kylian Mbappé",
+  "Lamine Yamal": "Lamine Yamal",
+  "Cristiano Ronaldo": "Cristiano Ronaldo",
+  "Kevin De Bruyne": "Kevin De Bruyne",
+  "Luka Modrić": "Luka Modrić",
+  "Edson Álvarez": "Edson Álvarez",
+  "Son Heung-min": "Son Heung-min",
+  "Sadio Mané": "Sadio Mané",
+  "James Rodríguez": "James Rodríguez",
+  "Moisés Caicedo": "Moisés Caicedo",
+  "Riyad Mahrez": "Riyad Mahrez",
+  "Sébastien Haller": "Sébastien Haller",
+  "Edin Džeko": "Edin Džeko",
+  "Cédric Bakambu": "Cédric Bakambu",
+  "Arda Güler": "Arda Güler",
+};
+
+export const getPersonWikipediaTitle = (name: string) =>
+  PERSON_WIKIPEDIA_TITLES[name] ?? name;
