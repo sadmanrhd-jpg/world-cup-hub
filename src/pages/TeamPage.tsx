@@ -171,9 +171,9 @@ const PersonFeatureCard = ({
   gradient: string;
 }) => (
   <article
-    className={`card-elevated relative min-h-[260px] overflow-hidden rounded-3xl border border-primary/25 bg-gradient-to-br ${gradient}`}
+    className={`card-elevated relative min-h-[220px] overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br sm:min-h-[260px] sm:rounded-3xl ${gradient}`}
   >
-    <div className="relative z-10 max-w-[68%] p-6 sm:p-7">
+    <div className="relative z-10 max-w-[62%] p-4 sm:max-w-[68%] sm:p-7">
       <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-primary sm:text-xs">
         <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15">
           <Icon className="h-4 w-4" />
@@ -184,16 +184,16 @@ const PersonFeatureCard = ({
       <SearchableName
         name={name}
         hint={searchHint}
-        className="mt-5 text-3xl font-black leading-tight sm:text-4xl"
+        className="mt-4 text-xl font-black leading-tight sm:mt-5 sm:text-4xl"
       />
 
-      <p className="mt-2 text-sm text-muted-foreground">{detail}</p>
-      <p className="mt-5 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-primary/80">
+      <p className="mt-2 text-xs text-muted-foreground sm:text-sm">{detail}</p>
+      <p className="mt-5 hidden items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-primary/80 sm:inline-flex">
         <Search className="h-3.5 w-3.5" /> Click the name to search
       </p>
     </div>
 
-    <div className="absolute inset-y-0 right-0 w-[48%]">
+    <div className="absolute inset-y-0 right-0 w-[42%] sm:w-[48%]">
       <PersonCutoutImage
         pageTitle={getPersonWikipediaTitle(name)}
         alt={`${name} portrait`}
@@ -319,8 +319,8 @@ const TeamPage = () => {
       : "";
 
   return (
-    <div className="container space-y-12 py-8 sm:py-12">
-      <section className="relative overflow-hidden rounded-[2rem] border border-border bg-gradient-to-br from-primary/12 via-background to-secondary/20 p-5 sm:p-8">
+    <div className="container space-y-8 py-6 sm:space-y-12 sm:py-12">
+      <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/12 via-background to-secondary/20 p-4 sm:rounded-[2rem] sm:p-8">
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
         <Link
           to="/teams"
@@ -329,11 +329,11 @@ const TeamPage = () => {
           ← All teams
         </Link>
 
-        <div className="relative mt-5 flex flex-wrap items-center gap-4 sm:gap-6">
+        <div className="relative mt-5 flex flex-wrap items-start gap-3 sm:items-center sm:gap-6">
           <TeamFlag
             name={team.name}
             slug={team.slug}
-            className="h-20 w-20 rounded-2xl shadow-lg sm:h-24 sm:w-24 md:h-28 md:w-28"
+            className="h-16 w-16 shrink-0 rounded-xl shadow-lg sm:h-24 sm:w-24 sm:rounded-2xl md:h-28 md:w-28"
             eager
           />
 
@@ -341,10 +341,10 @@ const TeamPage = () => {
             <div className="text-xs uppercase tracking-widest text-muted-foreground">
               Group {team.group}
             </div>
-            <h1 className="break-words text-4xl font-black sm:text-5xl md:text-7xl">
+            <h1 className="max-w-full break-words text-3xl font-black leading-[1.05] sm:text-5xl md:text-7xl">
               {team.name}
             </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground sm:mt-3 sm:text-base">
               {info.blurb}
             </p>
           </div>
@@ -353,7 +353,7 @@ const TeamPage = () => {
             type="button"
             onClick={() => setFav(isFav ? null : team.slug)}
             className={[
-              "inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold transition-all sm:px-5 sm:text-sm",
+              "inline-flex w-full items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold transition-all sm:w-auto sm:px-5 sm:text-sm",
               isFav
                 ? "border-primary bg-primary text-primary-foreground glow"
                 : "border-border bg-secondary/50 hover:border-primary/50",
@@ -372,28 +372,28 @@ const TeamPage = () => {
           accent="bg-amber-400/15 text-amber-300"
         >
           {info.titles > 0 ? (
-            <div className="flex min-h-20 flex-wrap items-center gap-2">
+            <div className="flex min-h-16 flex-wrap items-center gap-2 sm:min-h-20">
               {Array.from({ length: info.titles }).map((_, index) => (
                 <span
                   key={index}
-                  className="grid h-12 w-12 place-items-center rounded-2xl border border-amber-300/25 bg-amber-300/10"
+                  className="grid h-10 w-10 place-items-center rounded-xl border border-amber-300/25 bg-amber-300/10 sm:h-12 sm:w-12 sm:rounded-2xl"
                   title={`World Cup title ${index + 1}`}
                 >
-                  <Trophy className="h-6 w-6 text-amber-300" />
+                  <Trophy className="h-5 w-5 text-amber-300 sm:h-6 sm:w-6" />
                 </span>
               ))}
             </div>
           ) : (
-<div className="flex min-h-20 items-center gap-4">
-  <img
-    src={noTitleSticker}
-    alt="Yet to win their first World Cup title"
-    className="h-20 w-20 shrink-0 object-contain"
-  />
-  <p className="max-w-[150px] text-sm font-semibold leading-snug text-muted-foreground">
-    Yet to win their first title
-  </p>
-</div>
+            <div className="flex min-h-16 items-center gap-3 sm:min-h-20 sm:gap-4">
+              <img
+                src={noTitleSticker}
+                alt="Yet to win their first World Cup title"
+                className="h-16 w-16 shrink-0 object-contain sm:h-20 sm:w-20"
+              />
+              <p className="max-w-[145px] text-xs font-semibold leading-snug text-muted-foreground sm:text-sm">
+                Yet to win their first title
+              </p>
+            </div>
           )}
         </InfoCard>
 
@@ -484,7 +484,7 @@ const TeamPage = () => {
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-primary">
               <UsersRound className="h-4 w-4" /> Team roster
             </div>
-            <h2 className="mt-2 text-3xl font-black md:text-4xl">Full Squad</h2>
+            <h2 className="mt-2 text-2xl font-black sm:text-3xl md:text-4xl">Full Squad</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Select any player or coach name to open an automatic Google search.
             </p>
@@ -597,7 +597,7 @@ const TeamPage = () => {
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-primary">
             <Building2 className="h-4 w-4" /> Host venues
           </div>
-          <h2 className="mt-2 text-3xl font-black">Venues at WC 2026</h2>
+          <h2 className="mt-2 text-2xl font-black sm:text-3xl">Venues at WC 2026</h2>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -637,7 +637,7 @@ const TeamPage = () => {
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-primary">
             <Shirt className="h-4 w-4" /> Match day
           </div>
-          <h2 className="mt-2 text-3xl font-black md:text-4xl">2026 Kits</h2>
+          <h2 className="mt-2 text-2xl font-black sm:text-3xl md:text-4xl">2026 Kits</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Home and away jerseys.
           </p>
@@ -690,7 +690,7 @@ const TeamPage = () => {
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-primary">
             <CalendarDays className="h-4 w-4" /> Tournament schedule
           </div>
-          <h2 className="mt-2 text-3xl font-black">Group Stage Fixtures</h2>
+          <h2 className="mt-2 text-2xl font-black sm:text-3xl">Group Stage Fixtures</h2>
         </div>
 
         <div className="space-y-2">
@@ -698,18 +698,18 @@ const TeamPage = () => {
             <Link
               key={fixture.id}
               to={`/matches/${fixture.id}`}
-              className="card-elevated flex flex-wrap items-center gap-4 rounded-xl border border-border px-5 py-3 transition-colors hover:border-primary/50"
+              className="card-elevated grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-xl border border-border px-4 py-3 transition-colors hover:border-primary/50 sm:flex sm:flex-wrap sm:items-center sm:gap-4 sm:px-5"
             >
-              <div className="w-24 text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground sm:w-24">
                 {new Date(fixture.date).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                 })}
               </div>
-              <div className="w-14 font-mono text-xs text-muted-foreground">
+              <div className="text-right font-mono text-xs text-muted-foreground sm:w-14 sm:text-left">
                 {fixture.time}
               </div>
-              <div className="min-w-[180px] flex-1 font-medium">
+              <div className="col-span-2 min-w-0 flex-1 text-sm font-medium sm:min-w-[180px] sm:text-base">
                 {fixture.home}{" "}
                 <span className="text-muted-foreground">vs</span>{" "}
                 {fixture.away}
