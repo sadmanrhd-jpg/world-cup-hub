@@ -6,11 +6,9 @@ import {
   ExternalLink,
   Heart,
   Loader2,
-  MapPin,
   Medal,
   Search,
   Shirt,
-  Sparkles,
   Star,
   Trophy,
   UserRoundCog,
@@ -109,19 +107,19 @@ const InfoCard = ({
   children: ReactNode;
 }) => (
   <div
-    className={`card-elevated relative overflow-hidden rounded-3xl border border-border p-5 sm:p-6 ${className}`}
+    className={`card-elevated relative aspect-square min-w-0 overflow-hidden rounded-2xl border border-border p-3 sm:rounded-3xl sm:p-5 lg:aspect-auto lg:min-h-[220px] ${className}`}
   >
-    <div className={`absolute -right-10 -top-10 h-28 w-28 rounded-full blur-3xl ${accent}`} />
-    <div className="relative">
-      <div className="flex items-center gap-3">
-        <div className={`grid h-11 w-11 place-items-center rounded-2xl ${accent}`}>
-          <Icon className="h-5 w-5" />
+    <div className={`absolute -right-8 -top-8 h-24 w-24 rounded-full blur-3xl sm:-right-10 sm:-top-10 sm:h-28 sm:w-28 ${accent}`} />
+    <div className="relative flex h-full min-w-0 flex-col">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl sm:h-10 sm:w-10 sm:rounded-2xl ${accent}`}>
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
-        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground sm:text-xs">
+        <div className="min-w-0 text-[9px] font-semibold uppercase leading-tight tracking-[0.14em] text-muted-foreground sm:text-[11px] sm:font-bold sm:tracking-[0.18em]">
           {label}
         </div>
       </div>
-      <div className="mt-5">{children}</div>
+      <div className="mt-3 min-w-0 flex-1 sm:mt-4">{children}</div>
     </div>
   </div>
 );
@@ -313,10 +311,6 @@ const TeamPage = () => {
   const highlightRole = currentHighlight
     ? positionLabel(currentHighlight)
     : info.highlightPlayer.role;
-  const titleYears =
-    info.titles > 0
-      ? info.bestFinish.match(/\(([^)]+)\)/)?.[1] ?? ""
-      : "";
 
   return (
     <div className="container space-y-8 py-6 sm:space-y-12 sm:py-12">
@@ -365,32 +359,32 @@ const TeamPage = () => {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid w-full grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <InfoCard
           icon={Trophy}
           label="World Cup titles"
           accent="bg-amber-400/15 text-amber-300"
         >
           {info.titles > 0 ? (
-            <div className="flex min-h-16 flex-wrap items-center gap-2 sm:min-h-20">
+            <div className="flex h-full flex-wrap content-center items-center justify-center gap-1.5 sm:gap-2">
               {Array.from({ length: info.titles }).map((_, index) => (
                 <span
                   key={index}
-                  className="grid h-10 w-10 place-items-center rounded-xl border border-amber-300/25 bg-amber-300/10 sm:h-12 sm:w-12 sm:rounded-2xl"
+                  className="grid h-8 w-8 place-items-center rounded-lg border border-amber-300/25 bg-amber-300/10 sm:h-10 sm:w-10 sm:rounded-xl"
                   title={`World Cup title ${index + 1}`}
                 >
-                  <Trophy className="h-5 w-5 text-amber-300 sm:h-6 sm:w-6" />
+                  <Trophy className="h-4 w-4 text-amber-300 sm:h-5 sm:w-5" />
                 </span>
               ))}
             </div>
           ) : (
-            <div className="flex min-h-16 items-center gap-3 sm:min-h-20 sm:gap-4">
+            <div className="flex h-full items-center gap-2 sm:gap-3">
               <img
                 src={noTitleSticker}
                 alt="Yet to win their first World Cup title"
-                className="h-16 w-16 shrink-0 object-contain sm:h-20 sm:w-20"
+                className="h-12 w-12 shrink-0 object-contain sm:h-16 sm:w-16"
               />
-              <p className="max-w-[145px] text-xs font-semibold leading-snug text-muted-foreground sm:text-sm">
+              <p className="min-w-0 text-[10px] font-semibold leading-snug text-muted-foreground sm:text-sm">
                 Yet to win their first title
               </p>
             </div>
@@ -402,48 +396,26 @@ const TeamPage = () => {
           label="Appearances"
           accent="bg-sky-400/15 text-sky-300"
         >
-          <div className="font-display text-5xl font-black">{info.appearances}</div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            World Cup tournament appearances
-          </p>
+          <div className="flex h-full flex-col justify-center">
+            <div className="font-display text-3xl font-extrabold leading-none sm:text-5xl">
+              {info.appearances}
+            </div>
+            <p className="mt-2 text-[10px] font-medium leading-snug text-muted-foreground sm:text-xs">
+              World Cup appearances
+            </p>
+          </div>
         </InfoCard>
 
         <InfoCard
           icon={Medal}
           label="Best finish"
           accent="bg-violet-400/15 text-violet-300"
-          className="sm:col-span-2"
         >
-          <div className="text-xl font-black leading-snug sm:text-2xl">
-            {info.bestFinish}
+          <div className="flex h-full items-center">
+            <div className="break-words text-sm font-bold leading-snug sm:text-xl sm:font-extrabold">
+              {info.bestFinish}
+            </div>
           </div>
-
-          {info.titles > 0 && titleYears && (
-            <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-              <Sparkles className="h-4 w-4 text-amber-300" />
-              Winning years: {titleYears}
-            </div>
-          )}
-
-          {info.titles === 0 && (
-            <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-              <Star className="h-4 w-4 text-violet-300" />
-              Best tournament achievement
-            </div>
-          )}
-        </InfoCard>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2">
-        <InfoCard
-          icon={MapPin}
-          label="Base camp"
-          accent="bg-emerald-400/15 text-emerald-300"
-        >
-          <div className="text-xl font-black">{team.baseCamp}</div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Tournament training and operations base
-          </p>
         </InfoCard>
 
         <InfoCard
@@ -451,10 +423,14 @@ const TeamPage = () => {
           label="Home stadium"
           accent="bg-fuchsia-400/15 text-fuchsia-300"
         >
-          <div className="text-xl font-black">{team.homeStadium}</div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            National team home venue
-          </p>
+          <div className="flex h-full flex-col justify-center">
+            <div className="break-words text-sm font-bold leading-snug sm:text-xl sm:font-extrabold">
+              {team.homeStadium}
+            </div>
+            <p className="mt-2 text-[10px] font-medium leading-snug text-muted-foreground sm:text-xs">
+              National team home venue
+            </p>
+          </div>
         </InfoCard>
       </section>
 
