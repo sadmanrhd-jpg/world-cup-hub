@@ -43,10 +43,19 @@ const ResultCard = ({
   >
     <div className="mb-2 flex items-center justify-between gap-2 text-[9px] uppercase tracking-wider text-muted-foreground">
       <span>{stageLabel(row.fixture)}</span>
-      <span className={row.live ? "font-bold text-red-500" : shootout ? "font-bold text-primary" : ""}>
+      <span
+        className={
+          row.live
+            ? "font-bold text-red-500"
+            : shootout
+              ? "font-bold text-primary"
+              : ""
+        }
+      >
         {row.live ? row.badge ?? "LIVE" : shootout ? "PEN" : "FT"}
       </span>
     </div>
+
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
       <div className="flex min-w-0 items-center justify-end gap-1.5">
         <span className="truncate text-right text-xs font-semibold sm:text-sm">
@@ -54,6 +63,7 @@ const ResultCard = ({
         </span>
         <MatchFlag name={row.fixture.home} />
       </div>
+
       <div
         className={`rounded-lg px-2.5 py-1 font-mono text-sm font-black tabular-nums ${
           row.live
@@ -63,6 +73,7 @@ const ResultCard = ({
       >
         {row.homeScore} - {row.awayScore}
       </div>
+
       <div className="flex min-w-0 items-center gap-1.5">
         <MatchFlag name={row.fixture.away} />
         <span className="truncate text-xs font-semibold sm:text-sm">
@@ -70,6 +81,7 @@ const ResultCard = ({
         </span>
       </div>
     </div>
+
     {shootout && (
       <div className="mt-2 rounded-lg bg-primary/10 px-2.5 py-1.5 text-center text-[10px] font-bold text-primary">
         {shootoutLabel(shootout)}
@@ -93,6 +105,7 @@ const UpcomingCard = ({ row, now }: { row: MatchFeedRow; now: Date }) => (
           {row.fixture.time} BST
         </div>
       </div>
+
       <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
         <MatchFlag name={row.fixture.home} />
         <span className="truncate text-xs font-semibold">{row.fixture.home}</span>
@@ -101,6 +114,7 @@ const UpcomingCard = ({ row, now }: { row: MatchFeedRow; now: Date }) => (
         <MatchFlag name={row.fixture.away} />
       </div>
     </Link>
+
     <Link
       to={`/mini-game?match=${row.fixture.id}`}
       className="mt-2 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-full border border-primary/35 bg-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-primary transition-all hover:bg-primary hover:text-primary-foreground"
@@ -131,6 +145,7 @@ const SectionHeading = ({
       )}
       <h2 className="text-xl font-bold sm:text-2xl">{title}</h2>
     </div>
+
     <Link to={link} className="text-[11px] text-primary hover:underline">
       View all →
     </Link>
@@ -151,7 +166,14 @@ const HomeMatchUpdates = () => {
     () => enrichMatchFeed(FIXTURES, data, now),
     [data, now],
   );
-  const latest = useMemo(() => selectLatestMatches(rows), [rows]);
+
+  // Never render bundled/stored scores as "latest" before the live feed has
+  // completed its first successful request. That old-data flash was the bug.
+  const hasFreshScoreFeed = data.size > 0;
+  const latest = useMemo(
+    () => (hasFreshScoreFeed ? selectLatestMatches(rows) : []),
+    [hasFreshScoreFeed, rows],
+  );
   const upcoming = useMemo(() => selectUpcomingMatchDay(rows, 4), [rows]);
   const hasLive = latest.some((row) => row.live);
 
@@ -163,6 +185,7 @@ const HomeMatchUpdates = () => {
           live={hasLive}
           link="/fixtures?view=latest#latest-matches"
         />
+
         <div className="space-y-2">
           {latest.map((row) => (
             <ResultCard
@@ -173,12 +196,23 @@ const HomeMatchUpdates = () => {
               )}
             />
           ))}
-          {latest.length === 0 && loading && (
+
+          {!hasFreshScoreFeed && loading && (
             <div className="flex items-center gap-2 rounded-xl border border-border bg-background/30 px-4 py-4 text-xs text-muted-foreground">
-              <RefreshCw className="h-4 w-4 animate-spin" /> Loading match updates…
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              Loading the latest verified results…
             </div>
           )}
-          {latest.length === 0 && !loading && (
+
+          {!hasFreshScoreFeed && !loading && error && (
+            <div className="flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-4 text-xs text-muted-foreground">
+              <WifiOff className="h-4 w-4 shrink-0 text-amber-400" />
+              Latest results are temporarily unavailable. Old stored scores are
+              hidden until the live feed reconnects.
+            </div>
+          )}
+
+          {hasFreshScoreFeed && latest.length === 0 && !loading && (
             <div className="rounded-xl border border-dashed border-border px-4 py-4 text-xs text-muted-foreground">
               No completed or live match is available yet.
             </div>
@@ -191,10 +225,12 @@ const HomeMatchUpdates = () => {
           title="Upcoming Matches"
           link="/fixtures?view=latest#upcoming-matches"
         />
+
         <div className="space-y-2">
           {upcoming.map((row) => (
             <UpcomingCard key={row.fixture.id} row={row} now={now} />
           ))}
+
           {upcoming.length === 0 && (
             <div className="rounded-xl border border-dashed border-border px-4 py-4 text-xs text-muted-foreground">
               No upcoming match is currently scheduled.
@@ -206,9 +242,11 @@ const HomeMatchUpdates = () => {
       {refreshing && !loading && (
         <RefreshCw className="absolute right-3 top-3 h-3.5 w-3.5 animate-spin text-muted-foreground" />
       )}
-      {error && (
+
+      {error && hasFreshScoreFeed && (
         <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-          <WifiOff className="h-3 w-3" /> Stored match data is shown while the feed reconnects.
+          <WifiOff className="h-3 w-3" />
+          The last verified results remain visible while the feed reconnects.
         </div>
       )}
     </div>

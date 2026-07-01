@@ -25,22 +25,34 @@ const addUtcDays = (date: Date, amount: number) => {
   return next;
 };
 
-const laterDate = (a: Date, b: Date) => (a.getTime() > b.getTime() ? a : b);
+const laterDate = (a: Date, b: Date) =>
+  a.getTime() > b.getTime() ? a : b;
 
 const datesBetween = (start: Date, end: Date) => {
   const dates: string[] = [];
-  for (let cursor = new Date(start); cursor <= end; cursor = addUtcDays(cursor, 1)) {
+
+  for (
+    let cursor = new Date(start);
+    cursor <= end;
+    cursor = addUtcDays(cursor, 1)
+  ) {
     dates.push(formatDate(cursor));
   }
+
   return dates;
 };
 
 const endpoint = (dates: string) =>
-  `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dates}&limit=500`;
+  `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dates}&limit=500&_=${Date.now()}`;
 
 async function fetchPayload(dates: string): Promise<EspnPayload> {
   const upstream = await fetch(endpoint(dates), {
-    headers: { Accept: "application/json" },
+    cache: "no-store",
+    headers: {
+      Accept: "application/json",
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
   });
 
   if (!upstream.ok) {
@@ -69,6 +81,7 @@ async function fetchTournamentWindow(): Promise<EspnEvent[]> {
 
   try {
     const payload = await fetchPayload(range);
+
     if ((payload.events?.length ?? 0) > 0) {
       return mergeEvents([payload]);
     }
@@ -87,7 +100,10 @@ async function fetchTournamentWindow(): Promise<EspnEvent[]> {
   );
 
   const payloads = settled
-    .filter((result): result is PromiseFulfilledResult<EspnPayload> => result.status === "fulfilled")
+    .filter(
+      (result): result is PromiseFulfilledResult<EspnPayload> =>
+        result.status === "fulfilled",
+    )
     .map((result) => result.value);
 
   if (payloads.length === 0) {
@@ -97,23 +113,39 @@ async function fetchTournamentWindow(): Promise<EspnEvent[]> {
   return mergeEvents(payloads);
 }
 
-export default async function handler(_request: unknown, response: ApiResponse) {
+export default async function handler(
+  _request: unknown,
+  response: ApiResponse,
+) {
   try {
     const events = await fetchTournamentWindow();
 
+    // Results must never be served from Vercel's stale-while-revalidate cache.
     response.setHeader(
       "Cache-Control",
-      "public, s-maxage=45, stale-while-revalidate=120",
+      "no-store, no-cache, must-revalidate, proxy-revalidate",
     );
+    response.setHeader("CDN-Cache-Control", "no-store");
+    response.setHeader("Vercel-CDN-Cache-Control", "no-store");
+    response.setHeader("Pragma", "no-cache");
+    response.setHeader("Expires", "0");
+
     response.status(200).json({
       source: "ESPN",
       fetchedAt: new Date().toISOString(),
       events,
     });
   } catch (error) {
-    response.setHeader("Cache-Control", "no-store");
+    response.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate",
+    );
+    response.setHeader("CDN-Cache-Control", "no-store");
+    response.setHeader("Vercel-CDN-Cache-Control", "no-store");
+
     response.status(502).json({
-      error: error instanceof Error ? error.message : "Live score request failed",
+      error:
+        error instanceof Error ? error.message : "Live score request failed",
     });
   }
 }
