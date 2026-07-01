@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, UserRound } from "lucide-react";
 
 type WikiPage = {
-  title?: string;
+  missing?: boolean;
+  pageprops?: {
+    disambiguation?: string;
+  };
   thumbnail?: {
     source?: string;
   };
@@ -17,31 +20,26 @@ type WikiPayload = {
 const imageCache = new Map<string, string | null>();
 
 const PersonCutoutImage = ({
-  name,
-  searchHint,
+  pageTitle,
   alt,
   className = "",
 }: {
-  name: string;
-  searchHint: string;
+  pageTitle: string;
   alt: string;
   className?: string;
 }) => {
-  const query = useMemo(
-    () => `${name.trim()} ${searchHint.trim()}`.trim(),
-    [name, searchHint],
-  );
-  const [src, setSrc] = useState<string | null>(() => imageCache.get(query) ?? null);
-  const [loading, setLoading] = useState(() => !imageCache.has(query));
+  const title = useMemo(() => pageTitle.trim(), [pageTitle]);
+  const [src, setSrc] = useState<string | null>(() => imageCache.get(title) ?? null);
+  const [loading, setLoading] = useState(() => Boolean(title) && !imageCache.has(title));
 
   useEffect(() => {
-    if (!query || query === "TBA" || query.startsWith("—")) {
+    if (!title || title === "TBA" || title === "—") {
       setSrc(null);
       setLoading(false);
       return;
     }
 
-    const cached = imageCache.get(query);
+    const cached = imageCache.get(title);
     if (cached !== undefined) {
       setSrc(cached);
       setLoading(false);
@@ -57,11 +55,9 @@ const PersonCutoutImage = ({
         const endpoint = new URL("https://en.wikipedia.org/w/api.php");
         endpoint.searchParams.set("origin", "*");
         endpoint.searchParams.set("action", "query");
-        endpoint.searchParams.set("generator", "search");
-        endpoint.searchParams.set("gsrsearch", query);
-        endpoint.searchParams.set("gsrnamespace", "0");
-        endpoint.searchParams.set("gsrlimit", "6");
-        endpoint.searchParams.set("prop", "pageimages");
+        endpoint.searchParams.set("titles", title);
+        endpoint.searchParams.set("redirects", "1");
+        endpoint.searchParams.set("prop", "pageimages|pageprops");
         endpoint.searchParams.set("piprop", "thumbnail");
         endpoint.searchParams.set("pithumbsize", "900");
         endpoint.searchParams.set("format", "json");
@@ -78,15 +74,17 @@ const PersonCutoutImage = ({
         }
 
         const payload = (await response.json()) as WikiPayload;
+        const page = payload.query?.pages?.[0];
         const image =
-          payload.query?.pages?.find((page) => page.thumbnail?.source)?.thumbnail
-            ?.source ?? null;
+          page && !page.missing && !page.pageprops?.disambiguation
+            ? page.thumbnail?.source ?? null
+            : null;
 
-        imageCache.set(query, image);
+        imageCache.set(title, image);
         setSrc(image);
-      } catch (error) {
+      } catch {
         if (!controller.signal.aborted) {
-          imageCache.set(query, null);
+          imageCache.set(title, null);
           setSrc(null);
         }
       } finally {
@@ -97,7 +95,7 @@ const PersonCutoutImage = ({
     void load();
 
     return () => controller.abort();
-  }, [query]);
+  }, [title]);
 
   return (
     <div
@@ -123,7 +121,7 @@ const PersonCutoutImage = ({
               "linear-gradient(to bottom, black 0%, black 76%, transparent 100%)",
           }}
           onError={() => {
-            imageCache.set(query, null);
+            imageCache.set(title, null);
             setSrc(null);
           }}
         />
