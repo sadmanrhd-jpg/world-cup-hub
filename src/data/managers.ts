@@ -1,5 +1,5 @@
-// Head coaches for the 48 nations heading into WC 2026.
-// Best-effort current as of late 2025/early 2026 cycle.
+// Current head coaches for the 48 FIFA World Cup 2026 teams.
+// The live squad API remains the primary source. This table is the UI fallback.
 export const MANAGERS: Record<string, string> = {
   Brazil: "Carlo Ancelotti",
   Argentina: "Lionel Scaloni",
@@ -18,7 +18,7 @@ export const MANAGERS: Record<string, string> = {
   Canada: "Jesse Marsch",
   Japan: "Hajime Moriyasu",
   "Korea Republic": "Hong Myung-bo",
-  Morocco: "Walid Regragui",
+  Morocco: "Mohamed Ouahbi",
   Senegal: "Pape Thiaw",
   Australia: "Tony Popovic",
   Switzerland: "Murat Yakin",
@@ -31,13 +31,13 @@ export const MANAGERS: Record<string, string> = {
   Paraguay: "Gustavo Alfaro",
   "IR Iran": "Amir Ghalenoei",
   Iran: "Amir Ghalenoei",
-  Tunisia: "Sami Trabelsi",
-  "Saudi Arabia": "Hervé Renard",
-  Ghana: "Otto Addo",
+  Tunisia: "Hervé Renard",
+  "Saudi Arabia": "Georgios Donis",
+  Ghana: "Carlos Queiroz",
   Panama: "Thomas Christiansen",
   "Côte d'Ivoire": "Emerse Faé",
   Scotland: "Steve Clarke",
-  Czechia: "Ivan Hašek",
+  Czechia: "Miroslav Koubek",
   Sweden: "Graham Potter",
   "Bosnia and Herzegovina": "Sergej Barbarez",
   Qatar: "Julen Lopetegui",
@@ -46,11 +46,11 @@ export const MANAGERS: Record<string, string> = {
   "Cabo Verde": "Bubista",
   Curaçao: "Dick Advocaat",
   Jordan: "Jamal Sellami",
-  Uzbekistan: "Timur Kapadze",
+  Uzbekistan: "Fabio Cannavaro",
   "Congo DR": "Sébastien Desabre",
   Iraq: "Graham Arnold",
   "New Zealand": "Darren Bazeley",
-  "Türkiye": "Vincenzo Montella",
+  Türkiye: "Vincenzo Montella",
 };
 
 export const getManager = (name: string): string => MANAGERS[name] ?? "TBA";
