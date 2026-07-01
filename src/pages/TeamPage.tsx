@@ -384,11 +384,16 @@ const TeamPage = () => {
               ))}
             </div>
           ) : (
-            <img
-              src={noTitleSticker}
-              alt="No World Cup title yet"
-              className="h-20 w-20 object-contain"
-            />
+<div className="flex min-h-20 items-center gap-4">
+  <img
+    src={noTitleSticker}
+    alt="Yet to win their first World Cup title"
+    className="h-20 w-20 shrink-0 object-contain"
+  />
+  <p className="max-w-[150px] text-sm font-semibold leading-snug text-muted-foreground">
+    Yet to win their first title
+  </p>
+</div>
           )}
         </InfoCard>
 
