@@ -107,7 +107,7 @@ const InfoCard = ({
   children: ReactNode;
 }) => (
   <div
-    className={`card-elevated relative aspect-square min-w-0 overflow-hidden rounded-2xl border border-border p-3 sm:rounded-3xl sm:p-5 ${className}`}
+    className={`card-elevated relative aspect-square min-w-0 overflow-hidden rounded-2xl border border-border p-3 sm:rounded-3xl sm:p-5 lg:aspect-auto lg:min-h-[220px] ${className}`}
   >
     <div className={`absolute -right-8 -top-8 h-24 w-24 rounded-full blur-3xl sm:-right-10 sm:-top-10 sm:h-28 sm:w-28 ${accent}`} />
     <div className="relative flex h-full min-w-0 flex-col">
@@ -359,7 +359,7 @@ const TeamPage = () => {
         </div>
       </section>
 
-      <section className="mx-auto grid w-full max-w-3xl grid-cols-2 gap-3 sm:gap-4">
+      <section className="grid w-full grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <InfoCard
           icon={Trophy}
           label="World Cup titles"
