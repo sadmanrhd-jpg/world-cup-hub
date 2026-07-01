@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   Building2,
@@ -23,6 +23,7 @@ import StadiumImage from "@/components/StadiumImage";
 import TeamFlag from "@/components/TeamFlag";
 import PersonCutoutImage from "@/components/PersonCutoutImage";
 import { getTeamInfo } from "@/data/teamInfo";
+import { getPersonWikipediaTitle } from "@/data/personMedia";
 import { getManager } from "@/data/managers";
 import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import {
@@ -52,8 +53,47 @@ const POSITION_GROUPS: Array<{
   { key: "FWD", label: "Forwards", short: "FWD" },
 ];
 
+type SquadApiPayload = {
+  players?: WorldCupPlayer[];
+  managers?: WorldCupManager[];
+};
+
 const googleSearchUrl = (name: string, hint: string) =>
   `https://www.google.com/search?q=${encodeURIComponent(`${name} ${hint}`)}`;
+
+const normalizePersonName = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+
+const positionLabel = (player: WorldCupPlayer) =>
+  player.detailedPosition ||
+  ({ GK: "Goalkeeper", DEF: "Defender", MID: "Midfielder", FWD: "Forward" } as const)[
+    player.position
+  ];
+
+const pickCurrentHighlight = (
+  preferredName: string,
+  teamPlayers: WorldCupPlayer[],
+) => {
+  const preferredKey = normalizePersonName(preferredName);
+  const preferred = teamPlayers.find(
+    (player) => normalizePersonName(player.name) === preferredKey,
+  );
+  if (preferred) return preferred;
+
+  return [...teamPlayers].sort((a, b) => {
+    const score = (player: WorldCupPlayer) =>
+      (player.stats?.goals ?? 0) * 30 +
+      (player.stats?.assists ?? 0) * 20 +
+      (player.stats?.starts ?? 0) * 5 +
+      (player.stats?.appearances ?? 0) * 3 +
+      Math.round((player.stats?.minutes ?? 0) / 90);
+    return score(b) - score(a) || a.name.localeCompare(b.name);
+  })[0];
+};
 
 const InfoCard = ({
   icon: Icon,
@@ -66,7 +106,7 @@ const InfoCard = ({
   label: string;
   accent: string;
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) => (
   <div
     className={`card-elevated relative overflow-hidden rounded-3xl border border-border p-5 sm:p-6 ${className}`}
@@ -120,7 +160,6 @@ const PersonFeatureCard = ({
   name,
   detail,
   searchHint,
-  imageHint,
   icon: Icon,
   gradient,
 }: {
@@ -128,7 +167,6 @@ const PersonFeatureCard = ({
   name: string;
   detail: string;
   searchHint: string;
-  imageHint: string;
   icon: LucideIcon;
   gradient: string;
 }) => (
@@ -157,8 +195,7 @@ const PersonFeatureCard = ({
 
     <div className="absolute inset-y-0 right-0 w-[48%]">
       <PersonCutoutImage
-        name={name}
-        searchHint={imageHint}
+        pageTitle={getPersonWikipediaTitle(name)}
         alt={`${name} portrait`}
       />
     </div>
@@ -187,8 +224,30 @@ const TeamPage = () => {
     setSquadLoading(true);
     setSquadError(null);
 
-    Promise.all([fetchWorldCupPlayers(), fetchWorldCupManagers()])
-      .then(([allPlayers, allManagers]) => {
+    const loadTeamData = async () => {
+      try {
+        let allPlayers: WorldCupPlayer[];
+        let allManagers: WorldCupManager[];
+
+        try {
+          const response = await fetch("/api/world-cup-squads?team-profile=v2", {
+            cache: "no-store",
+            headers: { Accept: "application/json" },
+          });
+          if (!response.ok) throw new Error(`Squad API returned ${response.status}`);
+          const payload = (await response.json()) as SquadApiPayload;
+          if (!payload.players?.length || !payload.managers?.length) {
+            throw new Error("Squad API returned incomplete data");
+          }
+          allPlayers = payload.players;
+          allManagers = payload.managers;
+        } catch {
+          [allPlayers, allManagers] = await Promise.all([
+            fetchWorldCupPlayers(),
+            fetchWorldCupManagers(),
+          ]);
+        }
+
         if (cancelled) return;
 
         setPlayers(
@@ -203,8 +262,7 @@ const TeamPage = () => {
         setManager(
           allManagers.find((item) => item.teamSlug === team.slug) ?? null,
         );
-      })
-      .catch((error) => {
+      } catch (error) {
         if (cancelled) return;
         console.error(error);
         setSquadError(
@@ -212,10 +270,12 @@ const TeamPage = () => {
             ? error.message
             : "The squad list could not be loaded.",
         );
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setSquadLoading(false);
-      });
+      }
+    };
+
+    void loadTeamData();
 
     return () => {
       cancelled = true;
@@ -248,6 +308,11 @@ const TeamPage = () => {
   const info = getTeamInfo(team.name);
   const isFav = favSlug === team.slug;
   const managerName = manager?.name || getManager(team.name);
+  const currentHighlight = pickCurrentHighlight(info.highlightPlayer.name, players);
+  const highlightName = currentHighlight?.name || info.highlightPlayer.name;
+  const highlightRole = currentHighlight
+    ? positionLabel(currentHighlight)
+    : info.highlightPlayer.role;
   const titleYears =
     info.titles > 0
       ? info.bestFinish.match(/\(([^)]+)\)/)?.[1] ?? ""
@@ -306,34 +371,25 @@ const TeamPage = () => {
           label="World Cup titles"
           accent="bg-amber-400/15 text-amber-300"
         >
-          <div className="flex items-end justify-between gap-4">
-            <div className="font-display text-5xl font-black text-amber-300">
-              {info.titles}
+          {info.titles > 0 ? (
+            <div className="flex min-h-20 flex-wrap items-center gap-2">
+              {Array.from({ length: info.titles }).map((_, index) => (
+                <span
+                  key={index}
+                  className="grid h-12 w-12 place-items-center rounded-2xl border border-amber-300/25 bg-amber-300/10"
+                  title={`World Cup title ${index + 1}`}
+                >
+                  <Trophy className="h-6 w-6 text-amber-300" />
+                </span>
+              ))}
             </div>
-
-            {info.titles > 0 ? (
-              <div className="flex max-w-[150px] flex-wrap justify-end gap-1.5">
-                {Array.from({ length: info.titles }).map((_, index) => (
-                  <span
-                    key={index}
-                    className="grid h-8 w-8 place-items-center rounded-xl border border-amber-300/25 bg-amber-300/10"
-                    title={`World Cup title ${index + 1}`}
-                  >
-                    <Trophy className="h-4 w-4 text-amber-300" />
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <img
-                src={noTitleSticker}
-                alt="No World Cup title yet"
-                className="h-20 w-20 object-contain"
-              />
-            )}
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            {info.titles > 0 ? "Championships won" : "Still chasing a first title"}
-          </p>
+          ) : (
+            <img
+              src={noTitleSticker}
+              alt="No World Cup title yet"
+              className="h-20 w-20 object-contain"
+            />
+          )}
         </InfoCard>
 
         <InfoCard
@@ -403,17 +459,15 @@ const TeamPage = () => {
           name={managerName}
           detail={`Manager · ${team.name}`}
           searchHint="football manager"
-          imageHint="football manager"
           icon={UserRoundCog}
           gradient="from-rose-500/15 via-background to-background"
         />
 
         <PersonFeatureCard
           label="Highlight player"
-          name={info.highlightPlayer.name}
-          detail={info.highlightPlayer.role}
+          name={highlightName}
+          detail={highlightRole}
           searchHint="footballer"
-          imageHint="footballer"
           icon={Star}
           gradient="from-cyan-500/15 via-background to-background"
         />
