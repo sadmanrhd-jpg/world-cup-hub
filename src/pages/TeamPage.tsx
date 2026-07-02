@@ -19,6 +19,7 @@ import { FIXTURES, getTeam } from "@/data/wc26";
 import { STADIUMS } from "@/data/stadiums";
 import StadiumImage from "@/components/StadiumImage";
 import TeamFlag from "@/components/TeamFlag";
+import TeamFixtures from "@/components/TeamFixtures";
 import PersonCutoutImage from "@/components/PersonCutoutImage";
 import { getTeamInfo } from "@/data/teamInfo";
 import { getPersonWikipediaTitle } from "@/data/personMedia";
@@ -661,42 +662,7 @@ const TeamPage = () => {
         </div>
       </section>
 
-      <section>
-        <div className="mb-5">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-primary">
-            <CalendarDays className="h-4 w-4" /> Tournament schedule
-          </div>
-          <h2 className="mt-2 text-2xl font-black sm:text-3xl">Group Stage Fixtures</h2>
-        </div>
-
-        <div className="space-y-2">
-          {teamFixtures.map((fixture) => (
-            <Link
-              key={fixture.id}
-              to={`/matches/${fixture.id}`}
-              className="card-elevated grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-xl border border-border px-4 py-3 transition-colors hover:border-primary/50 sm:flex sm:flex-wrap sm:items-center sm:gap-4 sm:px-5"
-            >
-              <div className="text-xs text-muted-foreground sm:w-24">
-                {new Date(fixture.date).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </div>
-              <div className="text-right font-mono text-xs text-muted-foreground sm:w-14 sm:text-left">
-                {fixture.time}
-              </div>
-              <div className="col-span-2 min-w-0 flex-1 text-sm font-medium sm:min-w-[180px] sm:text-base">
-                {fixture.home}{" "}
-                <span className="text-muted-foreground">vs</span>{" "}
-                {fixture.away}
-              </div>
-              <div className="hidden text-sm text-muted-foreground sm:block">
-                {fixture.stadium}
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <TeamFixtures teamName={team.name} />
     </div>
   );
 };
