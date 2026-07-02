@@ -20,6 +20,7 @@ import { STADIUMS } from "@/data/stadiums";
 import StadiumImage from "@/components/StadiumImage";
 import TeamFlag from "@/components/TeamFlag";
 import TeamFixtures from "@/components/TeamFixtures";
+import SquadPositionCard from "@/components/SquadPositionCard";
 import PersonCutoutImage from "@/components/PersonCutoutImage";
 import { getTeamInfo } from "@/data/teamInfo";
 import { getPersonWikipediaTitle } from "@/data/personMedia";
@@ -60,39 +61,9 @@ type SquadApiPayload = {
 const googleSearchUrl = (name: string, hint: string) =>
   `https://www.google.com/search?q=${encodeURIComponent(`${name} ${hint}`)}`;
 
-const normalizePersonName = (value: string) =>
-  value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "");
+const GUARDIAN_PLAYER_GUIDE_URL =
+  "https://www.theguardian.com/football/ng-interactive/2026/jun/04/world-cup-2026-complete-player-guide";
 
-const positionLabel = (player: WorldCupPlayer) =>
-  player.detailedPosition ||
-  ({ GK: "Goalkeeper", DEF: "Defender", MID: "Midfielder", FWD: "Forward" } as const)[
-    player.position
-  ];
-
-const pickCurrentHighlight = (
-  preferredName: string,
-  teamPlayers: WorldCupPlayer[],
-) => {
-  const preferredKey = normalizePersonName(preferredName);
-  const preferred = teamPlayers.find(
-    (player) => normalizePersonName(player.name) === preferredKey,
-  );
-  if (preferred) return preferred;
-
-  return [...teamPlayers].sort((a, b) => {
-    const score = (player: WorldCupPlayer) =>
-      (player.stats?.goals ?? 0) * 30 +
-      (player.stats?.assists ?? 0) * 20 +
-      (player.stats?.starts ?? 0) * 5 +
-      (player.stats?.appearances ?? 0) * 3 +
-      Math.round((player.stats?.minutes ?? 0) / 90);
-    return score(b) - score(a) || a.name.localeCompare(b.name);
-  })[0];
-};
 
 const InfoCard = ({
   icon: Icon,
@@ -307,11 +278,8 @@ const TeamPage = () => {
   const info = getTeamInfo(team.name);
   const isFav = favSlug === team.slug;
   const managerName = manager?.name || getManager(team.name);
-  const currentHighlight = pickCurrentHighlight(info.highlightPlayer.name, players);
-  const highlightName = currentHighlight?.name || info.highlightPlayer.name;
-  const highlightRole = currentHighlight
-    ? positionLabel(currentHighlight)
-    : info.highlightPlayer.role;
+  const highlightName = info.highlightPlayer.name;
+  const highlightRole = info.highlightPlayer.role;
 
   return (
     <div className="container space-y-8 py-6 sm:space-y-12 sm:py-12">
@@ -374,7 +342,10 @@ const TeamPage = () => {
                   className="grid h-8 w-8 place-items-center rounded-lg border border-amber-300/25 bg-amber-300/10 sm:h-10 sm:w-10 sm:rounded-xl"
                   title={`World Cup title ${index + 1}`}
                 >
-                  <Trophy className="h-4 w-4 text-amber-300 sm:h-5 sm:w-5" />
+                  <Trophy
+                    aria-hidden="true"
+                    className="h-4 w-4 text-amber-300 sm:h-5 sm:w-5"
+                  />
                 </span>
               ))}
             </div>
@@ -463,7 +434,7 @@ const TeamPage = () => {
             </div>
             <h2 className="mt-2 text-2xl font-black sm:text-3xl md:text-4xl">Full Squad</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Select any player or coach name to open an automatic Google search.
+              Hover over a player on desktop, or tap the player thumbnail or bio button on mobile.
             </p>
           </div>
 
@@ -497,57 +468,31 @@ const TeamPage = () => {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 2xl:grid-cols-2">
             {groupedPlayers.map((group) => (
-              <article
+              <SquadPositionCard
                 key={group.key}
-                className="overflow-hidden rounded-3xl border border-border card-elevated"
-              >
-                <div className="flex items-center justify-between border-b border-border bg-secondary/35 px-5 py-4">
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-                      {group.short}
-                    </div>
-                    <h3 className="text-xl font-black">{group.label}</h3>
-                  </div>
-                  <span className="grid h-9 min-w-9 place-items-center rounded-full bg-primary/10 px-2 text-xs font-black text-primary">
-                    {group.players.length}
-                  </span>
-                </div>
-
-                <div className="divide-y divide-border">
-                  {group.players.map((player) => (
-                    <a
-                      key={player.id}
-                      href={googleSearchUrl(player.name, "footballer")}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-secondary/45 sm:px-5"
-                    >
-                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-secondary/60 font-mono text-xs font-black text-primary">
-                        {player.shirtNumber != null
-                          ? String(player.shirtNumber).padStart(2, "0")
-                          : group.short}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate font-bold transition-colors group-hover:text-primary">
-                            {player.name}
-                          </span>
-                          <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-40 transition-opacity group-hover:opacity-100" />
-                        </div>
-                        <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                          {player.detailedPosition || group.label.slice(0, -1)}
-                          {player.club ? ` · ${player.club}` : ""}
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </article>
+                groupShort={group.short}
+                groupLabel={group.label}
+                players={group.players}
+              />
             ))}
           </div>
+        )}
+
+        {!squadLoading && players.length > 0 && (
+          <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground sm:text-[11px]">
+            © The squad bio has been collected from{" "}
+            <a
+              href={GUARDIAN_PLAYER_GUIDE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-primary hover:underline"
+            >
+              The Guardian
+            </a>
+            . They deserve the credit.
+          </p>
         )}
 
         <div className="mt-4 rounded-2xl border border-border bg-secondary/20 p-4">
