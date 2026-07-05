@@ -1,4 +1,5 @@
 import type { PlayerBio } from "@/data/playerBios";
+import { formatPlayerPosition } from "@/utils/playerPosition";
 
 const RATING_STAGES: Array<{
   key: keyof PlayerBio["ratings"];
@@ -134,7 +135,7 @@ const PlayerBioPanel = ({
           Position
         </div>
         <div className="mt-1 text-xs font-semibold sm:text-sm">
-          {bio.position}
+          {formatPlayerPosition(bio.position)}
         </div>
       </div>
 
