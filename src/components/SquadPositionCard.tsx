@@ -5,6 +5,7 @@ import { getPlayerBio } from "@/data/playerBios";
 import type { PlayerBio } from "@/data/playerBios";
 import PlayerBioModal from "@/components/PlayerBioModal";
 import PlayerBioPanel, { Portrait } from "@/components/PlayerBioPanel";
+import { formatPlayerPosition } from "@/utils/playerPosition";
 
 const googleSearchUrl = (name: string) =>
   `https://www.google.com/search?q=${encodeURIComponent(`${name} footballer`)}`;
@@ -113,7 +114,7 @@ const SquadPositionCard = ({
                     </a>
 
                     <div className="mt-0.5 truncate text-[10px] text-muted-foreground sm:text-[11px]">
-                      {player.detailedPosition || groupLabel.slice(0, -1)}
+                      {formatPlayerPosition(player.position)}
                       {player.club ? ` · ${player.club}` : ""}
                     </div>
                   </div>
