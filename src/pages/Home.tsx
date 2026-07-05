@@ -205,128 +205,128 @@ const Home = () => {
 
   return (
     <div>
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 grid-bg opacity-40" />
-      <div className="container relative grid items-start gap-8 py-10 md:py-16 lg:grid-cols-[0.8fr_1.2fr]">
-        <div className="space-y-5 lg:sticky lg:top-28">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-            June 11 – July 19, 2026
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 grid-bg opacity-40" />
+        <div className="container relative grid items-start gap-8 py-10 md:py-16 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="space-y-5 lg:sticky lg:top-28">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+              FIFA World Cup 2026
+            </div>
+            <h1 className="text-[22.5px] font-bold leading-[1] tracking-tight sm:text-[27px] md:text-[36px]">
+              The world&apos;s <br />
+              biggest <span className="gradient-text">stage</span>.
+            </h1>
+            <p className="max-w-lg text-sm leading-relaxed text-muted-foreground md:text-base">
+              48 nations. 104 matches. 16 host cities across Canada, Mexico and
+              the USA.
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Link
+                to="/fixtures?view=latest#latest-matches"
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-105 glow"
+              >
+                Latest Matches
+              </Link>
+              <Link
+                to="/best-xi"
+                className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15"
+              >
+                <UsersRound className="h-4 w-4" /> Build Team
+              </Link>
+              <Link
+                to="/mini-game"
+                className="rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15"
+              >
+                Mini Game
+              </Link>
+              <Link
+                to="/prediction"
+                className="rounded-full border border-border bg-secondary/50 px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-secondary"
+              >
+                Make Your Prediction
+              </Link>
+              <Link
+                to="/profile"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-5 py-2.5 text-sm font-semibold transition-all hover:border-primary/50 hover:bg-secondary"
+              >
+                <LogIn className="h-4 w-4" />
+                {user ? "View Saved Progress" : "Log in & Save Progress"}
+              </Link>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold leading-[1] tracking-tight sm:text-4xl md:text-5xl">
-            The world&apos;s <br />
-            biggest <span className="gradient-text">stage</span>.
-          </h1>
-          <p className="max-w-lg text-sm leading-relaxed text-muted-foreground md:text-base">
-            48 nations. 104 matches. 16 host cities across Canada, Mexico and
-            the USA. Your home for everything FIFA World Cup 2026™.
-          </p>
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Link
-              to="/fixtures?view=latest#latest-matches"
-              className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-105 glow"
-            >
-              Latest Matches
-            </Link>
-            <Link
-              to="/best-xi"
-              className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15"
-            >
-              <UsersRound className="h-4 w-4" /> Build Team
-            </Link>
-            <Link
-              to="/mini-game"
-              className="rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15"
-            >
-              Mini Game
-            </Link>
-            <Link
-              to="/prediction"
-              className="rounded-full border border-border bg-secondary/50 px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-secondary"
-            >
-              Make Your Prediction
-            </Link>
-            <Link
-              to="/profile"
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-5 py-2.5 text-sm font-semibold transition-all hover:border-primary/50 hover:bg-secondary"
-            >
-              <LogIn className="h-4 w-4" />
-              {user ? "View Saved Progress" : "Log in & Save Progress"}
-            </Link>
-          </div>
+
+          <HomeMatchUpdates />
         </div>
+      </section>
 
-        <HomeMatchUpdates />
-      </div>
-    </section>
+      <InteractiveTeams />
+      <FavoriteSpotlight />
 
-    <InteractiveTeams />
-    <FavoriteSpotlight />
-
-    <section className="container py-12">
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {[
-          { n: "48", l: "Nations" },
-          { n: "104", l: "Matches" },
-          { n: "16", l: "Host Cities" },
-          { n: "39", l: "Days" },
-        ].map((stat) => (
-          <div
-            key={stat.l}
-            className="card-elevated rounded-2xl border border-border p-6"
-          >
-            <div className="font-display text-4xl font-bold md:text-5xl gradient-gold-text">
-              {stat.n}
+      <section className="container py-12">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {[
+            { n: "48", l: "Nations" },
+            { n: "104", l: "Matches" },
+            { n: "16", l: "Host Cities" },
+            { n: "39", l: "Days" },
+          ].map((stat) => (
+            <div
+              key={stat.l}
+              className="card-elevated rounded-2xl border border-border p-6"
+            >
+              <div className="font-display text-4xl font-bold md:text-5xl gradient-gold-text">
+                {stat.n}
+              </div>
+              <div className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
+                {stat.l}
+              </div>
             </div>
-            <div className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
-              {stat.l}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-
-    <section className="container py-12">
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <h2 className="text-3xl font-bold md:text-4xl">All 12 Groups</h2>
-          <p className="mt-1 text-muted-foreground">Tap any group to dive in.</p>
+          ))}
         </div>
-        <Link to="/groups" className="text-sm text-primary hover:underline">
-          View all →
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        {GROUPS.map((group) => (
-          <Link
-            key={group}
-            to={`/groups#${group}`}
-            className="card-elevated rounded-2xl border border-border p-5 transition-all hover:-translate-y-1 hover:border-primary/50"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-xs uppercase tracking-widest text-muted-foreground">
-                Group
-              </span>
-              <span className="font-display text-2xl font-bold gradient-text">
-                {group}
-              </span>
-            </div>
-            <ul className="space-y-1 text-sm">
-              {teamsInGroup(group).map((team) => (
-                <li key={team.slug} className="flex items-center gap-2">
-                  <TeamFlag
-                    name={team.name}
-                    slug={team.slug}
-                    className="h-5 w-5 rounded-md"
-                  />
-                  <span className="truncate">{team.name}</span>
-                </li>
-              ))}
-            </ul>
+      </section>
+
+      <section className="container py-12">
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <h2 className="text-3xl font-bold md:text-4xl">All 12 Groups</h2>
+            <p className="mt-1 text-muted-foreground">Tap any group to dive in.</p>
+          </div>
+          <Link to="/groups" className="text-sm text-primary hover:underline">
+            View all →
           </Link>
-        ))}
-      </div>
-    </section>
+        </div>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {GROUPS.map((group) => (
+            <Link
+              key={group}
+              to={`/groups#${group}`}
+              className="card-elevated rounded-2xl border border-border p-5 transition-all hover:-translate-y-1 hover:border-primary/50"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Group
+                </span>
+                <span className="font-display text-2xl font-bold gradient-text">
+                  {group}
+                </span>
+              </div>
+              <ul className="space-y-1 text-sm">
+                {teamsInGroup(group).map((team) => (
+                  <li key={team.slug} className="flex items-center gap-2">
+                    <TeamFlag
+                      name={team.name}
+                      slug={team.slug}
+                      className="h-5 w-5 rounded-md"
+                    />
+                    <span className="truncate">{team.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };
