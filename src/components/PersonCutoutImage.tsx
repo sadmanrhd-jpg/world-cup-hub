@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, UserRound } from "lucide-react";
+import "@/styles/personFeatureCards.css";
 
 type WikiPage = {
   missing?: boolean;
@@ -29,8 +30,12 @@ const PersonCutoutImage = ({
   className?: string;
 }) => {
   const title = useMemo(() => pageTitle.trim(), [pageTitle]);
-  const [src, setSrc] = useState<string | null>(() => imageCache.get(title) ?? null);
-  const [loading, setLoading] = useState(() => Boolean(title) && !imageCache.has(title));
+  const [src, setSrc] = useState<string | null>(
+    () => imageCache.get(title) ?? null,
+  );
+  const [loading, setLoading] = useState(
+    () => Boolean(title) && !imageCache.has(title),
+  );
 
   useEffect(() => {
     if (!title || title === "TBA" || title === "—") {
@@ -70,7 +75,9 @@ const PersonCutoutImage = ({
         });
 
         if (!response.ok) {
-          throw new Error(`Wikipedia image request returned ${response.status}`);
+          throw new Error(
+            `Wikipedia image request returned ${response.status}`,
+          );
         }
 
         const payload = (await response.json()) as WikiPayload;
@@ -99,13 +106,13 @@ const PersonCutoutImage = ({
 
   return (
     <div
-      className={`relative flex h-full w-full items-end justify-center overflow-hidden ${className}`}
+      className={`person-feature-portrait relative flex items-center justify-center overflow-hidden ${className}`}
       aria-label={alt}
     >
-      <div className="absolute inset-x-6 bottom-0 h-2/3 rounded-full bg-primary/10 blur-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-secondary/30" />
 
       {loading ? (
-        <Loader2 className="relative mb-12 h-9 w-9 animate-spin text-primary/70" />
+        <Loader2 className="relative h-9 w-9 animate-spin text-primary/70" />
       ) : src ? (
         <img
           src={src}
@@ -113,20 +120,14 @@ const PersonCutoutImage = ({
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
-          className="relative h-full w-full object-contain object-bottom drop-shadow-[0_24px_34px_rgba(0,0,0,0.55)]"
-          style={{
-            WebkitMaskImage:
-              "linear-gradient(to bottom, black 0%, black 76%, transparent 100%)",
-            maskImage:
-              "linear-gradient(to bottom, black 0%, black 76%, transparent 100%)",
-          }}
+          className="relative h-full w-full object-cover object-top"
           onError={() => {
             imageCache.set(title, null);
             setSrc(null);
           }}
         />
       ) : (
-        <div className="relative mb-8 grid h-24 w-24 place-items-center rounded-full border border-border bg-secondary/70">
+        <div className="relative grid h-24 w-24 place-items-center rounded-2xl border border-border bg-secondary/70">
           <UserRound className="h-11 w-11 text-muted-foreground" />
         </div>
       )}
