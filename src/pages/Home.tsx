@@ -207,50 +207,50 @@ const Home = () => {
     <div>
       <section className="relative min-w-0 overflow-hidden">
         <div className="absolute inset-0 grid-bg opacity-40" />
-        <div className="container relative grid min-w-0 grid-cols-1 items-start gap-5 py-5 sm:py-7 md:py-9 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="min-w-0 space-y-3 lg:sticky lg:top-24">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+        <div className="container relative grid min-w-0 grid-cols-1 items-start gap-5 py-5 sm:py-7 md:py-9 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8">
+          <div className="min-w-0 space-y-3 lg:sticky lg:top-24 lg:space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground lg:px-4 lg:py-1.5 lg:text-xs">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
               FIFA World Cup 2026
             </div>
-            <h1 className="text-[22.5px] font-bold leading-[1] tracking-tight sm:text-[27px] md:text-[36px]">
+            <h1 className="text-[22.5px] font-bold leading-[1] tracking-tight sm:text-[27px] md:text-[36px] lg:text-[52px] lg:leading-[0.96] xl:text-[58px]">
               The world&apos;s <br />
               biggest <span className="gradient-text">stage</span>.
             </h1>
-            <p className="max-w-lg text-xs leading-relaxed text-muted-foreground sm:text-sm md:text-base">
+            <p className="max-w-lg text-xs leading-relaxed text-muted-foreground sm:text-sm md:text-base lg:max-w-xl lg:text-lg lg:leading-8">
               48 nations. 104 matches. 16 host cities across Canada, Mexico and
               the USA.
             </p>
-            <div className="grid w-full min-w-0 grid-cols-2 gap-2 pt-0.5 sm:flex sm:flex-wrap">
+            <div className="grid w-full min-w-0 grid-cols-2 gap-2 pt-0.5 sm:flex sm:flex-wrap lg:gap-3">
               <Link
                 to="/fixtures?view=latest#latest-matches"
-                className="inline-flex min-w-0 items-center justify-center rounded-full bg-primary px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary-foreground transition-transform hover:scale-105 sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm glow"
+                className="inline-flex min-w-0 items-center justify-center rounded-full bg-primary px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary-foreground transition-transform hover:scale-105 sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base glow"
               >
                 Latest Matches
               </Link>
               <Link
                 to="/best-xi"
-                className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm"
+                className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
               >
-                <UsersRound className="h-4 w-4" /> Build Team
+                <UsersRound className="h-4 w-4 lg:h-5 lg:w-5" /> Build Team
               </Link>
               <Link
                 to="/mini-game"
-                className="inline-flex min-w-0 items-center justify-center rounded-full border border-primary/40 bg-primary/10 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm"
+                className="inline-flex min-w-0 items-center justify-center rounded-full border border-primary/40 bg-primary/10 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
               >
                 Mini Game
               </Link>
               <Link
                 to="/prediction"
-                className="inline-flex min-w-0 items-center justify-center rounded-full border border-border bg-secondary/50 px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors hover:bg-secondary sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm"
+                className="inline-flex min-w-0 items-center justify-center rounded-full border border-border bg-secondary/50 px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors hover:bg-secondary sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
               >
                 Make Your Prediction
               </Link>
               <Link
                 to="/profile"
-                className="col-span-2 inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border border-border bg-background/70 px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-all hover:border-primary/50 hover:bg-secondary sm:col-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm"
+                className="col-span-2 inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border border-border bg-background/70 px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-all hover:border-primary/50 hover:bg-secondary sm:col-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
               >
-                <LogIn className="h-4 w-4" />
+                <LogIn className="h-4 w-4 lg:h-5 lg:w-5" />
                 {user ? "View Saved Progress" : "Log in & Save Progress"}
               </Link>
             </div>

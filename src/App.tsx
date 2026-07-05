@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import FloatingPenaltyChallenge from "./components/FloatingPenaltyChallenge";
+import ScrollToTop from "./components/ScrollToTop";
 import Layout from "./components/Layout";
 import TournamentFixtureSync from "./components/TournamentFixtureSync";
 import BestXI from "./pages/BestXI";
@@ -30,6 +31,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <ScrollToTop />
           <TournamentFixtureSync />
           <FloatingPenaltyChallenge />
           <Routes>

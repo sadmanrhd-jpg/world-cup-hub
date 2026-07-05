@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock3, RefreshCw, WifiOff } from "lucide-react";
+import { Clock3, RefreshCw, Trophy, WifiOff } from "lucide-react";
 import { FIXTURES, getTeamByName } from "@/data/wc26";
 import TeamFlag from "@/components/TeamFlag";
 import { useLiveScores } from "@/hooks/useLiveScores";
@@ -26,133 +26,267 @@ const MatchFlag = ({ name }: { name: string }) => {
     <TeamFlag
       name={name}
       slug={team?.slug}
-      className="h-6 w-6 shrink-0 rounded-md sm:h-7 sm:w-7"
+      className="h-7 w-7 shrink-0 rounded-md sm:h-8 sm:w-8"
     />
   );
 };
 
-const TeamResultRow = ({
+const SectionShell = ({
+  title,
+  link,
+  live = false,
+  children,
+}: {
+  title: string;
+  link: string;
+  live?: boolean;
+  children: React.ReactNode;
+}) => (
+  <section className="min-w-0 overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-primary/[0.07] via-background/40 to-secondary/30">
+    <div className="flex min-w-0 items-center justify-between gap-3 px-4 py-4 sm:px-5">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full border border-primary/35 bg-primary/10 text-primary">
+          {live ? (
+            <>
+              <span className="absolute h-2.5 w-2.5 animate-ping rounded-full bg-red-500 opacity-70" />
+              <span className="relative h-2.5 w-2.5 rounded-full bg-red-500" />
+            </>
+          ) : title === "Upcoming Matches" ? (
+            <Clock3 className="h-5 w-5" />
+          ) : (
+            <Trophy className="h-5 w-5" />
+          )}
+        </span>
+
+        <h2 className="min-w-0 truncate text-xl font-black sm:text-2xl">
+          {title}
+        </h2>
+      </div>
+
+      <Link
+        to={link}
+        className="shrink-0 whitespace-nowrap text-xs font-semibold text-primary hover:underline sm:text-sm"
+      >
+        View all →
+      </Link>
+    </div>
+
+    {children}
+  </section>
+);
+
+const UpcomingTeamRow = ({
+  name,
+  align = "left",
+}: {
+  name: string;
+  align?: "left" | "right";
+}) => (
+  <div
+    className={[
+      "flex min-w-0 items-center gap-2",
+      align === "right" ? "justify-end" : "",
+    ].join(" ")}
+  >
+    {align === "right" ? (
+      <>
+        <span className="min-w-0 truncate text-right text-sm font-black sm:text-base">
+          {name}
+        </span>
+        <MatchFlag name={name} />
+      </>
+    ) : (
+      <>
+        <MatchFlag name={name} />
+        <span className="min-w-0 truncate text-sm font-black sm:text-base">
+          {name}
+        </span>
+      </>
+    )}
+  </div>
+);
+
+const UpcomingMatchTile = ({
+  row,
+  now,
+  index,
+}: {
+  row: MatchFeedRow;
+  now: Date;
+  index: number;
+}) => {
+  const alignRight = index % 2 === 1;
+
+  return (
+    <Link
+      to={`/matches/${row.fixture.id}`}
+      aria-label={`Open ${row.fixture.home} versus ${row.fixture.away} match details`}
+      className="group block min-h-[205px] min-w-0 overflow-hidden bg-background/15 p-4 transition-colors hover:bg-primary/[0.05] sm:p-5"
+    >
+      <div
+        className={[
+          "border-b border-border/70 pb-3",
+          alignRight ? "text-right" : "text-left",
+        ].join(" ")}
+      >
+        <div className="text-sm font-black text-primary sm:text-base">
+          {relativeMatchDay(row.fixture, now)}
+        </div>
+        <div className="mt-0.5 font-mono text-xs text-muted-foreground sm:text-sm">
+          {row.fixture.time} BST
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-4">
+        <UpcomingTeamRow
+          name={row.fixture.home}
+          align={alignRight ? "right" : "left"}
+        />
+
+        <div
+          className={[
+            "text-xs font-black uppercase tracking-[0.28em] text-muted-foreground",
+            alignRight ? "pr-8 text-right" : "pl-9 text-left",
+          ].join(" ")}
+        >
+          vs
+        </div>
+
+        <UpcomingTeamRow
+          name={row.fixture.away}
+          align={alignRight ? "right" : "left"}
+        />
+      </div>
+    </Link>
+  );
+};
+
+const ResultTeamRow = ({
   name,
   score,
+  align = "left",
 }: {
   name: string;
   score: number | string;
+  align?: "left" | "right";
 }) => (
-  <div className="flex min-w-0 items-center gap-2 rounded-lg bg-background/45 px-2.5 py-2">
-    <MatchFlag name={name} />
-    <span className="min-w-0 flex-1 truncate text-xs font-semibold sm:text-sm">
-      {name}
-    </span>
-    <span className="grid h-7 min-w-7 shrink-0 place-items-center rounded-md border border-border bg-background px-1.5 font-mono text-xs font-black tabular-nums">
-      {score}
-    </span>
+  <div
+    className={[
+      "flex min-w-0 items-center gap-2",
+      align === "right" ? "justify-end" : "",
+    ].join(" ")}
+  >
+    {align === "right" ? (
+      <>
+        <span className="grid h-10 min-w-10 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 px-2.5 font-mono text-lg font-black tabular-nums text-primary shadow-sm shadow-primary/20 sm:h-11 sm:min-w-11 sm:text-xl">
+          {score}
+        </span>
+        <span className="min-w-0 truncate text-right text-sm font-black sm:text-base">
+          {name}
+        </span>
+        <MatchFlag name={name} />
+      </>
+    ) : (
+      <>
+        <MatchFlag name={name} />
+        <span className="min-w-0 flex-1 truncate text-sm font-black sm:text-base">
+          {name}
+        </span>
+        <span className="grid h-10 min-w-10 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 px-2.5 font-mono text-lg font-black tabular-nums text-primary shadow-sm shadow-primary/20 sm:h-11 sm:min-w-11 sm:text-xl">
+          {score}
+        </span>
+      </>
+    )}
   </div>
 );
 
-const ResultCard = ({
+const ResultMatchTile = ({
   row,
   shootout,
+  index,
 }: {
   row: MatchFeedRow;
   shootout?: PenaltyShootoutResult;
-}) => (
-  <Link
-    to={`/matches/${row.fixture.id}`}
-    className="group block w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-secondary/30 p-2.5 transition-all hover:border-primary/40 hover:bg-secondary/50 sm:p-3"
-  >
-    <div className="mb-2 flex min-w-0 items-center justify-between gap-2 text-[9px] uppercase tracking-wider text-muted-foreground">
-      <span className="min-w-0 truncate">{stageLabel(row.fixture)}</span>
-      <span
-        className={`shrink-0 ${
-          row.live
-            ? "font-bold text-red-500"
-            : shootout
-              ? "font-bold text-primary"
-              : ""
-        }`}
-      >
-        {row.live ? row.badge ?? "LIVE" : shootout ? "PEN" : "FT"}
-      </span>
-    </div>
+  index: number;
+}) => {
+  const alignRight = index % 2 === 1;
+  const status = row.live ? row.badge ?? "LIVE" : shootout ? "PEN" : "FT";
 
-    <div className="space-y-1.5">
-      <TeamResultRow name={row.fixture.home} score={row.homeScore} />
-      <TeamResultRow name={row.fixture.away} score={row.awayScore} />
-    </div>
-
-    {shootout && (
-      <div className="mt-2 break-words rounded-lg bg-primary/10 px-2 py-1.5 text-center text-[9px] font-bold leading-relaxed text-primary">
-        {shootoutLabel(shootout)}
-      </div>
-    )}
-  </Link>
-);
-
-const UpcomingTeamRow = ({ name }: { name: string }) => (
-  <div className="flex min-w-0 items-center gap-2">
-    <MatchFlag name={name} />
-    <span className="min-w-0 flex-1 truncate text-xs font-semibold sm:text-sm">
-      {name}
-    </span>
-  </div>
-);
-
-const UpcomingCard = ({ row, now }: { row: MatchFeedRow; now: Date }) => (
-  <Link
-    to={`/matches/${row.fixture.id}`}
-    className="group block w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-secondary/20 p-2.5 transition-all hover:border-primary/40 hover:bg-secondary/45 sm:p-3"
-    aria-label={`Open ${row.fixture.home} versus ${row.fixture.away} match details`}
-  >
-    <div className="mb-2 flex min-w-0 items-center justify-between gap-2 border-b border-border/60 pb-2">
-      <span className="min-w-0 truncate text-[10px] font-semibold text-primary sm:text-xs">
-        {relativeMatchDay(row.fixture, now)}
-      </span>
-      <span className="shrink-0 font-mono text-[10px] text-muted-foreground sm:text-xs">
-        {row.fixture.time} BST
-      </span>
-    </div>
-
-    <div className="min-w-0 space-y-1.5">
-      <UpcomingTeamRow name={row.fixture.home} />
-      <div className="pl-8 text-[8px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-        vs
-      </div>
-      <UpcomingTeamRow name={row.fixture.away} />
-    </div>
-  </Link>
-);
-
-const SectionHeading = ({
-  title,
-  live,
-  link,
-}: {
-  title: string;
-  live?: boolean;
-  link: string;
-}) => (
-  <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
-    <div className="flex min-w-0 items-center gap-2">
-      {live ? (
-        <span className="relative flex h-2 w-2 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-        </span>
-      ) : (
-        <Clock3 className="h-3.5 w-3.5 shrink-0 text-primary" />
-      )}
-      <h2 className="min-w-0 truncate text-base font-bold sm:text-lg">
-        {title}
-      </h2>
-    </div>
-
+  return (
     <Link
-      to={link}
-      className="shrink-0 whitespace-nowrap text-[10px] text-primary hover:underline"
+      to={`/matches/${row.fixture.id}`}
+      aria-label={`Open ${row.fixture.home} versus ${row.fixture.away} result`}
+      className="group block min-h-[205px] min-w-0 overflow-hidden bg-background/15 p-4 transition-colors hover:bg-primary/[0.05] sm:p-5"
     >
-      View all →
+      <div
+        className={[
+          "flex min-w-0 items-center justify-between gap-2 border-b border-border/70 pb-3",
+          alignRight ? "flex-row-reverse text-right" : "text-left",
+        ].join(" ")}
+      >
+        <span className="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-muted-foreground sm:text-sm">
+          {stageLabel(row.fixture)}
+        </span>
+        <span
+          className={[
+            "shrink-0 text-sm font-black",
+            row.live ? "text-red-500" : "text-primary",
+          ].join(" ")}
+        >
+          {status}
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-4">
+        <ResultTeamRow
+          name={row.fixture.home}
+          score={row.homeScore}
+          align={alignRight ? "right" : "left"}
+        />
+
+        <div
+          className={[
+            "text-xs font-black uppercase tracking-[0.28em] text-primary/80",
+            alignRight ? "pr-8 text-right" : "pl-9 text-left",
+          ].join(" ")}
+        >
+          vs
+        </div>
+
+        <ResultTeamRow
+          name={row.fixture.away}
+          score={row.awayScore}
+          align={alignRight ? "right" : "left"}
+        />
+      </div>
+
+      {shootout && (
+        <div className="mt-3 break-words rounded-lg bg-primary/10 px-2 py-1.5 text-center text-[9px] font-bold leading-relaxed text-primary">
+          {shootoutLabel(shootout)}
+        </div>
+      )}
     </Link>
+  );
+};
+
+const RestTile = () => (
+  <div className="grid min-h-[205px] place-items-center bg-background/10 p-6 text-center">
+    <div>
+      <div className="text-lg font-black text-primary sm:text-xl">
+        Take Rest
+      </div>
+      <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:text-sm">
+        Get Ready for next match
+      </div>
+    </div>
   </div>
+);
+
+const EmptyGridTile = () => (
+  <div
+    aria-hidden="true"
+    className="hidden min-h-[205px] bg-background/[0.06] sm:block"
+  />
 );
 
 const HomeMatchUpdates = () => {
@@ -178,76 +312,112 @@ const HomeMatchUpdates = () => {
 
   const hasFreshScoreFeed = data.size > 0;
   const latest = useMemo(
-    () => (hasFreshScoreFeed ? selectLatestMatches(rows) : []),
+    () =>
+      hasFreshScoreFeed
+        ? selectLatestMatches(rows).slice(0, 4)
+        : [],
     [hasFreshScoreFeed, rows],
   );
-  const upcoming = useMemo(() => selectUpcomingMatchDay(rows, 3), [rows]);
+  const upcoming = useMemo(() => selectUpcomingMatchDay(rows, 4), [rows]);
+
+  const showRestTile = upcoming.length > 0 && upcoming.length % 2 === 1;
+  const showResultSpacer = latest.length > 0 && latest.length % 2 === 1;
   const hasLive = latest.some((row) => row.live);
 
   return (
     <div className="relative w-full min-w-0 max-w-full space-y-4 overflow-hidden rounded-2xl border border-border/60 bg-secondary/25 p-3 backdrop-blur-sm sm:p-4">
-      <div className="min-w-0">
-        <SectionHeading
-          title="Upcoming Matches"
-          link="/fixtures?view=latest#upcoming-matches"
-        />
+      <SectionShell
+        title="Upcoming Matches"
+        link="/fixtures?view=latest#upcoming-matches"
+      >
+        {upcoming.length > 0 ? (
+          <div className="grid min-w-0 grid-cols-1 overflow-hidden border-t border-border/80 sm:grid-cols-2">
+            {upcoming.map((row, index) => (
+              <div
+                key={row.fixture.id}
+                className={[
+                  "min-w-0",
+                  index % 2 === 1 ? "sm:border-l sm:border-border/80" : "",
+                  index >= 2 ? "border-t border-border/80" : "",
+                ].join(" ")}
+              >
+                <UpcomingMatchTile row={row} now={now} index={index} />
+              </div>
+            ))}
 
-        <div className="min-w-0 space-y-1.5">
-          {upcoming.map((row) => (
-            <UpcomingCard key={row.fixture.id} row={row} now={now} />
-          ))}
+            {showRestTile && (
+              <div className="border-t border-border/80 sm:border-l sm:border-border/80">
+                <RestTile />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="border-t border-border/80 px-4 py-6 text-center text-sm text-muted-foreground">
+            No upcoming match is currently scheduled.
+          </div>
+        )}
+      </SectionShell>
 
-          {upcoming.length === 0 && (
-            <div className="max-w-full break-words rounded-xl border border-dashed border-border px-3 py-3 text-[11px] text-muted-foreground">
-              No upcoming match is currently scheduled.
-            </div>
-          )}
-        </div>
-      </div>
+      <SectionShell
+        title={hasLive ? "Live Matches" : "Latest Results"}
+        live={hasLive}
+        link="/fixtures?view=latest#latest-matches"
+      >
+        {latest.length > 0 ? (
+          <div className="grid min-w-0 grid-cols-1 overflow-hidden border-t border-border/80 sm:grid-cols-2">
+            {latest.map((row, index) => (
+              <div
+                key={row.fixture.id}
+                className={[
+                  "min-w-0",
+                  index % 2 === 1 ? "sm:border-l sm:border-border/80" : "",
+                  index >= 2 ? "border-t border-border/80" : "",
+                ].join(" ")}
+              >
+                <ResultMatchTile
+                  row={row}
+                  index={index}
+                  shootout={shootouts.get(
+                    shootoutPairKey(row.fixture.home, row.fixture.away),
+                  )}
+                />
+              </div>
+            ))}
 
-      <div className="min-w-0">
-        <SectionHeading
-          title={hasLive ? "Live Matches" : "Latest Results"}
-          live={hasLive}
-          link="/fixtures?view=latest#latest-matches"
-        />
+            {showResultSpacer && (
+              <div className="border-t border-border/80 sm:border-l sm:border-border/80">
+                <EmptyGridTile />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="border-t border-border/80">
+            {!hasFreshScoreFeed && loading && (
+              <div className="flex max-w-full items-start gap-2 px-4 py-6 text-sm leading-relaxed text-muted-foreground">
+                <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+                <span className="min-w-0 break-words">
+                  Loading the latest verified results…
+                </span>
+              </div>
+            )}
 
-        <div className="min-w-0 space-y-1.5">
-          {latest.map((row) => (
-            <ResultCard
-              key={row.fixture.id}
-              row={row}
-              shootout={shootouts.get(
-                shootoutPairKey(row.fixture.home, row.fixture.away),
-              )}
-            />
-          ))}
+            {!hasFreshScoreFeed && !loading && error && (
+              <div className="flex max-w-full items-start gap-2 px-4 py-6 text-sm leading-relaxed text-muted-foreground">
+                <WifiOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                <span className="min-w-0 break-words">
+                  Live scores are reconnecting. Old stored scores remain hidden.
+                </span>
+              </div>
+            )}
 
-          {!hasFreshScoreFeed && loading && (
-            <div className="flex max-w-full items-start gap-2 rounded-xl border border-border bg-background/30 px-3 py-3 text-[11px] leading-relaxed text-muted-foreground">
-              <RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin" />
-              <span className="min-w-0 break-words">
-                Loading the latest verified results…
-              </span>
-            </div>
-          )}
-
-          {!hasFreshScoreFeed && !loading && error && (
-            <div className="flex max-w-full items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-3 text-[11px] leading-relaxed text-muted-foreground">
-              <WifiOff className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
-              <span className="min-w-0 break-words">
-                Live scores are reconnecting. Old stored scores remain hidden.
-              </span>
-            </div>
-          )}
-
-          {hasFreshScoreFeed && latest.length === 0 && !loading && (
-            <div className="max-w-full break-words rounded-xl border border-dashed border-border px-3 py-3 text-[11px] text-muted-foreground">
-              No completed or live match is available yet.
-            </div>
-          )}
-        </div>
-      </div>
+            {hasFreshScoreFeed && !loading && (
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                No completed or live match is available yet.
+              </div>
+            )}
+          </div>
+        )}
+      </SectionShell>
 
       <div className="flex min-w-0 items-start justify-between gap-2 text-[9px] leading-relaxed text-muted-foreground">
         <span className="min-w-0 break-words">
