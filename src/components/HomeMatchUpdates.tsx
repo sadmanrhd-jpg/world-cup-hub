@@ -31,6 +31,24 @@ const MatchFlag = ({ name }: { name: string }) => {
   );
 };
 
+const TeamResultRow = ({
+  name,
+  score,
+}: {
+  name: string;
+  score: number | string;
+}) => (
+  <div className="flex min-w-0 items-center gap-2 rounded-lg bg-background/45 px-2.5 py-2">
+    <MatchFlag name={name} />
+    <span className="min-w-0 flex-1 truncate text-xs font-semibold sm:text-sm">
+      {name}
+    </span>
+    <span className="grid h-7 min-w-7 shrink-0 place-items-center rounded-md border border-border bg-background px-1.5 font-mono text-xs font-black tabular-nums">
+      {score}
+    </span>
+  </div>
+);
+
 const ResultCard = ({
   row,
   shootout,
@@ -40,86 +58,66 @@ const ResultCard = ({
 }) => (
   <Link
     to={`/matches/${row.fixture.id}`}
-    className="group block rounded-xl border border-border bg-secondary/30 px-2.5 py-2 transition-all hover:border-primary/40 hover:bg-secondary/50 sm:px-3 sm:py-2.5"
+    className="group block w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-secondary/30 p-2.5 transition-all hover:border-primary/40 hover:bg-secondary/50 sm:p-3"
   >
-    <div className="mb-1.5 flex items-center justify-between gap-2 text-[8px] uppercase tracking-wider text-muted-foreground sm:text-[9px]">
-      <span>{stageLabel(row.fixture)}</span>
+    <div className="mb-2 flex min-w-0 items-center justify-between gap-2 text-[9px] uppercase tracking-wider text-muted-foreground">
+      <span className="min-w-0 truncate">{stageLabel(row.fixture)}</span>
       <span
-        className={
+        className={`shrink-0 ${
           row.live
             ? "font-bold text-red-500"
             : shootout
               ? "font-bold text-primary"
               : ""
-        }
+        }`}
       >
         {row.live ? row.badge ?? "LIVE" : shootout ? "PEN" : "FT"}
       </span>
     </div>
 
-    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2">
-      <div className="flex min-w-0 items-center justify-end gap-1.5">
-        <span className="truncate text-right text-[11px] font-semibold sm:text-xs">
-          {row.fixture.home}
-        </span>
-        <MatchFlag name={row.fixture.home} />
-      </div>
-
-      <div
-        className={`rounded-lg px-2 py-1 font-mono text-xs font-black tabular-nums sm:text-sm ${
-          row.live
-            ? "bg-primary text-primary-foreground"
-            : "border border-border bg-background"
-        }`}
-      >
-        {row.homeScore} - {row.awayScore}
-      </div>
-
-      <div className="flex min-w-0 items-center gap-1.5">
-        <MatchFlag name={row.fixture.away} />
-        <span className="truncate text-[11px] font-semibold sm:text-xs">
-          {row.fixture.away}
-        </span>
-      </div>
+    <div className="space-y-1.5">
+      <TeamResultRow name={row.fixture.home} score={row.homeScore} />
+      <TeamResultRow name={row.fixture.away} score={row.awayScore} />
     </div>
 
     {shootout && (
-      <div className="mt-1.5 rounded-lg bg-primary/10 px-2 py-1 text-center text-[9px] font-bold text-primary">
+      <div className="mt-2 break-words rounded-lg bg-primary/10 px-2 py-1.5 text-center text-[9px] font-bold leading-relaxed text-primary">
         {shootoutLabel(shootout)}
       </div>
     )}
   </Link>
 );
 
+const UpcomingTeamRow = ({ name }: { name: string }) => (
+  <div className="flex min-w-0 items-center gap-2">
+    <MatchFlag name={name} />
+    <span className="min-w-0 flex-1 truncate text-xs font-semibold sm:text-sm">
+      {name}
+    </span>
+  </div>
+);
+
 const UpcomingCard = ({ row, now }: { row: MatchFeedRow; now: Date }) => (
   <Link
     to={`/matches/${row.fixture.id}`}
-    className="group grid grid-cols-[52px_1fr] items-center gap-2 rounded-xl border border-border bg-secondary/20 px-2.5 py-2 transition-all hover:border-primary/40 hover:bg-secondary/45 sm:grid-cols-[60px_1fr] sm:px-3 sm:py-2.5"
+    className="group block w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-secondary/20 p-2.5 transition-all hover:border-primary/40 hover:bg-secondary/45 sm:p-3"
     aria-label={`Open ${row.fixture.home} versus ${row.fixture.away} match details`}
   >
-    <div className="shrink-0">
-      <div className="text-[9px] font-semibold text-primary sm:text-[10px]">
+    <div className="mb-2 flex min-w-0 items-center justify-between gap-2 border-b border-border/60 pb-2">
+      <span className="min-w-0 truncate text-[10px] font-semibold text-primary sm:text-xs">
         {relativeMatchDay(row.fixture, now)}
-      </div>
-      <div className="mt-0.5 font-mono text-[10px] text-muted-foreground sm:text-[11px]">
+      </span>
+      <span className="shrink-0 font-mono text-[10px] text-muted-foreground sm:text-xs">
         {row.fixture.time} BST
-      </div>
+      </span>
     </div>
 
-    <div className="grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-1.5">
-      <div className="flex min-w-0 items-center justify-end gap-1.5">
-        <span className="truncate text-right text-[11px] font-semibold sm:text-xs">
-          {row.fixture.home}
-        </span>
-        <MatchFlag name={row.fixture.home} />
+    <div className="min-w-0 space-y-1.5">
+      <UpcomingTeamRow name={row.fixture.home} />
+      <div className="pl-8 text-[8px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+        vs
       </div>
-      <span className="text-[9px] uppercase text-muted-foreground">vs</span>
-      <div className="flex min-w-0 items-center gap-1.5">
-        <MatchFlag name={row.fixture.away} />
-        <span className="truncate text-[11px] font-semibold sm:text-xs">
-          {row.fixture.away}
-        </span>
-      </div>
+      <UpcomingTeamRow name={row.fixture.away} />
     </div>
   </Link>
 );
@@ -133,20 +131,25 @@ const SectionHeading = ({
   live?: boolean;
   link: string;
 }) => (
-  <div className="mb-2 flex items-center justify-between gap-3">
-    <div className="flex items-center gap-2">
+  <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       {live ? (
-        <span className="relative flex h-2 w-2">
+        <span className="relative flex h-2 w-2 shrink-0">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
         </span>
       ) : (
-        <Clock3 className="h-3.5 w-3.5 text-primary" />
+        <Clock3 className="h-3.5 w-3.5 shrink-0 text-primary" />
       )}
-      <h2 className="text-base font-bold sm:text-lg">{title}</h2>
+      <h2 className="min-w-0 truncate text-base font-bold sm:text-lg">
+        {title}
+      </h2>
     </div>
 
-    <Link to={link} className="text-[10px] text-primary hover:underline">
+    <Link
+      to={link}
+      className="shrink-0 whitespace-nowrap text-[10px] text-primary hover:underline"
+    >
       View all →
     </Link>
   </div>
@@ -182,34 +185,34 @@ const HomeMatchUpdates = () => {
   const hasLive = latest.some((row) => row.live);
 
   return (
-    <div className="relative space-y-4 rounded-2xl border border-border/60 bg-secondary/25 p-3 backdrop-blur-sm sm:p-4">
-      <div>
+    <div className="relative w-full min-w-0 max-w-full space-y-4 overflow-hidden rounded-2xl border border-border/60 bg-secondary/25 p-3 backdrop-blur-sm sm:p-4">
+      <div className="min-w-0">
         <SectionHeading
           title="Upcoming Matches"
           link="/fixtures?view=latest#upcoming-matches"
         />
 
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           {upcoming.map((row) => (
             <UpcomingCard key={row.fixture.id} row={row} now={now} />
           ))}
 
           {upcoming.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border px-3 py-3 text-[11px] text-muted-foreground">
+            <div className="max-w-full break-words rounded-xl border border-dashed border-border px-3 py-3 text-[11px] text-muted-foreground">
               No upcoming match is currently scheduled.
             </div>
           )}
         </div>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <SectionHeading
           title={hasLive ? "Live Matches" : "Latest Results"}
           live={hasLive}
           link="/fixtures?view=latest#latest-matches"
         />
 
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           {latest.map((row) => (
             <ResultCard
               key={row.fixture.id}
@@ -221,29 +224,33 @@ const HomeMatchUpdates = () => {
           ))}
 
           {!hasFreshScoreFeed && loading && (
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-background/30 px-3 py-3 text-[11px] text-muted-foreground">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              Loading the latest verified results…
+            <div className="flex max-w-full items-start gap-2 rounded-xl border border-border bg-background/30 px-3 py-3 text-[11px] leading-relaxed text-muted-foreground">
+              <RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin" />
+              <span className="min-w-0 break-words">
+                Loading the latest verified results…
+              </span>
             </div>
           )}
 
           {!hasFreshScoreFeed && !loading && error && (
-            <div className="flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-3 text-[11px] text-muted-foreground">
-              <WifiOff className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-              Live scores are reconnecting. Old stored scores remain hidden.
+            <div className="flex max-w-full items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-3 text-[11px] leading-relaxed text-muted-foreground">
+              <WifiOff className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <span className="min-w-0 break-words">
+                Live scores are reconnecting. Old stored scores remain hidden.
+              </span>
             </div>
           )}
 
           {hasFreshScoreFeed && latest.length === 0 && !loading && (
-            <div className="rounded-xl border border-dashed border-border px-3 py-3 text-[11px] text-muted-foreground">
+            <div className="max-w-full break-words rounded-xl border border-dashed border-border px-3 py-3 text-[11px] text-muted-foreground">
               No completed or live match is available yet.
             </div>
           )}
         </div>
       </div>
 
-      <div className="flex min-h-4 items-center justify-between gap-3 text-[9px] text-muted-foreground">
-        <span>
+      <div className="flex min-w-0 items-start justify-between gap-2 text-[9px] leading-relaxed text-muted-foreground">
+        <span className="min-w-0 break-words">
           {lastUpdated
             ? `Automatically updated ${lastUpdated.toLocaleTimeString([], {
                 hour: "2-digit",
@@ -254,14 +261,16 @@ const HomeMatchUpdates = () => {
         </span>
 
         {refreshing && !loading && (
-          <RefreshCw className="h-3 w-3 shrink-0 animate-spin" />
+          <RefreshCw className="mt-0.5 h-3 w-3 shrink-0 animate-spin" />
         )}
       </div>
 
       {error && hasFreshScoreFeed && (
-        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
-          <WifiOff className="h-3 w-3" />
-          Last verified data remains visible while the feed reconnects.
+        <div className="flex max-w-full items-start gap-1.5 text-[9px] leading-relaxed text-muted-foreground">
+          <WifiOff className="mt-0.5 h-3 w-3 shrink-0" />
+          <span className="min-w-0 break-words">
+            Last verified data remains visible while the feed reconnects.
+          </span>
         </div>
       )}
     </div>
