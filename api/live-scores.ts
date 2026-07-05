@@ -11,13 +11,21 @@ type EspnPayload = {
 };
 
 const TOURNAMENT_START = new Date("2026-06-11T00:00:00.000Z");
-const FALLBACK_HISTORY_DAYS = 14;
+const TOURNAMENT_END = new Date("2026-07-20T23:59:59.000Z");
+const FALLBACK_HISTORY_DAYS = 7;
+const FALLBACK_FUTURE_DAYS = 7;
 
 const formatDate = (date: Date) =>
   date.toISOString().slice(0, 10).replaceAll("-", "");
 
 const startOfUtcDay = (date: Date) =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+    ),
+  );
 
 const addUtcDays = (date: Date, amount: number) => {
   const next = new Date(date);
@@ -27,6 +35,9 @@ const addUtcDays = (date: Date, amount: number) => {
 
 const laterDate = (a: Date, b: Date) =>
   a.getTime() > b.getTime() ? a : b;
+
+const earlierDate = (a: Date, b: Date) =>
+  a.getTime() < b.getTime() ? a : b;
 
 const datesBetween = (start: Date, end: Date) => {
   const dates: string[] = [];
@@ -46,20 +57,29 @@ const endpoint = (dates: string) =>
   `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dates}&limit=500&_=${Date.now()}`;
 
 async function fetchPayload(dates: string): Promise<EspnPayload> {
-  const upstream = await fetch(endpoint(dates), {
-    cache: "no-store",
-    headers: {
-      Accept: "application/json",
-      "Cache-Control": "no-cache",
-      Pragma: "no-cache",
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
 
-  if (!upstream.ok) {
-    throw new Error(`ESPN returned ${upstream.status}`);
+  try {
+    const upstream = await fetch(endpoint(dates), {
+      signal: controller.signal,
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        "Cache-Control": "no-cache, no-store, max-age=0",
+        Pragma: "no-cache",
+        "User-Agent": "Fan26-Live-Scores/1.0",
+      },
+    });
+
+    if (!upstream.ok) {
+      throw new Error(`ESPN returned ${upstream.status}`);
+    }
+
+    return (await upstream.json()) as EspnPayload;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return (await upstream.json()) as EspnPayload;
 }
 
 const mergeEvents = (payloads: EspnPayload[]) => {
@@ -75,28 +95,33 @@ const mergeEvents = (payloads: EspnPayload[]) => {
 };
 
 async function fetchTournamentWindow(): Promise<EspnEvent[]> {
-  const today = startOfUtcDay(new Date());
-  const end = addUtcDays(today, 1);
-  const range = `${formatDate(TOURNAMENT_START)}-${formatDate(end)}`;
+  const fullRange =
+    `${formatDate(TOURNAMENT_START)}-${formatDate(TOURNAMENT_END)}`;
 
   try {
-    const payload = await fetchPayload(range);
+    const payload = await fetchPayload(fullRange);
 
     if ((payload.events?.length ?? 0) > 0) {
       return mergeEvents([payload]);
     }
   } catch {
-    // Some ESPN scoreboards do not accept ranges consistently.
-    // Fall back to one request per day for the recent history window.
+    // Fall back to daily requests around the current tournament window.
   }
 
-  const recentStart = laterDate(
+  const today = startOfUtcDay(new Date());
+  const fallbackStart = laterDate(
     TOURNAMENT_START,
     addUtcDays(today, -FALLBACK_HISTORY_DAYS),
   );
+  const fallbackEnd = earlierDate(
+    TOURNAMENT_END,
+    addUtcDays(today, FALLBACK_FUTURE_DAYS),
+  );
 
   const settled = await Promise.allSettled(
-    datesBetween(recentStart, end).map((date) => fetchPayload(date)),
+    datesBetween(fallbackStart, fallbackEnd).map((date) =>
+      fetchPayload(date),
+    ),
   );
 
   const payloads = settled
@@ -113,39 +138,40 @@ async function fetchTournamentWindow(): Promise<EspnEvent[]> {
   return mergeEvents(payloads);
 }
 
+const setNoCacheHeaders = (response: ApiResponse) => {
+  response.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+  );
+  response.setHeader("CDN-Cache-Control", "no-store");
+  response.setHeader("Vercel-CDN-Cache-Control", "no-store");
+  response.setHeader("Surrogate-Control", "no-store");
+  response.setHeader("Pragma", "no-cache");
+  response.setHeader("Expires", "0");
+};
+
 export default async function handler(
   _request: unknown,
   response: ApiResponse,
 ) {
+  setNoCacheHeaders(response);
+
   try {
     const events = await fetchTournamentWindow();
+    const fetchedAt = new Date().toISOString();
 
-    // Results must never be served from Vercel's stale-while-revalidate cache.
-    response.setHeader(
-      "Cache-Control",
-      "no-store, no-cache, must-revalidate, proxy-revalidate",
-    );
-    response.setHeader("CDN-Cache-Control", "no-store");
-    response.setHeader("Vercel-CDN-Cache-Control", "no-store");
-    response.setHeader("Pragma", "no-cache");
-    response.setHeader("Expires", "0");
-
+    response.setHeader("X-Live-Scores-Fetched-At", fetchedAt);
     response.status(200).json({
       source: "ESPN",
-      fetchedAt: new Date().toISOString(),
+      fetchedAt,
       events,
     });
   } catch (error) {
-    response.setHeader(
-      "Cache-Control",
-      "no-store, no-cache, must-revalidate, proxy-revalidate",
-    );
-    response.setHeader("CDN-Cache-Control", "no-store");
-    response.setHeader("Vercel-CDN-Cache-Control", "no-store");
-
     response.status(502).json({
       error:
-        error instanceof Error ? error.message : "Live score request failed",
+        error instanceof Error
+          ? error.message
+          : "Live score request failed",
     });
   }
 }

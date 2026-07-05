@@ -207,8 +207,8 @@ const Home = () => {
     <div>
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 grid-bg opacity-40" />
-        <div className="container relative grid items-start gap-8 py-10 md:py-16 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="space-y-5 lg:sticky lg:top-28">
+        <div className="container relative grid items-start gap-5 py-5 sm:py-7 md:py-9 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="space-y-3 lg:sticky lg:top-24">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
               FIFA World Cup 2026
@@ -217,38 +217,38 @@ const Home = () => {
               The world&apos;s <br />
               biggest <span className="gradient-text">stage</span>.
             </h1>
-            <p className="max-w-lg text-sm leading-relaxed text-muted-foreground md:text-base">
+            <p className="max-w-lg text-xs leading-relaxed text-muted-foreground sm:text-sm md:text-base">
               48 nations. 104 matches. 16 host cities across Canada, Mexico and
               the USA.
             </p>
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 pt-0.5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
               <Link
                 to="/fixtures?view=latest#latest-matches"
-                className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-105 glow"
+                className="shrink-0 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-transform hover:scale-105 sm:px-5 sm:py-2.5 sm:text-sm glow"
               >
                 Latest Matches
               </Link>
               <Link
                 to="/best-xi"
-                className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15"
+                className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:px-5 sm:py-2.5 sm:text-sm"
               >
                 <UsersRound className="h-4 w-4" /> Build Team
               </Link>
               <Link
                 to="/mini-game"
-                className="rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15"
+                className="shrink-0 whitespace-nowrap rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:px-5 sm:py-2.5 sm:text-sm"
               >
                 Mini Game
               </Link>
               <Link
                 to="/prediction"
-                className="rounded-full border border-border bg-secondary/50 px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-secondary"
+                className="shrink-0 whitespace-nowrap rounded-full border border-border bg-secondary/50 px-4 py-2 text-xs font-semibold transition-colors hover:bg-secondary sm:px-5 sm:py-2.5 sm:text-sm"
               >
                 Make Your Prediction
               </Link>
               <Link
                 to="/profile"
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-5 py-2.5 text-sm font-semibold transition-all hover:border-primary/50 hover:bg-secondary"
+                className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-border bg-background/70 px-4 py-2 text-xs font-semibold transition-all hover:border-primary/50 hover:bg-secondary sm:px-5 sm:py-2.5 sm:text-sm"
               >
                 <LogIn className="h-4 w-4" />
                 {user ? "View Saved Progress" : "Log in & Save Progress"}
@@ -327,6 +327,26 @@ const Home = () => {
           ))}
         </div>
       </section>
+
+      <Link
+        to="/mini-game"
+        aria-label="Play the Penalty Challenge"
+        title="Play the Penalty Challenge"
+        className="group fixed bottom-5 right-4 z-40 grid h-14 w-14 place-items-center rounded-full border border-primary/40 bg-background/90 shadow-2xl shadow-primary/25 backdrop-blur transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:bottom-7 sm:right-7 sm:h-16 sm:w-16"
+      >
+        <span className="absolute inset-0 animate-ping rounded-full bg-primary/20 motion-reduce:animate-none" />
+        <span className="relative grid h-12 w-12 place-items-center rounded-full bg-primary/15 sm:h-14 sm:w-14">
+          <span
+            aria-hidden="true"
+            className="text-2xl drop-shadow-md animate-[spin_5s_linear_infinite] motion-reduce:animate-none sm:text-3xl"
+          >
+            ⚽
+          </span>
+        </span>
+        <span className="pointer-events-none absolute right-full mr-3 hidden whitespace-nowrap rounded-full border border-border bg-background/95 px-3 py-1.5 text-xs font-bold text-primary opacity-0 shadow-lg transition-opacity group-hover:opacity-100 sm:block">
+          Penalty Challenge
+        </span>
+      </Link>
     </div>
   );
 };

@@ -5,21 +5,32 @@ import {
   applyResolvedFixturesInPlace,
   buildTournamentState,
 } from "@/utils/tournament";
+import { resolveLiveFixtureParticipants } from "@/utils/liveFixtureParticipants";
 
 /**
- * Keeps the shared fixture catalogue synchronized with the current group table.
- * It is rendered before the route tree, so match-detail and live-match components
- * see the same resolved Round-of-32 team names as the Fixtures page.
+ * Keeps the shared fixture catalogue synchronized with group standings,
+ * live scores and the official upcoming-match participant list.
  */
 const TournamentFixtureSync = () => {
-  const { data, pairKey } = useLiveScores(60_000);
+  const { data, pairKey } = useLiveScores();
   const annex = useAnnexC();
+
   const tournament = useMemo(
     () => buildTournamentState(data, pairKey, annex.options),
     [data, pairKey, annex.options],
   );
 
-  applyResolvedFixturesInPlace(tournament.fixtures);
+  const synchronizedFixtures = useMemo(
+    () =>
+      resolveLiveFixtureParticipants(
+        tournament.fixtures,
+        data,
+        pairKey,
+      ),
+    [tournament.fixtures, data, pairKey],
+  );
+
+  applyResolvedFixturesInPlace(synchronizedFixtures);
   return null;
 };
 
