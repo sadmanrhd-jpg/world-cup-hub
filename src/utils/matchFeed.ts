@@ -1,9 +1,16 @@
 import {
-  Fixture,
+  type Fixture,
   fixtureKickoff,
   fixtureStatus,
 } from "@/data/wc26";
-import { LiveMap, teamKey } from "@/hooks/useLiveScores";
+import {
+  type LiveMap,
+  teamKey,
+} from "@/hooks/useLiveScores";
+import {
+  findLiveEventForFixture,
+  resolveLiveFixtureParticipants,
+} from "@/utils/liveFixtureParticipants";
 
 export type MatchFeedRow = {
   fixture: Fixture;
@@ -22,39 +29,80 @@ export const enrichMatchFeed = (
   fixtures: Fixture[],
   liveScores: LiveMap,
   now: Date,
-): MatchFeedRow[] =>
-  fixtures.filter(playable).map((fixture) => {
-    const key = [teamKey(fixture.home), teamKey(fixture.away)].sort().join("|");
-    const event = liveScores.get(key);
-    const sameOrder = event
-      ? teamKey(event.home) === teamKey(fixture.home)
-      : true;
-    const eventHomeScore = event
-      ? sameOrder
-        ? event.homeScore
-        : event.awayScore
-      : null;
-    const eventAwayScore = event
-      ? sameOrder
-        ? event.awayScore
-        : event.homeScore
-      : null;
-    const storedStatus = fixtureStatus(fixture, now);
-    const live = event?.live === true;
-    const finished =
-      event?.finished === true ||
-      (!live && fixture.score != null && storedStatus === "finished");
+): MatchFeedRow[] => {
+  const pairKey = (home: string, away: string) =>
+    [teamKey(home), teamKey(away)].sort().join("|");
 
-    return {
-      fixture,
-      live,
-      finished,
-      upcoming: !live && !finished && storedStatus === "upcoming",
-      homeScore: eventHomeScore ?? fixture.score?.home ?? "-",
-      awayScore: eventAwayScore ?? fixture.score?.away ?? "-",
-      badge: live ? event?.progress ?? "LIVE" : finished ? "FT" : null,
-    };
+  const resolvedFixtures = resolveLiveFixtureParticipants(
+    fixtures,
+    liveScores,
+    pairKey,
+  );
+
+  // Keep the caller's fixture catalogue synchronized too. This makes the
+  // Fixtures page's full schedule, match pages and any other consumers show
+  // the same newly resolved country names after this feed is enriched.
+  resolvedFixtures.forEach((next) => {
+    const current = fixtures.find((fixture) => fixture.id === next.id);
+    if (!current) return;
+
+    Object.assign(current, {
+      date: next.date,
+      time: next.time,
+      home: next.home,
+      away: next.away,
+      group: next.group,
+      stadium: next.stadium,
+      stage: next.stage,
+      score: next.score,
+    });
+
+    if (next.label) current.label = next.label;
+    else delete current.label;
   });
+
+  return resolvedFixtures
+    .filter(playable)
+    .map((fixture) => {
+      const event = findLiveEventForFixture(
+        fixture,
+        liveScores,
+        pairKey,
+      );
+      const sameOrder = event
+        ? teamKey(event.home) === teamKey(fixture.home)
+        : true;
+      const eventHomeScore = event
+        ? sameOrder
+          ? event.homeScore
+          : event.awayScore
+        : null;
+      const eventAwayScore = event
+        ? sameOrder
+          ? event.awayScore
+          : event.homeScore
+        : null;
+      const storedStatus = fixtureStatus(fixture, now);
+      const live = event?.live === true;
+      const finished =
+        event?.finished === true ||
+        (!live && fixture.score != null && storedStatus === "finished");
+
+      return {
+        fixture,
+        live,
+        finished,
+        upcoming: !live && !finished && storedStatus === "upcoming",
+        homeScore: eventHomeScore ?? fixture.score?.home ?? "-",
+        awayScore: eventAwayScore ?? fixture.score?.away ?? "-",
+        badge: live
+          ? event?.progress ?? "LIVE"
+          : finished
+            ? "FT"
+            : null,
+      };
+    });
+};
 
 export const selectLatestMatches = (rows: MatchFeedRow[]) => {
   const liveRows = rows
@@ -72,7 +120,8 @@ export const selectLatestMatches = (rows: MatchFeedRow[]) => {
         fixtureKickoff(a.fixture).getTime(),
     );
 
-  const currentStage = liveRows[0]?.fixture.stage ?? finishedRows[0]?.fixture.stage;
+  const currentStage =
+    liveRows[0]?.fixture.stage ?? finishedRows[0]?.fixture.stage;
   if (!currentStage) return [];
 
   const currentStageLive = liveRows.filter(
@@ -112,6 +161,7 @@ export const selectUpcomingMatchDay = (
 
 export const stageLabel = (fixture: Fixture) => {
   if (fixture.stage === "Group") return `Group ${fixture.group}`;
+
   const labels: Record<Fixture["stage"], string> = {
     Group: "Group Stage",
     R32: "Round of 32",
@@ -121,6 +171,7 @@ export const stageLabel = (fixture: Fixture) => {
     "3rd": "Third-place",
     Final: "Final",
   };
+
   return labels[fixture.stage];
 };
 
@@ -132,7 +183,10 @@ const bstDateKey = (date: Date) =>
     day: "2-digit",
   }).format(date);
 
-export const relativeMatchDay = (fixture: Fixture, now = new Date()) => {
+export const relativeMatchDay = (
+  fixture: Fixture,
+  now = new Date(),
+) => {
   const fixtureDate = fixture.date;
   const today = bstDateKey(now);
   const tomorrowDate = new Date(now);
