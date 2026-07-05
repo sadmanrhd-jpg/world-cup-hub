@@ -178,7 +178,7 @@ const ResultTeamRow = ({
   >
     {align === "right" ? (
       <>
-        <span className="grid h-8 min-w-8 shrink-0 place-items-center rounded-lg border border-border bg-background px-2 font-mono text-sm font-black tabular-nums">
+        <span className="grid h-10 min-w-10 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 px-2.5 font-mono text-lg font-black tabular-nums text-primary shadow-sm shadow-primary/20 sm:h-11 sm:min-w-11 sm:text-xl">
           {score}
         </span>
         <span className="min-w-0 truncate text-right text-sm font-black sm:text-base">
@@ -192,7 +192,7 @@ const ResultTeamRow = ({
         <span className="min-w-0 flex-1 truncate text-sm font-black sm:text-base">
           {name}
         </span>
-        <span className="grid h-8 min-w-8 shrink-0 place-items-center rounded-lg border border-border bg-background px-2 font-mono text-sm font-black tabular-nums">
+        <span className="grid h-10 min-w-10 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 px-2.5 font-mono text-lg font-black tabular-nums text-primary shadow-sm shadow-primary/20 sm:h-11 sm:min-w-11 sm:text-xl">
           {score}
         </span>
       </>
@@ -246,11 +246,11 @@ const ResultMatchTile = ({
 
         <div
           className={[
-            "text-xs font-black uppercase tracking-[0.28em] text-muted-foreground",
+            "text-xs font-black uppercase tracking-[0.28em] text-primary/80",
             alignRight ? "pr-8 text-right" : "pl-9 text-left",
           ].join(" ")}
         >
-          result
+          vs
         </div>
 
         <ResultTeamRow
