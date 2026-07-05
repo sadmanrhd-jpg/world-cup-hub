@@ -1,0 +1,69 @@
+/*
+ * Coach and highlight-player cards use PersonCutoutImage.
+ * :has() lets us improve the current TeamPage cards without duplicating
+ * their content or maintaining a second card component.
+ */
+
+article:has(.person-feature-portrait) {
+  display: flex !important;
+  min-height: 0 !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+article:has(.person-feature-portrait) > div:first-child {
+  position: relative !important;
+  z-index: 10 !important;
+  display: flex !important;
+  max-width: 100% !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding-bottom: 0.75rem !important;
+  text-align: center !important;
+}
+
+article:has(.person-feature-portrait) > div:last-child {
+  position: relative !important;
+  inset: auto !important;
+  display: flex !important;
+  width: 100% !important;
+  height: auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 1rem 1.25rem !important;
+}
+
+.person-feature-portrait {
+  width: min(400px, calc(100vw - 3rem)) !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1;
+  flex: none !important;
+  border: 1px solid hsl(var(--primary) / 0.25);
+  border-radius: 1.75rem;
+  background: hsl(var(--background) / 0.45);
+  box-shadow: 0 24px 55px rgb(0 0 0 / 0.28);
+}
+
+.person-feature-portrait img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+}
+
+@media (min-width: 640px) {
+  article:has(.person-feature-portrait) > div:last-child {
+    padding: 0 1.5rem 1.75rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  article:has(.person-feature-portrait) {
+    min-height: 560px !important;
+  }
+
+  .person-feature-portrait {
+    width: 400px !important;
+    height: 400px !important;
+  }
+}
