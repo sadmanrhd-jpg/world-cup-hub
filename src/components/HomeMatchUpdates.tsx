@@ -26,7 +26,7 @@ const MatchFlag = ({ name }: { name: string }) => {
     <TeamFlag
       name={name}
       slug={team?.slug}
-      className="h-7 w-7 shrink-0 rounded-md sm:h-8 sm:w-8"
+      className="h-5 w-5 shrink-0 rounded-md sm:h-8 sm:w-8"
     />
   );
 };
@@ -43,7 +43,7 @@ const SectionShell = ({
   children: React.ReactNode;
 }) => (
   <section className="min-w-0 overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-primary/[0.07] via-background/40 to-secondary/30">
-    <div className="flex min-w-0 items-center justify-between gap-3 px-4 py-4 sm:px-5">
+    <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
       <div className="flex min-w-0 items-center gap-3">
         <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full border border-primary/35 bg-primary/10 text-primary">
           {live ? (
@@ -58,14 +58,14 @@ const SectionShell = ({
           )}
         </span>
 
-        <h2 className="min-w-0 truncate text-xl font-black sm:text-2xl">
+        <h2 className="min-w-0 truncate text-base font-black leading-tight sm:text-2xl">
           {title}
         </h2>
       </div>
 
       <Link
         to={link}
-        className="shrink-0 whitespace-nowrap text-xs font-semibold text-primary hover:underline sm:text-sm"
+        className="shrink-0 whitespace-nowrap text-[9px] font-semibold text-primary hover:underline sm:text-sm"
       >
         View all →
       </Link>
@@ -90,7 +90,7 @@ const UpcomingTeamRow = ({
   >
     {align === "right" ? (
       <>
-        <span className="min-w-0 truncate text-right text-sm font-black sm:text-base">
+        <span className="min-w-0 truncate text-right text-[10px] font-black leading-tight sm:text-base">
           {name}
         </span>
         <MatchFlag name={name} />
@@ -98,7 +98,7 @@ const UpcomingTeamRow = ({
     ) : (
       <>
         <MatchFlag name={name} />
-        <span className="min-w-0 truncate text-sm font-black sm:text-base">
+        <span className="min-w-0 truncate text-[10px] font-black leading-tight sm:text-base">
           {name}
         </span>
       </>
@@ -121,7 +121,7 @@ const UpcomingMatchTile = ({
     <Link
       to={`/matches/${row.fixture.id}`}
       aria-label={`Open ${row.fixture.home} versus ${row.fixture.away} match details`}
-      className="group block min-h-[205px] min-w-0 overflow-hidden bg-background/15 p-4 transition-colors hover:bg-primary/[0.05] sm:p-5"
+      className="group block min-h-[150px] min-w-0 overflow-hidden bg-background/15 p-2.5 transition-colors hover:bg-primary/[0.05] sm:min-h-[205px] sm:p-5"
     >
       <div
         className={[
@@ -137,7 +137,7 @@ const UpcomingMatchTile = ({
         </div>
       </div>
 
-      <div className="mt-4 space-y-4">
+      <div className="mt-3 space-y-2.5 sm:mt-4 sm:space-y-4">
         <UpcomingTeamRow
           name={row.fixture.home}
           align={alignRight ? "right" : "left"}
@@ -145,8 +145,8 @@ const UpcomingMatchTile = ({
 
         <div
           className={[
-            "text-xs font-black uppercase tracking-[0.28em] text-muted-foreground",
-            alignRight ? "pr-8 text-right" : "pl-9 text-left",
+            "text-[9px] font-black uppercase tracking-[0.18em] text-muted-foreground sm:text-xs sm:tracking-[0.28em]",
+            alignRight ? "pr-6 text-right sm:pr-8" : "pl-7 text-left sm:pl-9",
           ].join(" ")}
         >
           vs
@@ -178,10 +178,10 @@ const ResultTeamRow = ({
   >
     {align === "right" ? (
       <>
-        <span className="grid h-10 min-w-10 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 px-2.5 font-mono text-lg font-black tabular-nums text-primary shadow-sm shadow-primary/20 sm:h-11 sm:min-w-11 sm:text-xl">
+        <span className="grid h-8 min-w-8 shrink-0 place-items-center rounded-lg border border-primary/50 bg-primary/15 px-1.5 font-mono text-base font-black tabular-nums text-primary shadow-sm shadow-primary/20 sm:h-11 sm:min-w-11 sm:rounded-xl sm:px-2.5 sm:text-xl">
           {score}
         </span>
-        <span className="min-w-0 truncate text-right text-sm font-black sm:text-base">
+        <span className="min-w-0 truncate text-right text-[10px] font-black leading-tight sm:text-base">
           {name}
         </span>
         <MatchFlag name={name} />
@@ -189,10 +189,10 @@ const ResultTeamRow = ({
     ) : (
       <>
         <MatchFlag name={name} />
-        <span className="min-w-0 flex-1 truncate text-sm font-black sm:text-base">
+        <span className="min-w-0 flex-1 truncate text-[10px] font-black leading-tight sm:text-base">
           {name}
         </span>
-        <span className="grid h-10 min-w-10 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 px-2.5 font-mono text-lg font-black tabular-nums text-primary shadow-sm shadow-primary/20 sm:h-11 sm:min-w-11 sm:text-xl">
+        <span className="grid h-8 min-w-8 shrink-0 place-items-center rounded-lg border border-primary/50 bg-primary/15 px-1.5 font-mono text-base font-black tabular-nums text-primary shadow-sm shadow-primary/20 sm:h-11 sm:min-w-11 sm:rounded-xl sm:px-2.5 sm:text-xl">
           {score}
         </span>
       </>
@@ -216,7 +216,7 @@ const ResultMatchTile = ({
     <Link
       to={`/matches/${row.fixture.id}`}
       aria-label={`Open ${row.fixture.home} versus ${row.fixture.away} result`}
-      className="group block min-h-[205px] min-w-0 overflow-hidden bg-background/15 p-4 transition-colors hover:bg-primary/[0.05] sm:p-5"
+      className="group block min-h-[150px] min-w-0 overflow-hidden bg-background/15 p-2.5 transition-colors hover:bg-primary/[0.05] sm:min-h-[205px] sm:p-5"
     >
       <div
         className={[
@@ -224,12 +224,12 @@ const ResultMatchTile = ({
           alignRight ? "flex-row-reverse text-right" : "text-left",
         ].join(" ")}
       >
-        <span className="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-muted-foreground sm:text-sm">
+        <span className="min-w-0 truncate text-[9px] font-bold uppercase tracking-wider text-muted-foreground sm:text-sm">
           {stageLabel(row.fixture)}
         </span>
         <span
           className={[
-            "shrink-0 text-sm font-black",
+            "shrink-0 text-xs font-black sm:text-sm",
             row.live ? "text-red-500" : "text-primary",
           ].join(" ")}
         >
@@ -237,7 +237,7 @@ const ResultMatchTile = ({
         </span>
       </div>
 
-      <div className="mt-4 space-y-4">
+      <div className="mt-3 space-y-2.5 sm:mt-4 sm:space-y-4">
         <ResultTeamRow
           name={row.fixture.home}
           score={row.homeScore}
@@ -246,8 +246,8 @@ const ResultMatchTile = ({
 
         <div
           className={[
-            "text-xs font-black uppercase tracking-[0.28em] text-primary/80",
-            alignRight ? "pr-8 text-right" : "pl-9 text-left",
+            "text-[9px] font-black uppercase tracking-[0.18em] text-primary/80 sm:text-xs sm:tracking-[0.28em]",
+            alignRight ? "pr-6 text-right sm:pr-8" : "pl-7 text-left sm:pl-9",
           ].join(" ")}
         >
           vs
@@ -270,12 +270,12 @@ const ResultMatchTile = ({
 };
 
 const RestTile = () => (
-  <div className="grid min-h-[205px] place-items-center bg-background/10 p-6 text-center">
+  <div className="grid min-h-[150px] place-items-center bg-background/10 p-3 text-center sm:min-h-[205px] sm:p-6">
     <div>
-      <div className="text-lg font-black text-primary sm:text-xl">
+      <div className="text-sm font-black text-primary sm:text-xl">
         Take Rest
       </div>
-      <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:text-sm">
+      <div className="mt-1 text-[9px] font-semibold uppercase leading-relaxed tracking-[0.1em] text-muted-foreground sm:text-sm sm:tracking-[0.16em]">
         Get Ready for next match
       </div>
     </div>
@@ -285,7 +285,7 @@ const RestTile = () => (
 const EmptyGridTile = () => (
   <div
     aria-hidden="true"
-    className="hidden min-h-[205px] bg-background/[0.06] sm:block"
+    className="min-h-[150px] bg-background/[0.06] sm:min-h-[205px]"
   />
 );
 
@@ -331,13 +331,13 @@ const HomeMatchUpdates = () => {
         link="/fixtures?view=latest#upcoming-matches"
       >
         {upcoming.length > 0 ? (
-          <div className="grid min-w-0 grid-cols-1 overflow-hidden border-t border-border/80 sm:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-2 overflow-hidden border-t border-border/80">
             {upcoming.map((row, index) => (
               <div
                 key={row.fixture.id}
                 className={[
                   "min-w-0",
-                  index % 2 === 1 ? "sm:border-l sm:border-border/80" : "",
+                  index % 2 === 1 ? "border-l border-border/80" : "",
                   index >= 2 ? "border-t border-border/80" : "",
                 ].join(" ")}
               >
@@ -346,7 +346,7 @@ const HomeMatchUpdates = () => {
             ))}
 
             {showRestTile && (
-              <div className="border-t border-border/80 sm:border-l sm:border-border/80">
+              <div className="border-l border-t border-border/80">
                 <RestTile />
               </div>
             )}
@@ -364,13 +364,13 @@ const HomeMatchUpdates = () => {
         link="/fixtures?view=latest#latest-matches"
       >
         {latest.length > 0 ? (
-          <div className="grid min-w-0 grid-cols-1 overflow-hidden border-t border-border/80 sm:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-2 overflow-hidden border-t border-border/80">
             {latest.map((row, index) => (
               <div
                 key={row.fixture.id}
                 className={[
                   "min-w-0",
-                  index % 2 === 1 ? "sm:border-l sm:border-border/80" : "",
+                  index % 2 === 1 ? "border-l border-border/80" : "",
                   index >= 2 ? "border-t border-border/80" : "",
                 ].join(" ")}
               >
@@ -385,7 +385,7 @@ const HomeMatchUpdates = () => {
             ))}
 
             {showResultSpacer && (
-              <div className="border-t border-border/80 sm:border-l sm:border-border/80">
+              <div className="border-l border-t border-border/80">
                 <EmptyGridTile />
               </div>
             )}
