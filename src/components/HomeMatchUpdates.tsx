@@ -181,6 +181,25 @@ const HomeMatchUpdates = () => {
     <div className="relative space-y-6 rounded-2xl border border-border/60 bg-secondary/25 p-4 backdrop-blur-sm sm:p-5">
       <div>
         <SectionHeading
+          title="Upcoming Matches"
+          link="/fixtures?view=latest#upcoming-matches"
+        />
+
+        <div className="space-y-2">
+          {upcoming.map((row) => (
+            <UpcomingCard key={row.fixture.id} row={row} now={now} />
+          ))}
+
+          {upcoming.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border px-4 py-4 text-xs text-muted-foreground">
+              No upcoming match is currently scheduled.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <SectionHeading
           title={hasLive ? "Live Matches" : "Latest Results"}
           live={hasLive}
           link="/fixtures?view=latest#latest-matches"
@@ -215,25 +234,6 @@ const HomeMatchUpdates = () => {
           {hasFreshScoreFeed && latest.length === 0 && !loading && (
             <div className="rounded-xl border border-dashed border-border px-4 py-4 text-xs text-muted-foreground">
               No completed or live match is available yet.
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <SectionHeading
-          title="Upcoming Matches"
-          link="/fixtures?view=latest#upcoming-matches"
-        />
-
-        <div className="space-y-2">
-          {upcoming.map((row) => (
-            <UpcomingCard key={row.fixture.id} row={row} now={now} />
-          ))}
-
-          {upcoming.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border px-4 py-4 text-xs text-muted-foreground">
-              No upcoming match is currently scheduled.
             </div>
           )}
         </div>
