@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 export type LiveEvent = {
   id: string;
@@ -76,10 +76,64 @@ const ALIASES: Record<string, string> = {
   iran: "iriran",
 };
 
+const CANONICAL_NAMES: Record<string, string> = {
+  mexico: "Mexico",
+  southafrica: "South Africa",
+  korearepublic: "Korea Republic",
+  czechia: "Czechia",
+  canada: "Canada",
+  bosniaherzegovina: "Bosnia and Herzegovina",
+  qatar: "Qatar",
+  switzerland: "Switzerland",
+  haiti: "Haiti",
+  scotland: "Scotland",
+  brazil: "Brazil",
+  morocco: "Morocco",
+  usa: "USA",
+  paraguay: "Paraguay",
+  australia: "Australia",
+  turkiye: "Türkiye",
+  cotedivoire: "Côte d'Ivoire",
+  ecuador: "Ecuador",
+  germany: "Germany",
+  curacao: "Curaçao",
+  netherlands: "Netherlands",
+  japan: "Japan",
+  sweden: "Sweden",
+  tunisia: "Tunisia",
+  iriran: "IR Iran",
+  newzealand: "New Zealand",
+  belgium: "Belgium",
+  egypt: "Egypt",
+  saudiarabia: "Saudi Arabia",
+  uruguay: "Uruguay",
+  spain: "Spain",
+  caboverde: "Cabo Verde",
+  france: "France",
+  senegal: "Senegal",
+  iraq: "Iraq",
+  norway: "Norway",
+  argentina: "Argentina",
+  algeria: "Algeria",
+  austria: "Austria",
+  jordan: "Jordan",
+  portugal: "Portugal",
+  congodr: "Congo DR",
+  uzbekistan: "Uzbekistan",
+  colombia: "Colombia",
+  ghana: "Ghana",
+  panama: "Panama",
+  england: "England",
+  croatia: "Croatia",
+};
+
 export const teamKey = (value: string) => {
   const normalized = norm(value);
   return ALIASES[normalized] ?? normalized;
 };
+
+export const canonicalTeamName = (value: string) =>
+  CANONICAL_NAMES[teamKey(value)] ?? value.trim();
 
 const pairKey = (a: string, b: string) =>
   [teamKey(a), teamKey(b)].sort().join("|");
@@ -88,7 +142,9 @@ const formatEspnDate = (date: Date) =>
   date.toISOString().slice(0, 10).replaceAll("-", "");
 
 const TOURNAMENT_START = new Date("2026-06-11T00:00:00.000Z");
-const FALLBACK_HISTORY_DAYS = 14;
+const TOURNAMENT_END = new Date("2026-07-20T23:59:59.000Z");
+const FALLBACK_HISTORY_DAYS = 7;
+const FALLBACK_FUTURE_DAYS = 7;
 
 const startOfUtcDay = (date: Date) =>
   new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -102,22 +158,36 @@ const addUtcDays = (date: Date, amount: number) => {
 const laterDate = (a: Date, b: Date) =>
   a.getTime() > b.getTime() ? a : b;
 
+const earlierDate = (a: Date, b: Date) =>
+  a.getTime() < b.getTime() ? a : b;
+
 const datesBetween = (start: Date, end: Date) => {
   const dates: string[] = [];
-  for (let cursor = new Date(start); cursor <= end; cursor = addUtcDays(cursor, 1)) {
+
+  for (
+    let cursor = new Date(start);
+    cursor <= end;
+    cursor = addUtcDays(cursor, 1)
+  ) {
     dates.push(formatEspnDate(cursor));
   }
+
   return dates;
 };
 
 const espnEndpoint = (dates: string) =>
   `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dates}&limit=500`;
 
+const withCacheBuster = (url: string) =>
+  `${url}${url.includes("?") ? "&" : "?"}_=${Date.now()}`;
+
 const getTeamName = (competitor?: EspnCompetitor) =>
-  competitor?.team?.displayName ??
-  competitor?.team?.shortDisplayName ??
-  competitor?.team?.name ??
-  "";
+  canonicalTeamName(
+    competitor?.team?.displayName ??
+      competitor?.team?.shortDisplayName ??
+      competitor?.team?.name ??
+      "",
+  );
 
 const getStatus = (event: EspnEvent) =>
   event.status ?? event.competitions?.[0]?.status;
@@ -172,11 +242,18 @@ const parseEvent = (event: EspnEvent): LiveEvent | null => {
   };
 };
 
-async function fetchJson(url: string, signal: AbortSignal): Promise<EspnPayload> {
-  const response = await fetch(url, {
+async function fetchJson(
+  url: string,
+  signal: AbortSignal,
+): Promise<EspnPayload> {
+  const response = await fetch(withCacheBuster(url), {
     signal,
     cache: "no-store",
-    headers: { Accept: "application/json" },
+    headers: {
+      Accept: "application/json",
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
   });
 
   if (!response.ok) {
@@ -199,31 +276,40 @@ const mergePayloads = (payloads: EspnPayload[]): EspnPayload => {
 };
 
 async function fetchDirect(signal: AbortSignal): Promise<EspnPayload> {
-  const today = startOfUtcDay(new Date());
-  const end = addUtcDays(today, 1);
-  const range = `${formatEspnDate(TOURNAMENT_START)}-${formatEspnDate(end)}`;
+  const fullTournamentRange =
+    `${formatEspnDate(TOURNAMENT_START)}-${formatEspnDate(TOURNAMENT_END)}`;
 
   try {
-    const payload = await fetchJson(espnEndpoint(range), signal);
+    const payload = await fetchJson(
+      espnEndpoint(fullTournamentRange),
+      signal,
+    );
+
     if ((payload.events?.length ?? 0) > 0) return payload;
   } catch {
-    // Fall back to recent daily requests when range requests are unavailable.
+    // Fall back to daily requests around the current match window.
   }
 
-  const recentStart = laterDate(
+  const today = startOfUtcDay(new Date());
+  const fallbackStart = laterDate(
     TOURNAMENT_START,
     addUtcDays(today, -FALLBACK_HISTORY_DAYS),
   );
+  const fallbackEnd = earlierDate(
+    TOURNAMENT_END,
+    addUtcDays(today, FALLBACK_FUTURE_DAYS),
+  );
 
   const settled = await Promise.allSettled(
-    datesBetween(recentStart, end).map((date) =>
+    datesBetween(fallbackStart, fallbackEnd).map((date) =>
       fetchJson(espnEndpoint(date), signal),
     ),
   );
 
   const payloads = settled
-    .filter((result): result is PromiseFulfilledResult<EspnPayload> =>
-      result.status === "fulfilled",
+    .filter(
+      (result): result is PromiseFulfilledResult<EspnPayload> =>
+        result.status === "fulfilled",
     )
     .map((result) => result.value);
 
@@ -250,75 +336,173 @@ async function fetchLiveEvents(signal: AbortSignal): Promise<LiveEvent[]> {
 
 export type LiveMap = Map<string, LiveEvent>;
 
-export function useLiveScores(refreshMs = 60_000) {
-  const [data, setData] = useState<LiveMap>(new Map());
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [error, setError] = useState<string | null>(null);
+type LiveSnapshot = {
+  data: LiveMap;
+  loading: boolean;
+  refreshing: boolean;
+  lastUpdated: Date | null;
+  error: string | null;
+};
 
-  useEffect(() => {
-    let cancelled = false;
-    let inFlight = false;
-    let controller: AbortController | null = null;
+let snapshot: LiveSnapshot = {
+  data: new Map(),
+  loading: true,
+  refreshing: false,
+  lastUpdated: null,
+  error: null,
+};
 
-    const load = async () => {
-      if (inFlight || document.visibilityState === "hidden") return;
+const listeners = new Set<() => void>();
+let subscriberCount = 0;
+let pollTimer: number | null = null;
+let activeRequest: Promise<void> | null = null;
+let requestController: AbortController | null = null;
 
-      inFlight = true;
-      controller = new AbortController();
-      setRefreshing(true);
+const emit = () => listeners.forEach((listener) => listener());
 
-      try {
-        const events = await fetchLiveEvents(controller.signal);
-        if (cancelled) return;
+const updateSnapshot = (patch: Partial<LiveSnapshot>) => {
+  snapshot = { ...snapshot, ...patch };
+  emit();
+};
 
-        const map: LiveMap = new Map();
-        for (const event of events) {
-          map.set(pairKey(event.home, event.away), event);
-        }
+const getSnapshot = () => snapshot;
+const getServerSnapshot = () => snapshot;
 
-        setData(map);
-        setError(null);
-        setLastUpdated(new Date());
-      } catch (requestError) {
-        if (cancelled || controller.signal.aborted) return;
-        setError(
+const subscribe = (listener: () => void) => {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+};
+
+const clearPollTimer = () => {
+  if (pollTimer != null && typeof window !== "undefined") {
+    window.clearTimeout(pollTimer);
+  }
+  pollTimer = null;
+};
+
+const nextPollDelay = () => {
+  const hasLiveMatch = Array.from(snapshot.data.values()).some(
+    (event) => event.live,
+  );
+
+  return hasLiveMatch ? 15_000 : 45_000;
+};
+
+const scheduleNextPoll = () => {
+  if (typeof window === "undefined" || subscriberCount === 0) return;
+
+  clearPollTimer();
+  pollTimer = window.setTimeout(async () => {
+    if (document.visibilityState === "visible") {
+      await refreshLiveScores();
+    }
+    scheduleNextPoll();
+  }, nextPollDelay());
+};
+
+const refreshLiveScores = async () => {
+  if (activeRequest) return activeRequest;
+
+  requestController = new AbortController();
+  const timeout = window.setTimeout(
+    () => requestController?.abort(),
+    15_000,
+  );
+
+  updateSnapshot({ refreshing: true });
+
+  activeRequest = (async () => {
+    try {
+      const events = await fetchLiveEvents(requestController!.signal);
+      const map: LiveMap = new Map();
+
+      for (const event of events) {
+        map.set(pairKey(event.home, event.away), event);
+      }
+
+      updateSnapshot({
+        data: map,
+        loading: false,
+        refreshing: false,
+        lastUpdated: new Date(),
+        error: null,
+      });
+    } catch (requestError) {
+      if (requestController?.signal.aborted) {
+        updateSnapshot({
+          loading: false,
+          refreshing: false,
+          error: "Live score request timed out",
+        });
+        return;
+      }
+
+      updateSnapshot({
+        loading: false,
+        refreshing: false,
+        error:
           requestError instanceof Error
             ? requestError.message
             : "Live score request failed",
-        );
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-          setRefreshing(false);
-        }
-        inFlight = false;
-      }
-    };
+      });
+    } finally {
+      window.clearTimeout(timeout);
+      requestController = null;
+      activeRequest = null;
+    }
+  })();
 
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") void load();
-    };
+  return activeRequest;
+};
 
-    void load();
-    const interval = window.setInterval(() => void load(), refreshMs);
-    document.addEventListener("visibilitychange", handleVisibility);
+const refreshWhenVisible = () => {
+  if (document.visibilityState !== "visible") return;
+  void refreshLiveScores().finally(scheduleNextPoll);
+};
+
+const startPolling = () => {
+  if (typeof window === "undefined") return;
+
+  window.addEventListener("online", refreshWhenVisible);
+  document.addEventListener("visibilitychange", refreshWhenVisible);
+
+  void refreshLiveScores().finally(scheduleNextPoll);
+};
+
+const stopPolling = () => {
+  if (typeof window === "undefined") return;
+
+  clearPollTimer();
+  window.removeEventListener("online", refreshWhenVisible);
+  document.removeEventListener("visibilitychange", refreshWhenVisible);
+  requestController?.abort();
+};
+
+export function useLiveScores(_refreshMs = 45_000) {
+  const current = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
+
+  useEffect(() => {
+    subscriberCount += 1;
+
+    if (subscriberCount === 1) {
+      startPolling();
+    }
 
     return () => {
-      cancelled = true;
-      controller?.abort();
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", handleVisibility);
+      subscriberCount = Math.max(0, subscriberCount - 1);
+
+      if (subscriberCount === 0) {
+        stopPolling();
+      }
     };
-  }, [refreshMs]);
+  }, []);
 
   return {
-    data,
-    loading,
-    refreshing,
-    lastUpdated,
-    error,
+    ...current,
     pairKey,
   };
 }
