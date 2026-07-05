@@ -495,23 +495,7 @@ const TeamPage = () => {
           </p>
         )}
 
-        <div className="mt-4 rounded-2xl border border-border bg-secondary/20 p-4">
-          <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-rose-400/15 text-rose-300">
-              <UserRoundCog className="h-5 w-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Head coach
-              </div>
-              <SearchableName
-                name={managerName}
-                hint="football manager"
-                className="font-black"
-              />
-            </div>
-          </div>
-        </div>
+       
       </section>
 
       <section>
