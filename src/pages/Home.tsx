@@ -6,7 +6,6 @@ import { getManager } from "@/data/managers";
 import { Bell, Heart, LogIn, Star, Trophy, UsersRound } from "lucide-react";
 import HomeMatchUpdates from "@/components/HomeMatchUpdates";
 import TeamFlag from "@/components/TeamFlag";
-import { useAuth } from "@/contexts/AuthContext";
 
 const FavoriteSpotlight = () => {
   const { slug } = useFavoriteTeam();
@@ -201,8 +200,6 @@ const InteractiveTeams = () => (
 );
 
 const Home = () => {
-  const { user } = useAuth();
-
   return (
     <div>
       <section className="relative min-w-0 overflow-hidden">
@@ -223,10 +220,11 @@ const Home = () => {
             </p>
             <div className="grid w-full min-w-0 grid-cols-2 gap-2 pt-0.5 sm:flex sm:flex-wrap lg:gap-3">
               <Link
-                to="/fixtures?view=latest#latest-matches"
-                className="inline-flex min-w-0 items-center justify-center rounded-full bg-primary px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary-foreground transition-transform hover:scale-105 sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base glow"
+                to="/profile"
+                className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary-foreground transition-transform hover:scale-105 sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base glow"
               >
-                Latest Matches
+                <LogIn className="h-4 w-4 lg:h-5 lg:w-5" />
+                Save Data
               </Link>
               <Link
                 to="/best-xi"
@@ -245,13 +243,6 @@ const Home = () => {
                 className="inline-flex min-w-0 items-center justify-center rounded-full border border-border bg-secondary/50 px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors hover:bg-secondary sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
               >
                 Make Your Prediction
-              </Link>
-              <Link
-                to="/profile"
-                className="col-span-2 inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border border-border bg-background/70 px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-all hover:border-primary/50 hover:bg-secondary sm:col-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
-              >
-                <LogIn className="h-4 w-4 lg:h-5 lg:w-5" />
-                {user ? "View Saved Progress" : "Log in & Save Progress"}
               </Link>
             </div>
           </div>
