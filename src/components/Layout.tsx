@@ -57,12 +57,16 @@ const Layout = () => {
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMobileMenuOpen(false);
     };
+
     window.addEventListener("keydown", closeOnEscape);
+
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
@@ -70,26 +74,30 @@ const Layout = () => {
   }, [mobileMenuOpen]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <UserDataSync />
+
       <header className="sticky top-0 z-50 border-b border-border bg-background/75 backdrop-blur-xl">
-        <div className="container flex h-16 items-center justify-between gap-3 sm:h-20">
-          <Link to="/" className="group flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="container flex h-14 items-center justify-between gap-3 sm:h-16">
+          <Link
+            to="/"
+            className="group flex min-w-0 shrink-0 items-center gap-2 sm:gap-3"
+          >
             <img
               src={logo}
               alt="FIFA World Cup 2026 logo"
-              className="h-9 w-auto transition-transform group-hover:scale-105 sm:h-12"
+              className="h-8 w-auto shrink-0 transition-transform group-hover:scale-105 sm:h-10"
             />
-            <div className="leading-tight">
-              <div className="hidden text-xs uppercase tracking-[0.25em] text-muted-foreground sm:block">
-                FIFA World Cup
-              </div>
-              <div className="font-display text-base font-bold gradient-gold-text sm:text-lg">2026</div>
-            </div>
+            <span className="min-w-0 whitespace-nowrap font-display text-[11px] font-bold leading-none gradient-gold-text sm:text-sm md:text-base">
+              FIFA World Cup 2026
+            </span>
           </Link>
 
           <div className="hidden min-w-0 items-center gap-2 lg:flex">
-            <nav className="flex min-w-0 items-center gap-0.5" aria-label="Main navigation">
+            <nav
+              className="flex min-w-0 items-center gap-0.5"
+              aria-label="Main navigation"
+            >
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -113,7 +121,7 @@ const Layout = () => {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary/60 text-foreground transition-colors hover:bg-secondary lg:hidden"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-secondary/60 text-foreground transition-colors hover:bg-secondary lg:hidden"
             aria-label="Open navigation menu"
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
@@ -133,23 +141,32 @@ const Layout = () => {
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close navigation menu"
           />
+
           <aside
             id="mobile-navigation"
             className="relative flex h-full w-[86%] max-w-xs flex-col border-r border-border bg-background shadow-2xl"
             aria-label="Mobile navigation"
           >
-            <div className="flex h-16 items-center justify-between border-b border-border px-4">
-              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
-                <img src={logo} alt="FIFA World Cup 2026 logo" className="h-9 w-auto" />
-                <div className="leading-tight">
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">FIFA World Cup</div>
-                  <div className="font-display font-bold gradient-gold-text">2026</div>
-                </div>
+            <div className="flex h-14 items-center justify-between border-b border-border px-4 sm:h-16">
+              <Link
+                to="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex min-w-0 items-center gap-2"
+              >
+                <img
+                  src={logo}
+                  alt="FIFA World Cup 2026 logo"
+                  className="h-8 w-auto shrink-0"
+                />
+                <span className="min-w-0 whitespace-nowrap font-display text-xs font-bold gradient-gold-text">
+                  FIFA World Cup 2026
+                </span>
               </Link>
+
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary/60"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-secondary/60"
                 aria-label="Close navigation menu"
               >
                 <X className="h-5 w-5" />
@@ -160,6 +177,7 @@ const Layout = () => {
               <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
                 Account
               </div>
+
               {loading ? (
                 <div className="rounded-xl border border-border bg-secondary/30 px-4 py-3 text-sm text-muted-foreground">
                   Loading account…
@@ -176,6 +194,7 @@ const Layout = () => {
                     >
                       <LogIn className="h-4 w-4" /> Log in
                     </Link>
+
                     <Link
                       to="/profile?mode=signup"
                       onClick={() => setMobileMenuOpen(false)}
@@ -184,6 +203,7 @@ const Layout = () => {
                       <UserPlus className="h-4 w-4" /> Create account
                     </Link>
                   </div>
+
                   <Link
                     to="/profile"
                     onClick={() => setMobileMenuOpen(false)}
@@ -195,13 +215,18 @@ const Layout = () => {
               )}
             </div>
 
-            <nav className="flex-1 overflow-y-auto p-4" aria-label="Mobile main navigation">
+            <nav
+              className="flex-1 overflow-y-auto p-4"
+              aria-label="Mobile main navigation"
+            >
               <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
                 Play & participate
               </div>
+
               <div className="space-y-1.5">
                 {mobileActionItems.map((item) => {
                   const Icon = item.icon;
+
                   return (
                     <NavLink
                       key={item.to}
@@ -225,9 +250,11 @@ const Layout = () => {
               <div className="mb-2 mt-5 border-t border-border pt-5 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
                 Explore
               </div>
+
               <div className="space-y-1.5">
                 {mobileExploreItems.map((item) => {
                   const Icon = item.icon;
+
                   return (
                     <NavLink
                       key={item.to}
@@ -259,12 +286,19 @@ const Layout = () => {
         </div>
       )}
 
-      <main className="flex-1"><Outlet /></main>
+      <main className="flex-1">
+        <Outlet />
+      </main>
 
       <footer className="mt-20 border-t border-border">
         <div className="container py-8 text-center text-sm text-muted-foreground">
-          <p>Unofficial fan-built site. Data sourced from FIFA&apos;s official 2026 World Cup schedule.</p>
-          <p className="mt-2">🇨🇦 Canada · 🇲🇽 Mexico · 🇺🇸 USA — June 11 – July 19, 2026</p>
+          <p>
+            Unofficial fan-built site. Data sourced from FIFA&apos;s official
+            2026 World Cup schedule.
+          </p>
+          <p className="mt-2">
+            🇨🇦 Canada · 🇲🇽 Mexico · 🇺🇸 USA — June 11 – July 19, 2026
+          </p>
         </div>
       </footer>
     </div>
