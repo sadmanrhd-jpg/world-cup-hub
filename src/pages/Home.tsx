@@ -204,12 +204,8 @@ const Home = () => {
     <div>
       <section className="relative min-w-0 overflow-hidden">
         <div className="absolute inset-0 grid-bg opacity-40" />
-        <div className="container relative grid min-w-0 grid-cols-1 items-start gap-5 py-5 sm:py-7 md:py-9 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8">
-          <div className="min-w-0 space-y-3 lg:sticky lg:top-24 lg:space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground lg:px-4 lg:py-1.5 lg:text-xs">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-              FIFA World Cup 2026
-            </div>
+        <div className="container relative grid min-w-0 grid-cols-1 items-start gap-4 py-2 sm:py-4 md:py-5 lg:grid-cols-[0.9fr_1.1fr] lg:gap-7">
+          <div className="min-w-0 space-y-2.5 lg:sticky lg:top-20 lg:space-y-4">
             <h1 className="text-[22.5px] font-bold leading-[1] tracking-tight sm:text-[27px] md:text-[36px] lg:text-[52px] lg:leading-[0.96] xl:text-[58px]">
               The world&apos;s <br />
               biggest <span className="gradient-text">stage</span>.
