@@ -41,6 +41,66 @@ const MatchFlag = ({
   );
 };
 
+const TEAM_SHORT_CODES: Record<string, string> = {
+  "Mexico": "MEX",
+  "South Africa": "RSA",
+  "Korea Republic": "KOR",
+  "Czechia": "CZE",
+  "Canada": "CAN",
+  "Bosnia and Herzegovina": "BIH",
+  "Qatar": "QAT",
+  "Switzerland": "SUI",
+  "Haiti": "HAI",
+  "Scotland": "SCO",
+  "Brazil": "BRA",
+  "Morocco": "MAR",
+  "USA": "USA",
+  "Paraguay": "PAR",
+  "Australia": "AUS",
+  "Türkiye": "TUR",
+  "Côte d'Ivoire": "CIV",
+  "Ecuador": "ECU",
+  "Germany": "GER",
+  "Curaçao": "CUW",
+  "Netherlands": "NED",
+  "Japan": "JPN",
+  "Sweden": "SWE",
+  "Tunisia": "TUN",
+  "IR Iran": "IRN",
+  "New Zealand": "NZL",
+  "Belgium": "BEL",
+  "Egypt": "EGY",
+  "Saudi Arabia": "KSA",
+  "Uruguay": "URU",
+  "Spain": "ESP",
+  "Cabo Verde": "CPV",
+  "France": "FRA",
+  "Senegal": "SEN",
+  "Iraq": "IRQ",
+  "Norway": "NOR",
+  "Argentina": "ARG",
+  "Algeria": "ALG",
+  "Austria": "AUT",
+  "Jordan": "JOR",
+  "Portugal": "POR",
+  "Congo DR": "COD",
+  "Uzbekistan": "UZB",
+  "Colombia": "COL",
+  "Ghana": "GHA",
+  "Panama": "PAN",
+  "England": "ENG",
+  "Croatia": "CRO",
+};
+
+const teamShortCode = (name: string) =>
+  TEAM_SHORT_CODES[name] ??
+  name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Za-z]/g, "")
+    .slice(0, 3)
+    .toUpperCase();
+
 const SectionShell = ({
   title,
   link,
@@ -175,104 +235,87 @@ const LatestStageGroup = ({
   );
 };
 
-const UpcomingTeamRow = ({
-  name,
-  align = "left",
-}: {
-  name: string;
-  align?: "left" | "right";
-}) => (
-  <div
-    className={[
-      "flex min-w-0 items-center gap-2",
-      align === "right" ? "justify-end" : "",
-    ].join(" ")}
-  >
-    {align === "right" ? (
-      <>
-        <span className="min-w-0 truncate text-right text-sm font-black leading-tight sm:text-lg">
-          {name}
-        </span>
-        <MatchFlag name={name} />
-      </>
-    ) : (
-      <>
-        <MatchFlag name={name} />
-        <span className="min-w-0 truncate text-sm font-black leading-tight sm:text-lg">
-          {name}
-        </span>
-      </>
-    )}
-  </div>
-);
-
-const UpcomingMatchTile = ({
+const UpcomingCompactMatch = ({
   row,
   now,
-  index,
 }: {
   row: MatchFeedRow;
   now: Date;
-  index: number;
-}) => {
-  const alignRight = index % 2 === 1;
+}) => (
+  <Link
+    to={`/matches/${row.fixture.id}`}
+    aria-label={`Open ${row.fixture.home} versus ${row.fixture.away} match details`}
+    className="group flex min-w-0 flex-col justify-center px-2.5 py-2.5 transition-colors hover:bg-primary/[0.06] sm:px-4 sm:py-3"
+  >
+    <div className="flex min-w-0 items-center justify-center gap-1.5 sm:gap-2">
+      <MatchFlag name={row.fixture.home} compact />
+      <span className="shrink-0 text-xs font-black tracking-wide sm:text-sm">
+        {teamShortCode(row.fixture.home)}
+      </span>
+      <span className="shrink-0 text-[10px] font-black text-primary sm:text-xs">
+        -
+      </span>
+      <span className="shrink-0 text-xs font-black tracking-wide sm:text-sm">
+        {teamShortCode(row.fixture.away)}
+      </span>
+      <MatchFlag name={row.fixture.away} compact />
+    </div>
 
-  return (
-    <Link
-      to={`/matches/${row.fixture.id}`}
-      aria-label={`Open ${row.fixture.home} versus ${row.fixture.away} match details`}
-      className="group block min-h-[160px] min-w-0 overflow-hidden bg-background/15 p-3 transition-colors hover:bg-primary/[0.05] sm:min-h-[205px] sm:p-5"
-    >
-      <div
-        className={[
-          "border-b border-border/70 pb-2",
-          alignRight ? "text-right" : "text-left",
-        ].join(" ")}
-      >
-        <div className="text-xs font-black text-primary sm:text-sm">
-          {relativeMatchDay(row.fixture, now)}
-        </div>
-        <div className="mt-0.5 font-mono text-[9px] text-muted-foreground sm:text-[11px]">
-          {row.fixture.time} BST
-        </div>
-      </div>
+    <div className="mt-1 flex min-w-0 items-center justify-center gap-1.5 text-[8px] font-semibold text-muted-foreground sm:text-[10px]">
+      <span className="truncate">{relativeMatchDay(row.fixture, now)}</span>
+      <span aria-hidden="true">·</span>
+      <span className="shrink-0 font-mono">{row.fixture.time} BST</span>
+    </div>
+  </Link>
+);
 
-      <div className="mt-3 space-y-3 sm:mt-4 sm:space-y-4">
-        <UpcomingTeamRow
-          name={row.fixture.home}
-          align={alignRight ? "right" : "left"}
-        />
-
-        <div
-          className={[
-            "text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground sm:text-xs sm:tracking-[0.28em]",
-            alignRight ? "pr-7 text-right sm:pr-8" : "pl-8 text-left sm:pl-9",
-          ].join(" ")}
-        >
-          vs
-        </div>
-
-        <UpcomingTeamRow
-          name={row.fixture.away}
-          align={alignRight ? "right" : "left"}
-        />
-      </div>
-    </Link>
-  );
-};
-
-const RestTile = () => (
-  <div className="grid min-h-[160px] place-items-center bg-background/10 p-3 text-center sm:min-h-[205px] sm:p-6">
+const UpcomingRestCell = () => (
+  <div className="grid min-h-[58px] place-items-center px-2 py-2.5 text-center sm:min-h-[68px] sm:px-4 sm:py-3">
     <div>
-      <div className="text-base font-black text-primary sm:text-xl">
+      <div className="text-xs font-black text-primary sm:text-sm">
         Take Rest
       </div>
-      <div className="mt-1 text-[10px] font-semibold uppercase leading-relaxed tracking-[0.1em] text-muted-foreground sm:text-sm sm:tracking-[0.16em]">
+      <div className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-muted-foreground sm:text-[10px]">
         Get Ready for next match
       </div>
     </div>
   </div>
 );
+
+const UpcomingMatchRows = ({
+  rows,
+  now,
+}: {
+  rows: MatchFeedRow[];
+  now: Date;
+}) => {
+  const pairs: Array<[MatchFeedRow, MatchFeedRow | null]> = [];
+
+  for (let index = 0; index < rows.length; index += 2) {
+    pairs.push([rows[index], rows[index + 1] ?? null]);
+  }
+
+  return (
+    <div className="space-y-2 border-t border-border/80 p-2 sm:space-y-3 sm:p-3">
+      {pairs.map(([first, second]) => (
+        <div
+          key={`${first.fixture.id}-${second?.fixture.id ?? "rest"}`}
+          className="grid min-w-0 grid-cols-2 overflow-hidden rounded-xl border border-border/60 bg-background/45 shadow-sm"
+        >
+          <UpcomingCompactMatch row={first} now={now} />
+
+          <div className="min-w-0 border-l border-border/60">
+            {second ? (
+              <UpcomingCompactMatch row={second} now={now} />
+            ) : (
+              <UpcomingRestCell />
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const HomeMatchUpdates = () => {
   const [now, setNow] = useState(() => new Date());
@@ -327,7 +370,6 @@ const HomeMatchUpdates = () => {
   }, [latest]);
 
   const upcoming = useMemo(() => selectUpcomingMatchDay(rows, 4), [rows]);
-  const showRestTile = upcoming.length > 0 && upcoming.length % 2 === 1;
   const hasLive = latest.some((row) => row.live);
 
   return (
@@ -382,26 +424,7 @@ const HomeMatchUpdates = () => {
         link="/fixtures?view=latest#upcoming-matches"
       >
         {upcoming.length > 0 ? (
-          <div className="grid min-w-0 grid-cols-2 overflow-hidden border-t border-border/80">
-            {upcoming.map((row, index) => (
-              <div
-                key={row.fixture.id}
-                className={[
-                  "min-w-0",
-                  index % 2 === 1 ? "border-l border-border/80" : "",
-                  index >= 2 ? "border-t border-border/80" : "",
-                ].join(" ")}
-              >
-                <UpcomingMatchTile row={row} now={now} index={index} />
-              </div>
-            ))}
-
-            {showRestTile && (
-              <div className="border-l border-t border-border/80">
-                <RestTile />
-              </div>
-            )}
-          </div>
+          <UpcomingMatchRows rows={upcoming} now={now} />
         ) : (
           <div className="border-t border-border/80 px-4 py-5 text-center text-sm text-muted-foreground">
             No upcoming match is currently scheduled.
