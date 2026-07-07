@@ -9,6 +9,7 @@ import {
   MapPin,
   Menu,
   Sparkles,
+  Trophy,
   Table2,
   UserPlus,
   UserRound,
@@ -28,11 +29,13 @@ const navItems = [
   { to: "/stadiums", label: "Stadiums", icon: MapPin },
   { to: "/fixtures", label: "Fixtures", icon: CalendarDays },
   { to: "/prediction", label: "Predict", icon: Sparkles },
+  { to: "/fantasy", label: "Fantasy", icon: Trophy },
   { to: "/mini-game", label: "Mini Game", icon: Gamepad2 },
   { to: "/best-xi", label: "Best XI", icon: Crown },
 ];
 
 const mobileActionItems = [
+  { to: "/fantasy", label: "Fantasy Game", icon: Trophy },
   { to: "/prediction", label: "Prediction", icon: Sparkles },
   { to: "/best-xi", label: "Best XI", icon: Crown },
   { to: "/mini-game", label: "Mini Game", icon: Gamepad2 },
