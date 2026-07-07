@@ -9,6 +9,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import Layout from "./components/Layout";
 import TournamentFixtureSync from "./components/TournamentFixtureSync";
 import BestXI from "./pages/BestXI";
+import FantasyGame from "./pages/FantasyGame";
 import Fixtures from "./pages/Fixtures";
 import Groups from "./pages/Groups";
 import Home from "./pages/Home";
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/stadiums" element={<Stadiums />} />
               <Route path="/stadiums/:id" element={<StadiumPage />} />
               <Route path="/prediction" element={<Prediction />} />
+              <Route path="/fantasy" element={<FantasyGame />} />
               <Route path="/mini-game" element={<MiniGame />} />
               <Route path="/best-xi" element={<BestXI />} />
               <Route path="/profile" element={<Profile />} />
