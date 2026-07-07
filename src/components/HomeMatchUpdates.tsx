@@ -112,7 +112,7 @@ const SectionShell = ({
   live?: boolean;
   children: ReactNode;
 }) => (
-  <section className="min-w-0 overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-primary/[0.07] via-background/40 to-secondary/30">
+  <section className="min-w-0 overflow-hidden rounded-2xl border border-primary/65 bg-gradient-to-br from-primary/[0.09] via-background/45 to-secondary/30 shadow-[0_0_0_1px_hsl(var(--primary)/0.14),0_0_18px_hsl(var(--primary)/0.08)]">
     <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
       <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
         <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full border border-primary/35 bg-primary/10 text-primary sm:h-9 sm:w-9">
@@ -146,7 +146,7 @@ const SectionShell = ({
 );
 
 const ScoreBox = ({ value }: { value: number | string }) => (
-  <span className="grid h-8 min-w-8 shrink-0 place-items-center rounded-lg border border-primary/50 bg-primary/15 px-1.5 font-mono text-base font-black tabular-nums text-primary sm:h-10 sm:min-w-10 sm:rounded-xl sm:px-2 sm:text-lg">
+  <span className="grid h-7 min-w-7 shrink-0 place-items-center rounded-lg border border-primary/55 bg-primary/15 px-1 font-mono text-sm font-black tabular-nums text-primary sm:h-10 sm:min-w-10 sm:rounded-xl sm:px-2 sm:text-lg">
     {value}
   </span>
 );
@@ -163,9 +163,9 @@ const LatestResultBar = ({
     aria-label={`Open ${row.fixture.home} versus ${row.fixture.away} result`}
     className="group block min-w-0 border-t border-border/65 bg-background/10 px-2.5 py-2 transition-colors hover:bg-primary/[0.05] sm:px-4 sm:py-3"
   >
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5 rounded-xl border border-border/45 bg-background/60 px-2 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5 rounded-xl border border-primary/35 bg-background/65 px-2 py-2.5 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.06)] sm:gap-3 sm:px-4 sm:py-3">
       <div className="flex min-w-0 items-center justify-end gap-1.5">
-        <span className="min-w-0 break-words text-right text-[10px] font-extrabold leading-[1.05] sm:text-base sm:leading-tight">
+        <span className="min-w-0 break-words text-right text-xs font-extrabold leading-[1.05] sm:text-base sm:leading-tight">
           {row.fixture.home}
         </span>
         <MatchFlag name={row.fixture.home} compact />
@@ -181,7 +181,7 @@ const LatestResultBar = ({
 
       <div className="flex min-w-0 items-center gap-1.5">
         <MatchFlag name={row.fixture.away} compact />
-        <span className="min-w-0 break-words text-[10px] font-extrabold leading-[1.05] sm:text-base sm:leading-tight">
+        <span className="min-w-0 break-words text-xs font-extrabold leading-[1.05] sm:text-base sm:leading-tight">
           {row.fixture.away}
         </span>
       </div>
@@ -208,7 +208,7 @@ const LatestStageGroup = ({
 
   return (
     <div className="min-w-0">
-      <div className="flex items-center justify-between gap-3 border-t border-border/80 bg-background/20 px-3 py-2 sm:px-4">
+      <div className="flex items-center justify-between gap-3 border-t border-primary/35 bg-background/25 px-3 py-2 sm:px-4">
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">
           {label}
         </span>
@@ -249,13 +249,13 @@ const UpcomingCompactMatch = ({
   >
     <div className="flex min-w-0 items-center justify-center gap-1.5 sm:gap-2">
       <MatchFlag name={row.fixture.home} compact />
-      <span className="shrink-0 text-xs font-black tracking-wide sm:text-sm">
+      <span className="shrink-0 text-sm font-black tracking-wide sm:text-base">
         {teamShortCode(row.fixture.home)}
       </span>
       <span className="shrink-0 text-[10px] font-black text-primary sm:text-xs">
         -
       </span>
-      <span className="shrink-0 text-xs font-black tracking-wide sm:text-sm">
+      <span className="shrink-0 text-sm font-black tracking-wide sm:text-base">
         {teamShortCode(row.fixture.away)}
       </span>
       <MatchFlag name={row.fixture.away} compact />
@@ -296,15 +296,15 @@ const UpcomingMatchRows = ({
   }
 
   return (
-    <div className="space-y-2 border-t border-border/80 p-2 sm:space-y-3 sm:p-3">
+    <div className="space-y-2 border-t border-primary/35 p-2 sm:space-y-3 sm:p-3">
       {pairs.map(([first, second]) => (
         <div
           key={`${first.fixture.id}-${second?.fixture.id ?? "rest"}`}
-          className="grid min-w-0 grid-cols-2 overflow-hidden rounded-xl border border-border/60 bg-background/45 shadow-sm"
+          className="grid min-w-0 grid-cols-2 overflow-hidden rounded-xl border border-primary/40 bg-background/55 shadow-[0_0_0_1px_hsl(var(--primary)/0.05)]"
         >
           <UpcomingCompactMatch row={first} now={now} />
 
-          <div className="min-w-0 border-l border-border/60">
+          <div className="min-w-0 border-l border-primary/35">
             {second ? (
               <UpcomingCompactMatch row={second} now={now} />
             ) : (
