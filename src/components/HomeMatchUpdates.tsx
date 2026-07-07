@@ -112,10 +112,10 @@ const SectionShell = ({
   live?: boolean;
   children: ReactNode;
 }) => (
-  <section className="min-w-0 overflow-hidden rounded-2xl border border-[#FAC938] bg-gradient-to-br from-primary/[0.09] via-background/45 to-secondary/30 shadow-[0_0_0_1px_rgba(250,201,56,0.22),0_0_18px_rgba(250,201,56,0.10)]">
+  <section className="min-w-0 overflow-hidden rounded-2xl border border-primary/65 bg-gradient-to-br from-primary/[0.09] via-background/45 to-secondary/30 shadow-[0_0_0_1px_hsl(var(--primary)/0.14),0_0_18px_hsl(var(--primary)/0.08)]">
     <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
       <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-        <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[#FAC938] bg-primary/10 text-primary sm:h-9 sm:w-9">
+        <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full border border-primary/35 bg-primary/10 text-primary sm:h-9 sm:w-9">
           {live ? (
             <>
               <span className="absolute h-2.5 w-2.5 animate-ping rounded-full bg-red-500 opacity-70" />
@@ -163,7 +163,7 @@ const LatestResultBar = ({
     aria-label={`Open ${row.fixture.home} versus ${row.fixture.away} result`}
     className="group block min-w-0 border-t border-border/65 bg-background/10 px-2.5 py-2 transition-colors hover:bg-primary/[0.05] sm:px-4 sm:py-3"
   >
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5 rounded-xl border border-[#FAC938] bg-background/65 px-2 py-2.5 shadow-[inset_0_0_0_1px_rgba(250,201,56,0.10)] sm:gap-3 sm:px-4 sm:py-3">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5 rounded-xl border border-primary/35 bg-background/65 px-2 py-2.5 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.06)] sm:gap-3 sm:px-4 sm:py-3">
       <div className="flex min-w-0 items-center justify-end gap-1.5">
         <span className="min-w-0 break-words text-right text-xs font-extrabold leading-[1.05] sm:text-base sm:leading-tight">
           {row.fixture.home}
@@ -208,7 +208,7 @@ const LatestStageGroup = ({
 
   return (
     <div className="min-w-0">
-      <div className="flex items-center justify-between gap-3 border-t border-[#FAC938] bg-background/25 px-3 py-2 sm:px-4">
+      <div className="flex items-center justify-between gap-3 border-t border-primary/35 bg-background/25 px-3 py-2 sm:px-4">
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground sm:text-xs">
           {label}
         </span>
@@ -296,15 +296,15 @@ const UpcomingMatchRows = ({
   }
 
   return (
-    <div className="space-y-2 border-t border-[#FAC938] p-2 sm:space-y-3 sm:p-3">
+    <div className="space-y-2 border-t border-primary/35 p-2 sm:space-y-3 sm:p-3">
       {pairs.map(([first, second]) => (
         <div
           key={`${first.fixture.id}-${second?.fixture.id ?? "rest"}`}
-          className="grid min-w-0 grid-cols-2 overflow-hidden rounded-xl border border-[#FAC938] bg-background/55 shadow-[0_0_0_1px_rgba(250,201,56,0.10)]"
+          className="grid min-w-0 grid-cols-2 overflow-hidden rounded-xl border border-primary/40 bg-background/55 shadow-[0_0_0_1px_hsl(var(--primary)/0.05)]"
         >
           <UpcomingCompactMatch row={first} now={now} />
 
-          <div className="min-w-0 border-l border-[#FAC938]">
+          <div className="min-w-0 border-l border-primary/35">
             {second ? (
               <UpcomingCompactMatch row={second} now={now} />
             ) : (
