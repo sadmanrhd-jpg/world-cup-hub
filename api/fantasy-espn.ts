@@ -226,15 +226,48 @@ const statValue = (
   return parseNumber(stat?.value ?? stat?.displayValue);
 };
 
-const normalizePosition = (position: Record<string, unknown> | undefined): Position | null => {
-  const text = String(
-    position?.abbreviation ?? position?.name ?? position?.displayName ?? "",
-  ).toLowerCase();
+const textFromPositionValue = (value: unknown): string => {
+  if (!value) return "";
+  if (typeof value === "string" || typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.map(textFromPositionValue).join(" ");
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return [
+      record.abbreviation,
+      record.name,
+      record.displayName,
+      record.shortName,
+      record.type,
+      record.text,
+      record.position,
+    ]
+      .map(textFromPositionValue)
+      .filter(Boolean)
+      .join(" ");
+  }
+  return "";
+};
 
-  if (/goal|^gk$|^g$/.test(text)) return "GK";
-  if (/def|back|^d$/.test(text)) return "DEF";
-  if (/mid|^m$/.test(text)) return "MID";
-  if (/forward|striker|attacker|^f$|^fw$/.test(text)) return "FW";
+const normalizePosition = (...values: unknown[]): Position | null => {
+  const text = values.map(textFromPositionValue).join(" ").toLowerCase();
+  if (!text.trim()) return null;
+
+  if (/\b(gk|g|goalkeeper|keeper|goalie)\b/.test(text)) return "GK";
+  if (
+    /\b(def|df|d|defender|defence|defense|back|centre-back|center-back|center back|centre back|fullback|full back|left back|right back|cb|lb|rb|lcb|rcb|rwb|lwb)\b/.test(text)
+  ) {
+    return "DEF";
+  }
+  if (
+    /\b(mid|mf|m|midfielder|midfield|centre-midfield|center-midfield|central midfield|defensive midfield|attacking midfield|cm|dm|cdm|am|cam|lm|rm|lcm|rcm)\b/.test(text)
+  ) {
+    return "MID";
+  }
+  if (
+    /\b(fw|f|forward|striker|attacker|attack|winger|left wing|right wing|centre-forward|center-forward|cf|st|lw|rw|lf|rf)\b/.test(text)
+  ) {
+    return "FW";
+  }
   return null;
 };
 
@@ -296,6 +329,149 @@ const calculatePrice = (player: AggregatedPlayer) => {
       12,
     ),
   );
+};
+
+const athleteIdFromRef = (value: unknown) => {
+  const ref = typeof value === "string" ? value : "";
+  const match = ref.match(/athletes\/(\d+)/i);
+  return match?.[1] ?? "";
+};
+
+const collectRosterCandidates = (value: unknown): Array<Record<string, unknown>> => {
+  if (!value || typeof value !== "object") return [];
+  const record = value as Record<string, unknown>;
+  const rows: Array<Record<string, unknown>> = [];
+
+  const pushCandidate = (candidate: unknown, inheritedPosition?: unknown) => {
+    if (!candidate || typeof candidate !== "object") return;
+    const next = candidate as Record<string, unknown>;
+    rows.push(
+      inheritedPosition && !next.position
+        ? { ...next, position: inheritedPosition }
+        : next,
+    );
+  };
+
+  const readArray = (items: unknown, inheritedPosition?: unknown) => {
+    if (!Array.isArray(items)) return;
+    for (const item of items) {
+      if (!item || typeof item !== "object") continue;
+      const itemRecord = item as Record<string, unknown>;
+      if (Array.isArray(itemRecord.items)) {
+        readArray(itemRecord.items, itemRecord.position ?? itemRecord.displayName ?? itemRecord.name ?? inheritedPosition);
+      } else if (Array.isArray(itemRecord.athletes)) {
+        readArray(itemRecord.athletes, itemRecord.position ?? itemRecord.displayName ?? itemRecord.name ?? inheritedPosition);
+      } else {
+        pushCandidate(item, inheritedPosition);
+      }
+    }
+  };
+
+  readArray(record.athletes);
+  readArray(record.items);
+  readArray(record.roster);
+
+  const team = record.team as Record<string, unknown> | undefined;
+  readArray(team?.athletes);
+  readArray(team?.roster);
+
+  return rows;
+};
+
+const fetchRosterItem = async (item: Record<string, unknown>) => {
+  const ref = typeof item.$ref === "string" ? item.$ref : null;
+  if (!ref) return item;
+  try {
+    return await fetchJson<Record<string, unknown>>(ref);
+  } catch {
+    return item;
+  }
+};
+
+const rosterUrlsForTeam = (teamId: string) => [
+  `${ESPN_BASE}/teams/${encodeURIComponent(teamId)}/roster`,
+  `${ESPN_BASE}/teams/${encodeURIComponent(teamId)}/athletes`,
+  `https://site.web.api.espn.com/apis/common/v3/sports/soccer/fifa.world/teams/${encodeURIComponent(teamId)}/roster`,
+  `https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/seasons/2026/teams/${encodeURIComponent(teamId)}/athletes?limit=200`,
+];
+
+const mergeRosterPlayers = async (
+  teamMap: Map<string, EspnTeam>,
+  players: Map<string, AggregatedPlayer>,
+) => {
+  await mapLimit(Array.from(teamMap.entries()), 4, async ([teamId, team]) => {
+    for (const url of rosterUrlsForTeam(teamId)) {
+      try {
+        const rosterData = await fetchJson<Record<string, unknown>>(url);
+        const candidates = collectRosterCandidates(rosterData);
+        if (candidates.length === 0) continue;
+
+        const resolved = await mapLimit(candidates, 6, fetchRosterItem);
+        let addedForTeam = 0;
+
+        for (const item of resolved) {
+          const athlete = (item.athlete as Record<string, unknown> | undefined) ?? item;
+          const playerId = String(
+            athlete.id ?? item.id ?? athleteIdFromRef(item.$ref) ?? "",
+          );
+          const playerName = String(
+            athlete.displayName ?? athlete.fullName ?? athlete.name ?? item.displayName ?? item.fullName ?? item.name ?? "",
+          ).trim();
+          const position = normalizePosition(
+            item.position,
+            item.displayPosition,
+            item.lineupSlot,
+            item.slot,
+            athlete.position,
+            athlete.defaultPosition,
+          );
+
+          if (!playerId || !playerName || !position) continue;
+
+          const headshotValue =
+            (athlete.headshot as Record<string, unknown> | undefined)?.href ??
+            (athlete.headshot as Record<string, unknown> | undefined)?.url ??
+            (item.headshot as Record<string, unknown> | undefined)?.href ??
+            (item.headshot as Record<string, unknown> | undefined)?.url;
+
+          const existing = players.get(playerId) ?? {
+            id: playerId,
+            name: playerName,
+            teamId,
+            teamName: String(team.displayName ?? "Unknown team"),
+            teamAbbreviation: String(team.abbreviation ?? ""),
+            position,
+            headshotUrl: typeof headshotValue === "string" ? headshotValue : null,
+            matches: 0,
+            starts: 0,
+            minutes: 0,
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            cleanSheets: 0,
+            yellowCards: 0,
+            redCards: 0,
+            fantasyPoints: 0,
+          };
+
+          existing.position = position;
+          existing.teamId = teamId;
+          existing.teamName = String(team.displayName ?? existing.teamName);
+          existing.teamAbbreviation = String(team.abbreviation ?? existing.teamAbbreviation);
+          if (!existing.headshotUrl && typeof headshotValue === "string") {
+            existing.headshotUrl = headshotValue;
+          }
+
+          players.set(playerId, existing);
+          addedForTeam += 1;
+        }
+
+        if (addedForTeam > 0) return;
+      } catch {
+        // Try the next ESPN roster shape. Their endpoints are not exactly a monument to stability.
+      }
+    }
+  });
 };
 
 const statusPeriod = (event: EspnEvent) =>
@@ -416,7 +592,12 @@ const buildPlayerPool = async (events: EspnEvent[], round: RoundCode) => {
       for (const entry of roster) {
         const athlete = entry.athlete as Record<string, unknown> | undefined;
         const position = normalizePosition(
-          entry.position as Record<string, unknown> | undefined,
+          entry.position,
+          entry.displayPosition,
+          entry.lineupSlot,
+          entry.slot,
+          athlete?.position,
+          athlete?.defaultPosition,
         );
         const playerId = String(athlete?.id ?? "");
         const playerName = String(athlete?.displayName ?? athlete?.fullName ?? "").trim();
@@ -495,6 +676,8 @@ const buildPlayerPool = async (events: EspnEvent[], round: RoundCode) => {
     }
   }
 
+  await mergeRosterPlayers(teamMap, players);
+
   const playerRows = Array.from(players.values())
     .map((player) => ({
       id: player.id,
@@ -562,6 +745,20 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
     if (pool.players.length === 0) {
       warnings.push("ESPN has not published usable roster details for the current player pool yet.");
+    }
+
+    const positionCounts = pool.players.reduce(
+      (counts, player) => ({
+        ...counts,
+        [player.position]: (counts[player.position] ?? 0) + 1,
+      }),
+      {} as Record<Position, number>,
+    );
+
+    for (const position of ["GK", "DEF", "MID", "FW"] as Position[]) {
+      if ((positionCounts[position] ?? 0) < 3) {
+        warnings.push(`ESPN returned a very small ${position} pool. Refresh again after the squad feed updates.`);
+      }
     }
 
     response.setHeader(
