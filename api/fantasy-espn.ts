@@ -81,6 +81,17 @@ const TOURNAMENT_RANGE = "20260611-20260719";
 const REQUEST_TIMEOUT_MS = 8_000;
 const SUMMARY_CONCURRENCY = 8;
 
+const KNOWN_QF_TEAM_NAMES = new Set([
+  "France",
+  "Morocco",
+  "Spain",
+  "Belgium",
+  "Norway",
+  "England",
+  "Argentina",
+  "Switzerland",
+]);
+
 const positionBasePrice: Record<Position, number> = {
   GK: 4.5,
   DEF: 5,
@@ -168,6 +179,9 @@ const isRealTeam = (team: EspnTeam | undefined) => {
       !/tbd|winner of|loser of|to be determined/i.test(name),
   );
 };
+
+const isKnownQuarterfinalTeam = (team: EspnTeam | undefined) =>
+  Boolean(team?.displayName && KNOWN_QF_TEAM_NAMES.has(team.displayName));
 
 const determineCurrentRound = (events: EspnEvent[]): RoundCode => {
   const quarterfinals = events.filter((event) => eventRound(event) === "QF");
@@ -339,6 +353,19 @@ const buildPlayerPool = async (events: EspnEvent[], round: RoundCode) => {
     }
   }
 
+  // ESPN sometimes publishes the knockout labels later than the participant names.
+  // For the live Quarter-final update, keep the confirmed eight teams available
+  // even if the stage text is temporarily incomplete.
+  if (round === "QF" && teamMap.size < 8) {
+    for (const event of events) {
+      for (const competitor of event.competitions?.[0]?.competitors ?? []) {
+        if (isRealTeam(competitor.team) && isKnownQuarterfinalTeam(competitor.team)) {
+          teamMap.set(String(competitor.team?.id), competitor.team ?? {});
+        }
+      }
+    }
+  }
+
   const teamIds = new Set(teamMap.keys());
   const relevantCompletedEvents = events.filter((event) => {
     if (!event.id || !isCompleted(event)) return false;
@@ -396,7 +423,6 @@ const buildPlayerPool = async (events: EspnEvent[], round: RoundCode) => {
         if (!playerId || !playerName || !position) continue;
 
         const minutes = estimateMinutes(entry);
-        if (minutes <= 0) continue;
 
         const stats = entry.stats as Array<Record<string, unknown>> | undefined;
         const goals = statValue(stats, ["totalgoals", "goals"]);
@@ -404,17 +430,20 @@ const buildPlayerPool = async (events: EspnEvent[], round: RoundCode) => {
         const saves = statValue(stats, ["saves", "totalsaves"]);
         const yellowCards = statValue(stats, ["yellowcards", "yellowcard"]);
         const redCards = statValue(stats, ["redcards", "redcard"]);
+        const appeared = minutes > 0;
         const cleanSheet =
-          opponentGoals === 0 && minutes >= 60 && position !== "FW" ? 1 : 0;
-        const appearancePoints = minutes >= 60 ? 2 : 1;
+          appeared && opponentGoals === 0 && minutes >= 60 && position !== "FW" ? 1 : 0;
+        const appearancePoints = appeared ? (minutes >= 60 ? 2 : 1) : 0;
         const cleanSheetPoints =
           cleanSheet === 0 ? 0 : position === "MID" ? 1 : position === "FW" ? 0 : 4;
         const concededPenalty =
-          position === "GK"
-            ? Math.floor(opponentGoals / 2) * -2
-            : position === "DEF"
-              ? Math.floor(opponentGoals / 2) * -1
-              : 0;
+          !appeared
+            ? 0
+            : position === "GK"
+              ? Math.floor(opponentGoals / 2) * -2
+              : position === "DEF"
+                ? Math.floor(opponentGoals / 2) * -1
+                : 0;
         const matchFantasyPoints =
           appearancePoints +
           goals * 5 +
@@ -449,16 +478,18 @@ const buildPlayerPool = async (events: EspnEvent[], round: RoundCode) => {
           fantasyPoints: 0,
         };
 
-        existing.matches += 1;
-        existing.starts += entry.starter ? 1 : 0;
-        existing.minutes += minutes;
-        existing.goals += goals;
-        existing.assists += assists;
-        existing.saves += saves;
-        existing.cleanSheets += cleanSheet;
-        existing.yellowCards += yellowCards;
-        existing.redCards += redCards;
-        existing.fantasyPoints += matchFantasyPoints;
+        if (appeared) {
+          existing.matches += 1;
+          existing.starts += entry.starter ? 1 : 0;
+          existing.minutes += minutes;
+          existing.goals += goals;
+          existing.assists += assists;
+          existing.saves += saves;
+          existing.cleanSheets += cleanSheet;
+          existing.yellowCards += yellowCards;
+          existing.redCards += redCards;
+          existing.fantasyPoints += matchFantasyPoints;
+        }
         players.set(playerId, existing);
       }
     }
@@ -530,7 +561,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     }
 
     if (pool.players.length === 0) {
-      warnings.push("ESPN has not published usable roster statistics for the current player pool yet.");
+      warnings.push("ESPN has not published usable roster details for the current player pool yet.");
     }
 
     response.setHeader(
