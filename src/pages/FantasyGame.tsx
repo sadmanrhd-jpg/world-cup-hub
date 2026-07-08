@@ -229,15 +229,15 @@ const SectionCard = ({
   action?: ReactNode;
 }) => (
   <section
-    className={`rounded-3xl border border-[#FAC938]/35 bg-card/85 shadow-sm backdrop-blur ${className}`}
+    className={`rounded-2xl border border-[#FAC938]/35 bg-card/85 shadow-sm backdrop-blur ${className}`}
   >
     {(title || action) && (
-      <div className="flex items-center justify-between gap-3 border-b border-[#FAC938]/20 px-4 py-3 sm:px-5">
-        {title ? <h2 className="text-lg font-black sm:text-xl">{title}</h2> : <span />}
+      <div className="flex items-center justify-between gap-3 border-b border-[#FAC938]/20 px-3 py-2.5 sm:px-4">
+        {title ? <h2 className="text-base font-black sm:text-lg">{title}</h2> : <span />}
         {action}
       </div>
     )}
-    <div className="p-4 sm:p-5">{children}</div>
+    <div className="p-3 sm:p-4">{children}</div>
   </section>
 );
 
@@ -532,7 +532,7 @@ const FantasyPitch = ({
   const usedIndex = new Map<FantasyPosition, number>();
 
   return (
-    <div className="relative aspect-[0.72] w-full overflow-hidden rounded-[22px] border border-white/20 bg-emerald-800 shadow-2xl ring-1 ring-[#FAC938]/20 sm:rounded-[30px]">
+    <div className="relative aspect-[0.72] w-full overflow-hidden rounded-[20px] border border-white/20 bg-emerald-800 shadow-xl ring-1 ring-[#FAC938]/20 sm:rounded-[26px]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(250,201,56,.14),transparent_34%),linear-gradient(90deg,rgba(255,255,255,.045)_50%,transparent_50%)] bg-[length:100%_100%,20%_100%]" />
       <div className="absolute inset-[4%] rounded-sm border-2 border-white/45" />
       <div className="absolute left-[18%] right-[18%] top-[4%] h-[16%] border-x-2 border-b-2 border-white/45" />
@@ -1063,8 +1063,8 @@ const TeamBuilder = ({
   }));
 
   return (
-    <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.12fr)_minmax(360px,.88fr)]">
-      <div className="space-y-5">
+    <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,.95fr)]">
+      <div className="space-y-4">
         <SectionCard
           title="Build on the pitch"
           action={
@@ -1093,7 +1093,7 @@ const TeamBuilder = ({
             </div>
           }
         >
-          <div className="mx-auto w-full max-w-[700px] overflow-hidden px-0.5 sm:px-0">
+          <div className="mx-auto w-full max-w-[560px] overflow-hidden px-0.5 sm:px-0">
             <FantasyPitch
               formationId={formationId}
               players={players}
@@ -1109,7 +1109,7 @@ const TeamBuilder = ({
             />
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <BenchSlot
               label="Bench GK"
               hint="Goalkeeper substitute"
@@ -1215,7 +1215,7 @@ const TeamBuilder = ({
         </SectionCard>
       </div>
 
-      <div className="space-y-5 xl:sticky xl:top-20 xl:self-start">
+      <div className="space-y-4 xl:sticky xl:top-20 xl:self-start">
         <SectionCard title="Player selector">
           {activeTarget && (
             <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-[#FAC938]/40 bg-[#FAC938]/10 p-3">
@@ -1622,25 +1622,23 @@ const FantasyGame = () => {
   };
 
   return (
-    <div className="container py-7 sm:py-10">
-      <div className="relative overflow-hidden rounded-3xl border border-[#FAC938]/55 bg-gradient-to-br from-[#FAC938]/15 via-background to-emerald-700/10 p-5 sm:p-8">
-        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[#FAC938]/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-40 w-72 rounded-tl-full border-l border-t border-white/10 bg-[linear-gradient(90deg,rgba(255,255,255,.05)_50%,transparent_50%)] bg-[length:20%_100%] opacity-50" />
-        <div className="relative max-w-3xl">
-          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[#FAC938]"><Trophy className="h-4 w-4" /> Knockout Edition</div>
-          <h1 className="mt-3 text-4xl font-black sm:text-5xl">Fantasy Game</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Build a 15-player squad on the pitch for the Quarter-finals, Semi-finals, Third-place Match and Final. Player values and tournament performance are supplied through ESPN data.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#FAC938]/40 bg-[#FAC938]/10 px-3 py-1.5 text-[#FAC938]"><Coins className="h-3.5 w-3.5" /> 105m starting budget</span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/55 px-3 py-1.5"><UsersRound className="h-3.5 w-3.5" /> 15-player squad</span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/55 px-3 py-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Top 3 win prizes</span>
+    <div className="container py-4 sm:py-6">
+      <div className="relative overflow-hidden rounded-2xl border border-[#FAC938]/45 bg-gradient-to-br from-[#FAC938]/12 via-background to-emerald-800/10 px-4 py-3 sm:px-5 sm:py-4">
+        <div className="absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#FAC938]/10 blur-2xl" />
+        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">FIFA WC 2026 Fantasy Game</h1>
+            <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] font-bold sm:text-xs">
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#FAC938]/40 bg-[#FAC938]/10 px-2.5 py-1 text-[#FAC938]"><Coins className="h-3 w-3" /> 105m budget</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background/55 px-2.5 py-1"><UsersRound className="h-3 w-3" /> 15 players</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background/55 px-2.5 py-1"><ShieldCheck className="h-3 w-3" /> Top 3 prizes</span>
+            </div>
           </div>
+          <div className="hidden rounded-full border border-white/10 bg-emerald-900/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#FAC938] sm:inline-flex">Knockout Edition</div>
         </div>
       </div>
 
-      <div className="sticky top-14 z-30 -mx-4 mt-5 overflow-x-auto border-y border-border bg-background/92 px-4 py-2 backdrop-blur-xl sm:top-16 sm:mx-0 sm:rounded-2xl sm:border">
+      <div className="sticky top-14 z-30 -mx-4 mt-3 overflow-x-auto border-y border-border bg-background/92 px-4 py-1.5 backdrop-blur-xl sm:top-16 sm:mx-0 sm:rounded-2xl sm:border">
         <div className="flex min-w-max gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -1650,7 +1648,7 @@ const FantasyGame = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-xs font-black transition-colors sm:px-4 sm:text-sm ${active ? "bg-[#FAC938] text-black" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                className={`inline-flex min-h-9 items-center gap-2 rounded-xl px-3 text-xs font-black transition-colors sm:min-h-10 sm:px-4 sm:text-sm ${active ? "bg-[#FAC938] text-black" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
               >
                 <Icon className="h-4 w-4" />{tab.label}
               </button>
@@ -1659,7 +1657,7 @@ const FantasyGame = () => {
         </div>
       </div>
 
-      <main className="mt-5">
+      <main className="mt-3 sm:mt-4">
         {poolLoading && ["team", "players"].includes(activeTab) ? (
           <div className="grid min-h-[360px] place-items-center rounded-2xl border border-border">
             <div className="text-center"><Loader2 className="mx-auto h-7 w-7 animate-spin text-primary" /><p className="mt-3 text-sm text-muted-foreground">Collecting the current QF player pool from ESPN…</p></div>
@@ -1684,7 +1682,7 @@ const FantasyGame = () => {
         ) : null}
       </main>
 
-      <div className="mt-8 flex items-center justify-center gap-2 text-center text-[11px] text-muted-foreground"><UserRound className="h-3.5 w-3.5" /> Fantasy statistics are provisional until reviewed.</div>
+      <div className="mt-5 flex items-center justify-center gap-2 text-center text-[11px] text-muted-foreground"><UserRound className="h-3.5 w-3.5" /> Fantasy statistics are provisional until reviewed.</div>
     </div>
   );
 };
