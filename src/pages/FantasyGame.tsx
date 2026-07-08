@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import TeamFlag from "@/components/TeamFlag";
+import { getTeamByName } from "@/data/wc26";
 import {
   FANTASY_FAQ,
   FANTASY_SCORING,
@@ -92,6 +94,18 @@ const qfTeamCode: Record<string, string> = {
   England: "ENG",
   Argentina: "ARG",
   Switzerland: "SUI",
+};
+
+const FixtureFlag = ({ name }: { name: string }) => {
+  const team = getTeamByName(name);
+
+  return (
+    <TeamFlag
+      name={name}
+      slug={team?.slug}
+      className="h-6 w-6 shrink-0 rounded-md border border-white/20 sm:h-7 sm:w-7"
+    />
+  );
 };
 
 const squadSlots: SquadSlot[] = [
@@ -613,14 +627,20 @@ const QuarterFinalFixtures = () => (
             <span className="inline-flex items-center gap-1 font-mono"><Clock3 className="h-3.5 w-3.5" /> {fixture.time}</span>
           </div>
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-            <div className="min-w-0 text-right">
-              <div className="truncate text-base font-black sm:text-lg">{fixture.home}</div>
-              <div className="text-[10px] font-black text-[#FAC938]">{qfTeamCode[fixture.home]}</div>
+            <div className="flex min-w-0 items-center justify-end gap-2 text-right">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-black sm:text-base">{fixture.home}</div>
+                <div className="text-[10px] font-black text-[#FAC938]">{qfTeamCode[fixture.home]}</div>
+              </div>
+              <FixtureFlag name={fixture.home} />
             </div>
-            <div className="rounded-full border border-[#FAC938]/35 bg-[#FAC938]/10 px-3 py-1 text-xs font-black text-[#FAC938]">vs</div>
-            <div className="min-w-0">
-              <div className="truncate text-base font-black sm:text-lg">{fixture.away}</div>
-              <div className="text-[10px] font-black text-[#FAC938]">{qfTeamCode[fixture.away]}</div>
+            <div className="rounded-full border border-[#FAC938]/35 bg-[#FAC938]/10 px-2.5 py-1 text-[10px] font-black text-[#FAC938] sm:px-3 sm:text-xs">vs</div>
+            <div className="flex min-w-0 items-center gap-2">
+              <FixtureFlag name={fixture.away} />
+              <div className="min-w-0">
+                <div className="truncate text-sm font-black sm:text-base">{fixture.away}</div>
+                <div className="text-[10px] font-black text-[#FAC938]">{qfTeamCode[fixture.away]}</div>
+              </div>
             </div>
           </div>
         </div>
