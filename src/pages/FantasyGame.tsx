@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   BookOpen,
+  CalendarDays,
   CircleHelp,
+  Clock3,
   Coins,
   ListFilter,
   Loader2,
@@ -72,6 +74,24 @@ const positionName: Record<FantasyPosition, string> = {
   DEF: "Defenders",
   MID: "Midfielders",
   FW: "Forwards",
+};
+
+const qfFixtures = [
+  { date: "Friday 10 July 2026", time: "02:00 BST", home: "France", away: "Morocco" },
+  { date: "Saturday 11 July 2026", time: "01:00 BST", home: "Spain", away: "Belgium" },
+  { date: "Sunday 12 July 2026", time: "03:00 BST", home: "Norway", away: "England" },
+  { date: "Sunday 12 July 2026", time: "07:00 BST", home: "Argentina", away: "Switzerland" },
+];
+
+const qfTeamCode: Record<string, string> = {
+  France: "FRA",
+  Morocco: "MAR",
+  Spain: "ESP",
+  Belgium: "BEL",
+  Norway: "NOR",
+  England: "ENG",
+  Argentina: "ARG",
+  Switzerland: "SUI",
 };
 
 const squadSlots: SquadSlot[] = [
@@ -150,7 +170,7 @@ const LoginGate = () => (
 );
 
 const PoolStatus = ({ pool, totalPoints }: { pool: FantasyPoolResponse; totalPoints: number }) => (
-  <div className="space-y-3">
+  <div className="hidden space-y-3 md:block">
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       <div className="rounded-2xl border border-border bg-background/60 p-3"><div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Active round</div><div className="mt-1 font-black">{pool.round.name}</div></div>
       <div className="rounded-2xl border border-border bg-background/60 p-3"><div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Budget</div><div className="mt-1 font-black text-[#FAC938]">{pool.round.budget}m</div></div>
@@ -484,18 +504,130 @@ const TeamBuilder = ({ pool, initialPlayers, initialCaptain, userId, onSaved }: 
           <div className="mt-5 grid gap-2 sm:grid-cols-[auto_1fr]"><button type="button" onClick={resetSquad} disabled={pool.round.locked || selectedIds.size === 0} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border px-4 text-sm font-black disabled:cursor-not-allowed disabled:opacity-45"><RotateCcw className="h-4 w-4" /> Reset</button><button type="button" onClick={handleSave} disabled={saving || pool.round.locked || errors.length > 0} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-black text-primary-foreground disabled:cursor-not-allowed disabled:opacity-45">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Fantasy Team</button></div>
         </SectionCard>
       </div>
-      <div className="space-y-5 xl:sticky xl:top-20 xl:self-start">
+      <div className="hidden space-y-5 xl:sticky xl:top-20 xl:block xl:self-start">
         <SectionCard title="Player selector">
           {activeSlot && <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-[#FAC938]/40 bg-[#FAC938]/10 p-3"><div><div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#FAC938]">Selection target</div><div className="text-sm font-black">{activeSlot.label} · {activeSlot.position}</div></div><button type="button" onClick={() => setActiveSlot(null)} className="grid h-8 w-8 place-items-center rounded-full border border-[#FAC938]/40" aria-label="Clear active selection target"><X className="h-4 w-4" /></button></div>}
           <div className="grid gap-2"><label className="flex items-center gap-2 rounded-xl border border-border bg-background px-3"><Search className="h-4 w-4 text-muted-foreground" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search player or country" className="min-h-11 min-w-0 flex-1 bg-transparent text-sm outline-none" /></label><div className="grid gap-2 sm:grid-cols-3"><select value={position} onChange={(event) => setPosition(event.target.value as "ALL" | FantasyPosition)} disabled={Boolean(activeSlot)} className="min-h-11 rounded-xl border border-border bg-background px-3 text-xs font-black disabled:opacity-50"><option value="ALL">All positions</option>{positionOrder.map((value) => <option key={value} value={value}>{value}</option>)}</select><select value={team} onChange={(event) => setTeam(event.target.value)} className="min-h-11 rounded-xl border border-border bg-background px-3 text-xs font-black"><option value="ALL">All teams</option>{pool.teams.map((value) => <option key={value.id} value={value.id}>{value.abbreviation || value.name}</option>)}</select><select value={sort} onChange={(event) => setSort(event.target.value as SortMode)} className="min-h-11 rounded-xl border border-border bg-background px-3 text-xs font-black"><option value="value">Best value</option><option value="points">Points</option><option value="price">Price</option><option value="name">Name</option><option value="team">Team</option></select></div></div>
           <div className="mt-4 max-h-[60vh] space-y-2 overflow-y-auto pr-1 xl:max-h-[690px]">{filteredPlayers.map((player) => <PlayerRow key={player.id} player={player} selected={selectedIds.has(player.id)} disabled={pool.round.locked} onAdd={() => assignPlayer(player)} onRemove={() => { const slot = squadSlots.find((item) => assignments[item.id] === player.id); if (slot) removeSlot(slot); }} />)}{filteredPlayers.length === 0 && <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No player matches the current filters.</div>}</div>
         </SectionCard>
       </div>
+
+      {activeSlot && (
+        <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm xl:hidden">
+          <button
+            type="button"
+            className="absolute inset-0"
+            onClick={() => setActiveSlot(null)}
+            aria-label="Close player selector"
+          />
+          <div className="absolute inset-x-0 bottom-0 max-h-[82vh] overflow-hidden rounded-t-[28px] border border-[#FAC938]/45 bg-background shadow-2xl">
+            <div className="flex items-center justify-between gap-3 border-b border-[#FAC938]/25 px-4 py-3">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-[#FAC938]">Choose player</div>
+                <div className="text-base font-black">{activeSlot.label} · {activeSlot.position}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveSlot(null)}
+                className="grid h-10 w-10 place-items-center rounded-full border border-border bg-secondary/70"
+                aria-label="Close player selector"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 p-3">
+              <label className="flex items-center gap-2 rounded-xl border border-border bg-background px-3">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={`Search ${activeSlot.position} players`}
+                  className="min-h-11 min-w-0 flex-1 bg-transparent text-sm outline-none"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={team}
+                  onChange={(event) => setTeam(event.target.value)}
+                  className="min-h-11 rounded-xl border border-border bg-background px-3 text-xs font-black"
+                >
+                  <option value="ALL">All teams</option>
+                  {pool.teams.map((value) => (
+                    <option key={value.id} value={value.id}>{value.abbreviation || value.name}</option>
+                  ))}
+                </select>
+                <select
+                  value={sort}
+                  onChange={(event) => setSort(event.target.value as SortMode)}
+                  className="min-h-11 rounded-xl border border-border bg-background px-3 text-xs font-black"
+                >
+                  <option value="value">Best value</option>
+                  <option value="points">Points</option>
+                  <option value="price">Price</option>
+                  <option value="name">Name</option>
+                  <option value="team">Team</option>
+                </select>
+              </div>
+
+              <div className="max-h-[54vh] space-y-2 overflow-y-auto pr-1">
+                {filteredPlayers.map((player) => (
+                  <PlayerRow
+                    key={player.id}
+                    player={player}
+                    selected={selectedIds.has(player.id)}
+                    disabled={pool.round.locked}
+                    onAdd={() => assignPlayer(player)}
+                    onRemove={() => {
+                      const slot = squadSlots.find((item) => assignments[item.id] === player.id);
+                      if (slot) removeSlot(slot);
+                    }}
+                  />
+                ))}
+                {filteredPlayers.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                    No player matches this slot.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 const PlayersTab = ({ pool }: { pool: FantasyPoolResponse }) => <SectionCard title="All QF players"><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{pool.players.map((player) => <div key={player.id} className="rounded-2xl border border-[#FAC938]/35 bg-background/65 p-4"><div className="flex items-center gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full border border-white/50 bg-secondary text-xs font-black">{player.headshotUrl ? <img src={player.headshotUrl} alt="" className="h-full w-full object-cover object-top" loading="lazy" /> : playerInitials(player.name)}</div><div className="min-w-0 flex-1"><div className="truncate font-black">{player.name}</div><div className="text-xs text-muted-foreground">{teamCode(player)} · {player.position}</div></div><div className="text-lg font-black text-[#FAC938]">{formatPrice(player.price)}</div></div><div className="mt-4 grid grid-cols-4 gap-2 text-center"><div className="rounded-lg bg-secondary/55 p-2"><div className="text-[9px] text-muted-foreground">MIN</div><div className="text-sm font-black">{player.stats.minutes}</div></div><div className="rounded-lg bg-secondary/55 p-2"><div className="text-[9px] text-muted-foreground">G</div><div className="text-sm font-black">{player.stats.goals}</div></div><div className="rounded-lg bg-secondary/55 p-2"><div className="text-[9px] text-muted-foreground">A</div><div className="text-sm font-black">{player.stats.assists}</div></div><div className="rounded-lg bg-secondary/55 p-2"><div className="text-[9px] text-muted-foreground">PTS</div><div className="text-sm font-black">{player.stats.fantasyPoints}</div></div></div></div>)}</div></SectionCard>;
+
+const QuarterFinalFixtures = () => (
+  <SectionCard
+    title="Upcoming QF Fixtures"
+    action={<span className="inline-flex items-center gap-1.5 rounded-full border border-[#FAC938]/35 bg-[#FAC938]/10 px-3 py-1 text-[10px] font-black text-[#FAC938]"><CalendarDays className="h-3.5 w-3.5" /> Quarter-finals</span>}
+  >
+    <div className="grid gap-3 md:grid-cols-2">
+      {qfFixtures.map((fixture) => (
+        <div key={`${fixture.home}-${fixture.away}`} className="rounded-2xl border border-border bg-background/60 p-3 sm:p-4">
+          <div className="mb-3 flex items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            <span>{fixture.date}</span>
+            <span className="inline-flex items-center gap-1 font-mono"><Clock3 className="h-3.5 w-3.5" /> {fixture.time}</span>
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+            <div className="min-w-0 text-right">
+              <div className="truncate text-base font-black sm:text-lg">{fixture.home}</div>
+              <div className="text-[10px] font-black text-[#FAC938]">{qfTeamCode[fixture.home]}</div>
+            </div>
+            <div className="rounded-full border border-[#FAC938]/35 bg-[#FAC938]/10 px-3 py-1 text-xs font-black text-[#FAC938]">vs</div>
+            <div className="min-w-0">
+              <div className="truncate text-base font-black sm:text-lg">{fixture.away}</div>
+              <div className="text-[10px] font-black text-[#FAC938]">{qfTeamCode[fixture.away]}</div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </SectionCard>
+);
 
 const PointsTab = ({ rows }: { rows: FantasyPointRow[] }) => { const total = rows.reduce((sum, row) => sum + row.totalPoints, 0); return <div className="space-y-5"><SectionCard><div className="flex items-center justify-between gap-4"><div><div className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total points</div><div className="mt-1 text-4xl font-black text-[#FAC938]">{total}</div></div><Star className="h-10 w-10 text-[#FAC938]" /></div></SectionCard><SectionCard title="Match by match points">{rows.length === 0 ? <div className="py-10 text-center text-sm text-muted-foreground">Points will appear here after match data has been reviewed and scored.</div> : <div className="space-y-2">{rows.map((row) => <div key={row.id} className="flex items-center gap-3 rounded-xl border border-border bg-background/55 p-3"><div className="min-w-0 flex-1"><div className="truncate text-sm font-black">{row.playerName}</div><div className="text-[11px] text-muted-foreground">{row.teamName} · {row.roundCode} · Match {row.matchId}</div></div><div className="text-right"><div className="text-xl font-black text-[#FAC938]">{row.totalPoints}</div><div className="text-[9px] uppercase tracking-wide text-muted-foreground">{row.finalized ? "Final" : "Provisional"}</div></div></div>)}</div>}</SectionCard></div>; };
 const LeaderboardTab = ({ rows }: { rows: FantasyLeaderboardRow[] }) => <SectionCard title="Overall Leaderboard"><p className="mb-4 text-sm text-muted-foreground">Quarter finals, Semi finals, Third place Match and Final points are added together. The top three managers receive prizes.</p>{rows.length === 0 ? <div className="py-10 text-center text-sm text-muted-foreground">The leaderboard will appear after the first points are published.</div> : <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead><tr className="border-b border-[#FAC938]/30 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"><th className="px-3 py-3">Rank</th><th className="px-3 py-3">Manager</th><th className="px-3 py-3 text-center">Points</th><th className="px-3 py-3 text-center">Goals</th><th className="px-3 py-3 text-center">Assists</th><th className="px-3 py-3 text-center">Clean sheets</th></tr></thead><tbody>{rows.map((row, index) => <tr key={row.userId} className="border-b border-border/70 last:border-0"><td className="px-3 py-3 font-black"><span className="inline-flex items-center gap-1.5">{index < 3 && <Medal className="h-4 w-4 text-[#FAC938]" />}{index + 1}</span></td><td className="px-3 py-3 font-bold">{row.displayName}</td><td className="px-3 py-3 text-center text-lg font-black text-[#FAC938]">{row.totalPoints}</td><td className="px-3 py-3 text-center">{row.goals}</td><td className="px-3 py-3 text-center">{row.assists}</td><td className="px-3 py-3 text-center">{row.cleanSheets}</td></tr>)}</tbody></table></div>}</SectionCard>;
@@ -532,13 +664,27 @@ const FantasyGame = () => {
 
   return (
     <div className="container py-7 sm:py-10">
-      <div className="relative overflow-hidden rounded-3xl border border-[#FAC938]/55 bg-gradient-to-br from-[#FAC938]/15 via-background to-emerald-700/10 p-5 sm:p-8">
-        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[#FAC938]/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-40 w-72 rounded-tl-full border-l border-t border-white/10 bg-[linear-gradient(90deg,rgba(255,255,255,.05)_50%,transparent_50%)] bg-[length:20%_100%] opacity-50" />
-        <div className="relative max-w-3xl"><div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[#FAC938]"><Trophy className="h-4 w-4" /> Knockout Edition</div><h1 className="mt-3 text-4xl font-black sm:text-5xl">Fantasy Game</h1><p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">Build a 15 player squad on the pitch for the Quarter finals, Semi finals, Third place Match and Final.</p><div className="mt-5 flex flex-wrap gap-2 text-xs font-bold"><span className="inline-flex items-center gap-1.5 rounded-full border border-[#FAC938]/40 bg-[#FAC938]/10 px-3 py-1.5 text-[#FAC938]"><Coins className="h-3.5 w-3.5" /> 105m starting budget</span><span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/55 px-3 py-1.5"><UsersRound className="h-3.5 w-3.5" /> 15 player squad</span><span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/55 px-3 py-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Top 3 win prizes</span></div></div>
+      <div className="relative overflow-hidden rounded-3xl border border-[#FAC938]/55 bg-gradient-to-br from-[#FAC938]/15 via-background to-emerald-700/10 p-4 sm:p-8">
+        <div className="absolute -right-16 -top-16 hidden h-44 w-44 rounded-full bg-[#FAC938]/10 blur-3xl sm:block" />
+        <div className="absolute bottom-0 right-0 hidden h-40 w-72 rounded-tl-full border-l border-t border-white/10 bg-[linear-gradient(90deg,rgba(255,255,255,.05)_50%,transparent_50%)] bg-[length:20%_100%] opacity-50 sm:block" />
+        <div className="relative max-w-3xl">
+          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FAC938] sm:text-xs">
+            <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Knockout Edition
+          </div>
+          <h1 className="mt-2 text-3xl font-black sm:mt-3 sm:text-5xl">Fantasy League</h1>
+          <p className="mt-3 hidden max-w-2xl text-sm leading-relaxed text-muted-foreground sm:block sm:text-base">Build a 15 player squad on the pitch for the Quarter finals, Semi finals, Third place Match and Final.</p>
+          <div className="mt-5 hidden flex-wrap gap-2 text-xs font-bold sm:flex">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#FAC938]/40 bg-[#FAC938]/10 px-3 py-1.5 text-[#FAC938]"><Coins className="h-3.5 w-3.5" /> 105m starting budget</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/55 px-3 py-1.5"><UsersRound className="h-3.5 w-3.5" /> 15 player squad</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/55 px-3 py-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Top 3 win prizes</span>
+          </div>
+        </div>
       </div>
-      <div className="sticky top-14 z-30 -mx-4 mt-5 overflow-x-auto border-y border-border bg-background/92 px-4 py-2 backdrop-blur-xl sm:top-16 sm:mx-0 sm:rounded-2xl sm:border"><div className="flex min-w-max gap-1">{tabs.map((tab) => { const Icon = tab.icon; const active = activeTab === tab.id; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-xs font-black transition-colors sm:px-4 sm:text-sm ${active ? "bg-[#FAC938] text-black" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}><Icon className="h-4 w-4" />{tab.label}</button>; })}</div></div>
+      <div className="sticky top-14 z-30 -mx-4 mt-4 overflow-x-auto border-y border-border bg-background/92 px-4 py-2 backdrop-blur-xl sm:top-16 sm:mx-0 sm:mt-5 sm:rounded-2xl sm:border"><div className="flex min-w-0 justify-between gap-1 sm:min-w-max sm:justify-start">{tabs.map((tab) => { const Icon = tab.icon; const active = activeTab === tab.id; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} title={tab.label} className={`inline-flex min-h-10 w-10 items-center justify-center rounded-xl px-0 text-xs font-black transition-colors sm:w-auto sm:gap-2 sm:px-4 sm:text-sm ${active ? "bg-[#FAC938] text-black" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}><Icon className="h-4 w-4" /><span className="sr-only sm:not-sr-only sm:inline">{tab.label}</span></button>; })}</div></div>
       <main className="mt-5">{poolLoading && ["team", "players"].includes(activeTab) ? <div className="grid min-h-[360px] place-items-center rounded-2xl border border-border"><div className="text-center"><Loader2 className="mx-auto h-7 w-7 animate-spin text-primary" /><p className="mt-3 text-sm text-muted-foreground">Collecting the current QF player pool from ESPN…</p></div></div> : poolError && ["team", "players"].includes(activeTab) ? <SectionCard><div className="py-8 text-center"><p className="text-sm text-destructive">{poolError}</p><button type="button" onClick={refreshPool} className="mt-4 inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-black"><RefreshCw className="h-4 w-4" /> Try again</button></div></SectionCard> : ["team", "points"].includes(activeTab) ? renderProtectedContent() : activeTab === "players" && pool ? <PlayersTab pool={pool} /> : activeTab === "leaderboard" ? <LeaderboardTab rows={leaderboard} /> : activeTab === "how" ? <HowToPlayTab /> : activeTab === "faq" ? <FaqTab /> : null}</main>
+      <div className="mt-8">
+        <QuarterFinalFixtures />
+      </div>
       <div className="mt-8 flex items-center justify-center gap-2 text-center text-[11px] text-muted-foreground"><UserRound className="h-3.5 w-3.5" /> Fantasy statistics are provisional until reviewed.</div>
     </div>
   );
