@@ -4,7 +4,6 @@ import {
   BookOpen,
   CircleHelp,
   Coins,
-  Crown,
   ListFilter,
   Loader2,
   Lock,
@@ -135,7 +134,7 @@ const SectionCard = ({ title, children, className = "", action }: { title?: stri
         {action}
       </div>
     )}
-    <div className="p-4 sm:p-5">{children}</div>
+    <div className="p-3 sm:p-5">{children}</div>
   </section>
 );
 
@@ -196,32 +195,43 @@ const selectInitialSlots = (players: FantasySquadPlayer[]) => {
 const FieldPlayerCard = ({ player, slot, isCaptain, onPick, onRemove, onCaptain }: { player: FantasyPlayer | null; slot: SquadSlot; isCaptain: boolean; onPick: () => void; onRemove: () => void; onCaptain: () => void }) => {
   const canBeCaptain = slot.starter && player;
   return (
-    <div className="group relative w-[52px] text-center min-[390px]:w-[62px] sm:w-[96px]">
+    <div className="group relative w-[44px] text-center min-[390px]:w-[50px] sm:w-[74px] lg:w-[82px]">
       {player ? (
-        <div className="overflow-hidden rounded-lg border border-white/75 bg-black shadow-xl">
+        <div className="overflow-hidden rounded-md border border-white/75 bg-black shadow-xl sm:rounded-lg">
           <button type="button" onClick={onPick} className="block w-full" title={player.name}>
-            <div className="relative grid h-9 place-items-center overflow-hidden bg-[#0d3c65] min-[390px]:h-11 sm:h-16">
+            <div className="relative grid h-7 place-items-center overflow-hidden bg-[#0d3c65] min-[390px]:h-8 sm:h-12 lg:h-14">
               {player.headshotUrl ? (
                 <img src={player.headshotUrl} alt="" className="h-full w-full object-cover object-top" loading="lazy" />
               ) : (
-                <span className="text-xs font-black text-white sm:text-lg">{playerInitials(player.name)}</span>
+                <span className="text-[10px] font-black text-white sm:text-base">{playerInitials(player.name)}</span>
               )}
-              {!slot.starter && <span className="absolute right-1 top-1 rounded bg-black/70 px-1 text-[7px] font-black text-[#FAC938] sm:text-[8px]">SUB</span>}
+              {!slot.starter && <span className="absolute right-0.5 top-0.5 rounded bg-black/70 px-1 text-[6px] font-black text-[#FAC938] sm:right-1 sm:top-1 sm:text-[8px]">SUB</span>}
             </div>
-            <div className="truncate bg-white px-1 py-0.5 text-[8px] font-black leading-tight text-black min-[390px]:text-[9px] sm:py-1 sm:text-sm">{player.name}</div>
-            <div className="flex items-center justify-center gap-1 bg-black px-1 py-0.5 text-[8px] font-black text-white min-[390px]:text-[9px] sm:text-sm">
+            <div className="truncate bg-white px-1 py-0.5 text-[7px] font-black leading-tight text-black min-[390px]:text-[8px] sm:py-0.5 sm:text-[11px] lg:text-xs">{player.name}</div>
+            <div className="flex items-center justify-center gap-0.5 bg-black px-1 py-0.5 text-[7px] font-black text-white min-[390px]:text-[8px] sm:gap-1 sm:text-[11px] lg:text-xs">
               <span>{formatPrice(player.price)}</span><span className="text-[#FAC938]">{teamCode(player)}</span>
             </div>
           </button>
-          <button type="button" onClick={onRemove} className="absolute -left-1.5 -top-1.5 grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-red-600 text-white shadow" aria-label={`Remove ${player.name}`}><X className="h-3 w-3" /></button>
+          <button type="button" onClick={onRemove} className="absolute -left-1 -top-1 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-red-600 text-white shadow sm:-left-1.5 sm:-top-1.5 sm:h-6 sm:w-6" aria-label={`Remove ${player.name}`}><X className="h-2.5 w-2.5 sm:h-3 sm:w-3" /></button>
           {canBeCaptain && (
-            <button type="button" onClick={onCaptain} className={`absolute -right-1.5 -top-1.5 grid h-6 w-6 place-items-center rounded-full border-2 border-white text-[10px] font-black shadow ${isCaptain ? "bg-[#FAC938] text-black" : "bg-black text-white"}`} aria-label={`Make ${player.name} captain`}>C</button>
+            <button
+              type="button"
+              onClick={onCaptain}
+              className={`absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full border-2 border-white text-[9px] font-black shadow transition-opacity sm:-right-1.5 sm:-top-1.5 sm:h-6 sm:w-6 sm:text-[10px] ${
+                isCaptain
+                  ? "bg-[#FAC938] text-black opacity-100"
+                  : "pointer-events-none bg-black text-white opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+              }`}
+              aria-label={`Make ${player.name} captain`}
+            >
+              C
+            </button>
           )}
         </div>
       ) : (
-        <button type="button" onClick={onPick} className="mx-auto flex h-11 w-11 flex-col items-center justify-center rounded-full border-2 border-dashed border-white/80 bg-black/25 text-white shadow-lg transition-transform hover:scale-105 hover:bg-black/40 min-[390px]:h-12 min-[390px]:w-12 sm:h-14 sm:w-14" aria-label={`Choose ${slot.label}`}>
+        <button type="button" onClick={onPick} className="mx-auto flex h-9 w-9 flex-col items-center justify-center rounded-full border-2 border-dashed border-white/80 bg-black/25 text-white shadow-lg transition-transform hover:scale-105 hover:bg-black/40 min-[390px]:h-10 min-[390px]:w-10 sm:h-12 sm:w-12" aria-label={`Choose ${slot.label}`}>
           <Plus className="h-4 w-4" />
-          <span className="text-[7px] font-black min-[390px]:text-[8px]">{slot.label}</span>
+          <span className="text-[6px] font-black min-[390px]:text-[7px] sm:text-[8px]">{slot.label}</span>
         </button>
       )}
     </div>
@@ -229,7 +239,7 @@ const FieldPlayerCard = ({ player, slot, isCaptain, onPick, onRemove, onCaptain 
 };
 
 const FantasyPitch = ({ assignments, poolById, activeSlotId, captainPlayerId, onSelectSlot, onRemove, onCaptain }: { assignments: Record<string, string | null>; poolById: Map<string, FantasyPlayer>; activeSlotId: string | null; captainPlayerId: string | null; onSelectSlot: (slot: SquadSlot) => void; onRemove: (slot: SquadSlot) => void; onCaptain: (slot: SquadSlot) => void }) => (
-  <div className="relative aspect-[0.72] w-full overflow-hidden rounded-[22px] border border-white/20 bg-emerald-800 shadow-2xl ring-1 ring-[#FAC938]/20 sm:rounded-[30px]">
+  <div className="relative aspect-[0.72] w-full overflow-hidden rounded-[18px] border border-white/20 bg-emerald-800 shadow-2xl ring-1 ring-[#FAC938]/20 sm:rounded-[26px]">
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(250,201,56,.14),transparent_34%),linear-gradient(90deg,rgba(255,255,255,.045)_50%,transparent_50%)] bg-[length:100%_100%,20%_100%]" />
     <div className="absolute inset-[4%] rounded-sm border-2 border-white/45" />
     <div className="absolute left-[18%] right-[18%] top-[4%] h-[16%] border-x-2 border-b-2 border-white/45" />
@@ -457,7 +467,7 @@ const TeamBuilder = ({ pool, initialPlayers, initialCaptain, userId, onSaved }: 
     <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.12fr)_minmax(360px,.88fr)]">
       <div className="space-y-5">
         <SectionCard title="Build your 15-player squad" action={<div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"><button type="button" onClick={autopick} disabled={pool.round.locked} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full bg-[#FAC938] px-4 text-xs font-black text-black disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"><Sparkles className="h-4 w-4" /> Autopick</button></div>}>
-          <div className="mx-auto w-full max-w-[760px] overflow-hidden px-0.5 sm:px-0">
+          <div className="mx-auto w-full max-w-[620px] overflow-hidden px-0.5 sm:px-0">
             <FantasyPitch assignments={assignments} poolById={poolById} activeSlotId={activeSlot?.id ?? null} captainPlayerId={captainPlayerId} onSelectSlot={(slot) => { setActiveSlot(slot); setPosition(slot.position); }} onRemove={removeSlot} onCaptain={(slot) => { if (!slot.starter) { toast.error("Captain must be in a starting slot."); return; } const playerId = assignments[slot.id]; if (playerId) setCaptainPlayerId(playerId); }} />
           </div>
         </SectionCard>
