@@ -26,7 +26,7 @@ const FootballPitch = ({
   };
 
   return (
-    <div className="relative mx-auto aspect-[0.72] w-full max-w-[620px] overflow-hidden rounded-[28px] border border-white/15 bg-emerald-800 shadow-2xl">
+    <div className="relative aspect-[0.72] w-full overflow-hidden rounded-[28px] border border-white/15 bg-emerald-800 shadow-2xl">
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,.035)_50%,transparent_50%)] bg-[length:20%_100%]" />
       <div className="absolute inset-[4%] rounded-sm border-2 border-white/45" />
       <div className="absolute left-[18%] right-[18%] top-[4%] h-[16%] border-x-2 border-b-2 border-white/45" />
