@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Clock3, RefreshCw, Trophy, WifiOff } from "lucide-react";
 import { FIXTURES, getTeamByName } from "@/data/wc26";
 import TeamFlag from "@/components/TeamFlag";
+import MvpStatsTable from "@/components/MvpStatsTable";
 import { useLiveScores } from "@/hooks/useLiveScores";
 import {
   shootoutLabel,
@@ -165,7 +166,7 @@ const LatestResultBar = ({
   >
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5 rounded-xl border border-primary/35 bg-background/65 px-2 py-2.5 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.06)] sm:gap-3 sm:px-4 sm:py-3">
       <div className="flex min-w-0 items-center justify-end gap-1.5">
-        <span className="min-w-0 break-words text-right text-xs font-extrabold leading-[1.05] sm:text-base sm:leading-tight">
+        <span className="min-w-0 break-words text-right text-[11px] font-extrabold leading-[1.05] sm:text-[15px] sm:leading-tight">
           {row.fixture.home}
         </span>
         <MatchFlag name={row.fixture.home} compact />
@@ -181,7 +182,7 @@ const LatestResultBar = ({
 
       <div className="flex min-w-0 items-center gap-1.5">
         <MatchFlag name={row.fixture.away} compact />
-        <span className="min-w-0 break-words text-xs font-extrabold leading-[1.05] sm:text-base sm:leading-tight">
+        <span className="min-w-0 break-words text-[11px] font-extrabold leading-[1.05] sm:text-[15px] sm:leading-tight">
           {row.fixture.away}
         </span>
       </div>
@@ -431,6 +432,8 @@ const HomeMatchUpdates = () => {
           </div>
         )}
       </SectionShell>
+
+      <MvpStatsTable limit={5} compact />
 
       <div className="flex min-w-0 items-start justify-between gap-2 text-[9px] leading-relaxed text-muted-foreground sm:text-[10px]">
         <span className="min-w-0 break-words">
