@@ -214,36 +214,38 @@ const Home = () => {
               48 nations. 104 matches. 16 host cities across Canada, Mexico and
               the USA.
             </p>
-            <div className="grid w-full min-w-0 grid-cols-2 gap-2 pt-0.5 sm:flex sm:flex-wrap lg:gap-3">
+            <div className="grid w-full min-w-0 grid-cols-2 gap-2 pt-0.5 sm:flex sm:flex-wrap lg:gap-2">
               <Link
                 to="/profile"
-                className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary-foreground transition-transform hover:scale-105 sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base glow"
+                className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary-foreground transition-transform hover:scale-105 sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-xs lg:px-4 lg:py-2.5 lg:text-sm glow"
               >
-                <LogIn className="h-4 w-4 lg:h-5 lg:w-5" />
+                <LogIn className="h-4 w-4" />
                 Save Data
               </Link>
               <Link
                 to="/best-xi"
-                className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
+                className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-xs lg:px-4 lg:py-2.5 lg:text-sm"
               >
-                <UsersRound className="h-4 w-4 lg:h-5 lg:w-5" /> Build Team
+                <UsersRound className="h-4 w-4" /> Build Team
               </Link>
               <Link
                 to="/mini-game"
-                className="inline-flex min-w-0 items-center justify-center rounded-full border border-primary/40 bg-primary/10 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
+                className="inline-flex min-w-0 items-center justify-center rounded-full border border-primary/40 bg-primary/10 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:w-auto sm:px-4 sm:py-2 sm:text-xs lg:px-4 lg:py-2.5 lg:text-sm"
               >
                 Mini Game
               </Link>
               <Link
                 to="/prediction"
-                className="inline-flex min-w-0 items-center justify-center rounded-full border border-border bg-secondary/50 px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors hover:bg-secondary sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
+                className="inline-flex min-w-0 items-center justify-center rounded-full border border-border bg-secondary/50 px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors hover:bg-secondary sm:w-auto sm:px-4 sm:py-2 sm:text-xs lg:px-4 lg:py-2.5 lg:text-sm"
               >
                 Make Your Prediction
               </Link>
             </div>
           </div>
 
-          <div className="min-w-0 max-w-full overflow-hidden"><HomeMatchUpdates /></div>
+          <div className="min-w-0 max-w-full overflow-hidden">
+            <HomeMatchUpdates />
+          </div>
         </div>
       </section>
 
