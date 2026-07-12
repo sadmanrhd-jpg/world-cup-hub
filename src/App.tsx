@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import FloatingPenaltyChallenge from "./components/FloatingPenaltyChallenge";
+import FloatingStatsButton from "./components/FloatingStatsButton";
 import ScrollToTop from "./components/ScrollToTop";
 import Layout from "./components/Layout";
 import TournamentFixtureSync from "./components/TournamentFixtureSync";
@@ -20,6 +21,7 @@ import Prediction from "./pages/Prediction";
 import Profile from "./pages/Profile";
 import StadiumPage from "./pages/StadiumPage";
 import Stadiums from "./pages/Stadiums";
+import Stats from "./pages/Stats";
 import TeamPage from "./pages/TeamPage";
 import Teams from "./pages/Teams";
 
@@ -34,6 +36,7 @@ const App = () => (
         <AuthProvider>
           <ScrollToTop />
           <TournamentFixtureSync />
+          <FloatingStatsButton />
           <FloatingPenaltyChallenge />
           <Routes>
             <Route element={<Layout />}>
@@ -48,6 +51,7 @@ const App = () => (
               <Route path="/stadiums/:id" element={<StadiumPage />} />
               <Route path="/prediction" element={<Prediction />} />
               <Route path="/fantasy" element={<FantasyGame />} />
+              <Route path="/stats" element={<Stats />} />
               <Route path="/mini-game" element={<MiniGame />} />
               <Route path="/best-xi" element={<BestXI />} />
               <Route path="/profile" element={<Profile />} />
