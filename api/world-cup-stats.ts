@@ -1,8 +1,5 @@
-export const config = {
-  maxDuration: 60,
-};
-
-import fantasyHandler from "./fantasy-espn";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import fantasyEspnHandler from "./fantasy-espn";
 
 type ApiRequest = {
   method?: string;
@@ -15,83 +12,159 @@ type ApiResponse = {
   json: (body: unknown) => void;
 };
 
+type StatCategory = "goals" | "assists" | "yellowCards" | "redCards";
+
+type FantasyPlayer = {
+  id?: string;
+  name?: string;
+  teamName?: string;
+  teamAbbreviation?: string;
+  stats?: {
+    matches?: number;
+    starts?: number;
+    minutes?: number;
+    goals?: number;
+    assists?: number;
+    yellowCards?: number;
+    redCards?: number;
+  };
+};
+
+type FantasyPoolPayload = {
+  source?: string;
+  generatedAt?: string;
+  round?: {
+    completedMatches?: number;
+  };
+  players?: FantasyPlayer[];
+  warnings?: string[];
+  error?: string;
+};
+
+type TournamentPlayer = {
+  rank: number;
+  name: string;
+  country: string;
+  countryCode: string;
+  goals: number;
+  assists: number;
+  yellowCards: number;
+  redCards: number;
+};
+
+const numberValue = (value: unknown) => {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const invokeFantasyPool = async (): Promise<FantasyPoolPayload> => {
+  let statusCode = 200;
+  let body: FantasyPoolPayload | undefined;
+
+  const response: ApiResponse = {
+    setHeader: () => undefined,
+    status: (code: number) => {
+      statusCode = code;
+      return response;
+    },
+    json: (value: unknown) => {
+      body = value as FantasyPoolPayload;
+    },
+  };
+
+  await fantasyEspnHandler(
+    { method: "GET", query: { view: "pool" } },
+    response,
+  );
+
+  if (statusCode < 200 || statusCode >= 300 || !body) {
+    throw new Error(
+      body?.error || `ESPN fantasy data request returned ${statusCode}.`,
+    );
+  }
+
+  return body;
+};
+
+const normalizePlayer = (player: FantasyPlayer): Omit<TournamentPlayer, "rank"> => ({
+  name: String(player.name ?? "Unknown player"),
+  country: String(player.teamName ?? "Unknown team"),
+  countryCode: String(player.teamAbbreviation ?? "").toUpperCase().slice(0, 3),
+  goals: numberValue(player.stats?.goals),
+  assists: numberValue(player.stats?.assists),
+  yellowCards: numberValue(player.stats?.yellowCards),
+  redCards: numberValue(player.stats?.redCards),
+});
+
+const buildLeaders = (
+  players: Array<Omit<TournamentPlayer, "rank">>,
+  category: StatCategory,
+  limit = 20,
+): TournamentPlayer[] => {
+  const secondary: StatCategory = category === "goals" ? "assists" : "goals";
+
+  return players
+    .filter((player) => player[category] > 0)
+    .sort((first, second) => {
+      const primaryDifference = second[category] - first[category];
+      if (primaryDifference !== 0) return primaryDifference;
+
+      const secondaryDifference = second[secondary] - first[secondary];
+      if (secondaryDifference !== 0) return secondaryDifference;
+
+      return first.name.localeCompare(second.name);
+    })
+    .slice(0, limit)
+    .map((player, index) => ({ ...player, rank: index + 1 }));
+};
+
+export const config = {
+  maxDuration: 60,
+};
+
 export default async function handler(
   request: ApiRequest,
   response: ApiResponse,
 ) {
+  if (request.method && request.method !== "GET") {
+    response.status(405).json({ error: "Only GET requests are supported." });
+    return;
+  }
+
   try {
-    let statusCode = 200;
-    let payload: any = null;
-
-    const mockResponse: ApiResponse = {
-      status(code) {
-        statusCode = code;
-        return this;
-      },
-      setHeader() {},
-      json(body) {
-        payload = body;
-      },
-    };
-
-    await fantasyHandler(request, mockResponse);
-
-    if (statusCode !== 200 || !payload) {
-      response.status(statusCode || 502).json(payload ?? {
-        error: "Could not load ESPN fantasy statistics."
-      });
-      return;
-    }
-
-    const players = payload.players ?? [];
-
-    const createRows = (key: string) =>
-      players
-        .map((player: any) => ({
-          name: player.name,
-          country: player.teamAbbreviation || "",
-          value: Number(player.stats?.[key] ?? 0),
-        }))
-        .filter((player: any) => player.value > 0)
-        .sort((a: any, b: any) => b.value - a.value)
-        .slice(0, 10);
+    const fantasyPool = await invokeFantasyPool();
+    const players = (fantasyPool.players ?? []).map(normalizePlayer);
+    const fetchedAt = fantasyPool.generatedAt || new Date().toISOString();
 
     response.setHeader(
       "Cache-Control",
-      "s-maxage=900, stale-while-revalidate=3600",
+      "public, s-maxage=300, stale-while-revalidate=1800",
     );
 
     response.status(200).json({
       source: "ESPN FIFA World Cup Fantasy API",
-      fetchedAt: new Date().toISOString(),
+      fetchedAt,
+      completedMatches: numberValue(fantasyPool.round?.completedMatches),
+      parsedMatches: numberValue(fantasyPool.round?.completedMatches),
+      playerStatsCount: players.length,
+      warnings: fantasyPool.warnings ?? [],
       leaders: {
-        goals: createRows("goals").map((p:any) => ({
-          ...p,
-          goals: p.value,
-        })),
-        assists: createRows("assists").map((p:any) => ({
-          ...p,
-          assists: p.value,
-        })),
-        yellowCards: createRows("yellowCards").map((p:any) => ({
-          ...p,
-          yellowCards: p.value,
-        })),
-        redCards: createRows("redCards").map((p:any) => ({
-          ...p,
-          redCards: p.value,
-        })),
-      },
-      stats: {
-        totalPlayers: players.length,
+        goals: buildLeaders(players, "goals"),
+        assists: buildLeaders(players, "assists"),
+        yellowCards: buildLeaders(players, "yellowCards"),
+        redCards: buildLeaders(players, "redCards"),
       },
     });
   } catch (error) {
+    console.error("ESPN tournament statistics sync failed", error);
+    response.setHeader("Cache-Control", "no-store");
     response.status(502).json({
+      code: "ESPN_STATS_REQUEST_FAILED",
+      provider: "ESPN",
       error:
         error instanceof Error
           ? error.message
-          : "Could not load ESPN statistics.",
+          : "Could not load ESPN tournament statistics.",
     });
   }
 }
