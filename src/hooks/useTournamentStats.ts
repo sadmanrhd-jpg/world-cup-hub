@@ -11,8 +11,12 @@ type StoredStats = {
 
 const readStoredStats = (): StoredStats | undefined => {
   if (typeof window === "undefined") return undefined;
+
   try {
-    const parsed = JSON.parse(localStorage.getItem(CACHE_KEY) ?? "null") as StoredStats | null;
+    const parsed = JSON.parse(
+      localStorage.getItem(CACHE_KEY) ?? "null",
+    ) as StoredStats | null;
+
     if (!parsed?.payload?.leaders || !parsed.storedAt) return undefined;
     return parsed;
   } catch {
@@ -22,29 +26,39 @@ const readStoredStats = (): StoredStats | undefined => {
 
 const storeStats = (payload: TournamentStatsPayload) => {
   if (typeof window === "undefined") return;
+
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ storedAt: Date.now(), payload }));
-  } catch {}
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({ storedAt: Date.now(), payload } satisfies StoredStats),
+    );
+  } catch {
+    // Browsers can disable storage in private or restricted contexts.
+  }
 };
 
 const fetchTournamentStats = async () => {
-  const response = await fetch("/api/world-cup-stats?v=espn1", {
+  const response = await fetch("/api/world-cup-stats?source=espn-v1", {
     cache: "no-store",
     headers: { Accept: "application/json" },
   });
 
   if (!response.ok) {
-    const body = await response.json().catch(() => null);
+    const body = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+
     throw new Error(body?.error || `Stats request returned ${response.status}`);
   }
 
-  const payload = await response.json() as TournamentStatsPayload;
+  const payload = (await response.json()) as TournamentStatsPayload;
   storeStats(payload);
   return payload;
 };
 
 export const useTournamentStats = () => {
   const stored = readStoredStats();
+
   return useQuery({
     queryKey: ["espn-world-cup-stats", 1],
     queryFn: fetchTournamentStats,
