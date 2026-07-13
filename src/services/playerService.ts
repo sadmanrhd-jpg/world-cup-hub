@@ -7,7 +7,7 @@ import type {
   WorldCupPlayer,
 } from "@/types/fanProfile";
 
-const CACHE_KEY = "fan26.world-cup-player-data-v3";
+const CACHE_KEY = "fan26.world-cup-player-data-v4";
 const CACHE_TTL = 6 * 60 * 60 * 1000;
 
 const emptyStats = (): PlayerTournamentStats => ({
@@ -324,7 +324,7 @@ const loadData = async (): Promise<CachedData> => {
     }
 
     const statPayload = await fetchJson<StatsPayload>(
-      "/api/world-cup-stats?v=5",
+      "/api/world-cup-stats?v=6",
     ).catch((): StatsPayload => ({ stats: {}, playerStatsCount: 0 }));
 
     const statMap = statPayload.stats ?? {};
