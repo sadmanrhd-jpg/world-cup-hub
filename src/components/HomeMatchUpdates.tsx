@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Clock3, RefreshCw, Trophy, WifiOff } from "lucide-react";
 import { FIXTURES, getTeamByName } from "@/data/wc26";
 import TeamFlag from "@/components/TeamFlag";
-import MvpStatsTable from "@/components/MvpStatsTable";
 import { useLiveScores } from "@/hooks/useLiveScores";
 import {
   shootoutLabel,
@@ -166,7 +165,7 @@ const LatestResultBar = ({
   >
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5 rounded-xl border border-primary/35 bg-background/65 px-2 py-2.5 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.06)] sm:gap-3 sm:px-4 sm:py-3">
       <div className="flex min-w-0 items-center justify-end gap-1.5">
-        <span className="min-w-0 break-words text-right text-[11px] font-extrabold leading-[1.05] sm:text-[15px] sm:leading-tight">
+        <span className="min-w-0 break-words text-right text-xs font-extrabold leading-[1.05] sm:text-base sm:leading-tight">
           {row.fixture.home}
         </span>
         <MatchFlag name={row.fixture.home} compact />
@@ -182,7 +181,7 @@ const LatestResultBar = ({
 
       <div className="flex min-w-0 items-center gap-1.5">
         <MatchFlag name={row.fixture.away} compact />
-        <span className="min-w-0 break-words text-[11px] font-extrabold leading-[1.05] sm:text-[15px] sm:leading-tight">
+        <span className="min-w-0 break-words text-xs font-extrabold leading-[1.05] sm:text-base sm:leading-tight">
           {row.fixture.away}
         </span>
       </div>
@@ -374,91 +373,86 @@ const HomeMatchUpdates = () => {
   const hasLive = latest.some((row) => row.live);
 
   return (
-    <div className="grid min-w-0 gap-4 lg:grid-cols-2 lg:items-start lg:gap-7">
-      <div className="min-w-0 space-y-4 lg:space-y-7">
-        <SectionShell
-          title={hasLive ? "Live Matches" : "Latest Results"}
-          live={hasLive}
-          link="/fixtures?view=latest#latest-matches"
-        >
-          {latestGroups.length > 0 ? (
-            <div className="min-w-0">
-              {latestGroups.map((group) => (
-                <LatestStageGroup
-                  key={group.label}
-                  label={group.label}
-                  rows={group.rows}
-                  shootouts={shootouts}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="border-t border-border/80">
-              {!hasFreshScoreFeed && loading && (
-                <div className="flex max-w-full items-start gap-2 px-4 py-5 text-sm leading-relaxed text-muted-foreground">
-                  <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
-                  <span className="min-w-0 break-words">
-                    Loading the latest verified results…
-                  </span>
-                </div>
-              )}
+    <div className="relative w-full min-w-0 max-w-full space-y-3 overflow-hidden rounded-2xl border border-border/60 bg-secondary/25 p-3 backdrop-blur-sm sm:space-y-4 sm:p-4">
+      <SectionShell
+        title={hasLive ? "Live Matches" : "Latest Results"}
+        live={hasLive}
+        link="/fixtures?view=latest#latest-matches"
+      >
+        {latestGroups.length > 0 ? (
+          <div className="min-w-0">
+            {latestGroups.map((group) => (
+              <LatestStageGroup
+                key={group.label}
+                label={group.label}
+                rows={group.rows}
+                shootouts={shootouts}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="border-t border-border/80">
+            {!hasFreshScoreFeed && loading && (
+              <div className="flex max-w-full items-start gap-2 px-4 py-5 text-sm leading-relaxed text-muted-foreground">
+                <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+                <span className="min-w-0 break-words">
+                  Loading the latest verified results…
+                </span>
+              </div>
+            )}
 
-              {!hasFreshScoreFeed && !loading && error && (
-                <div className="flex max-w-full items-start gap-2 px-4 py-5 text-sm leading-relaxed text-muted-foreground">
-                  <WifiOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                  <span className="min-w-0 break-words">
-                    Live scores are reconnecting. Old stored scores remain hidden.
-                  </span>
-                </div>
-              )}
+            {!hasFreshScoreFeed && !loading && error && (
+              <div className="flex max-w-full items-start gap-2 px-4 py-5 text-sm leading-relaxed text-muted-foreground">
+                <WifiOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                <span className="min-w-0 break-words">
+                  Live scores are reconnecting. Old stored scores remain hidden.
+                </span>
+              </div>
+            )}
 
-              {hasFreshScoreFeed && !loading && (
-                <div className="px-4 py-5 text-center text-sm text-muted-foreground">
-                  No completed or live match is available yet.
-                </div>
-              )}
-            </div>
-          )}
-        </SectionShell>
+            {hasFreshScoreFeed && !loading && (
+              <div className="px-4 py-5 text-center text-sm text-muted-foreground">
+                No completed or live match is available yet.
+              </div>
+            )}
+          </div>
+        )}
+      </SectionShell>
 
-        <SectionShell
-          title="Upcoming Matches"
-          link="/fixtures?view=latest#upcoming-matches"
-        >
-          {upcoming.length > 0 ? (
-            <UpcomingMatchRows rows={upcoming} now={now} />
-          ) : (
-            <div className="border-t border-border/80 px-4 py-5 text-center text-sm text-muted-foreground">
-              No upcoming match is currently scheduled.
-            </div>
-          )}
-        </SectionShell>
+      <SectionShell
+        title="Upcoming Matches"
+        link="/fixtures?view=latest#upcoming-matches"
+      >
+        {upcoming.length > 0 ? (
+          <UpcomingMatchRows rows={upcoming} now={now} />
+        ) : (
+          <div className="border-t border-border/80 px-4 py-5 text-center text-sm text-muted-foreground">
+            No upcoming match is currently scheduled.
+          </div>
+        )}
+      </SectionShell>
 
-        <div className="flex min-w-0 items-start justify-between gap-2 px-1 text-[9px] leading-relaxed text-muted-foreground sm:text-[10px]">
-          <span className="min-w-0 break-words">
-            {lastUpdated
-              ? `Match feed updated ${lastUpdated.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}`
-              : "Connecting to the live match feed…"}
-          </span>
+      <div className="flex min-w-0 items-start justify-between gap-2 text-[9px] leading-relaxed text-muted-foreground sm:text-[10px]">
+        <span className="min-w-0 break-words">
+          {lastUpdated
+            ? `Automatically updated ${lastUpdated.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}`
+            : "Connecting to the live tournament feed…"}
+        </span>
 
-          {refreshing && !loading && (
-            <RefreshCw className="mt-0.5 h-3 w-3 shrink-0 animate-spin" />
-          )}
-        </div>
-      </div>
-
-      <div className="min-w-0">
-        <MvpStatsTable limit={5} compact />
+        {refreshing && !loading && (
+          <RefreshCw className="mt-0.5 h-3 w-3 shrink-0 animate-spin" />
+        )}
       </div>
 
       {error && hasFreshScoreFeed && (
-        <div className="flex max-w-full items-start gap-1.5 px-1 text-[9px] leading-relaxed text-muted-foreground sm:text-[10px] lg:col-span-2">
+        <div className="flex max-w-full items-start gap-1.5 text-[9px] leading-relaxed text-muted-foreground sm:text-[10px]">
           <WifiOff className="mt-0.5 h-3 w-3 shrink-0" />
           <span className="min-w-0 break-words">
-            Last verified match data remains visible while the feed reconnects.
+            Last verified data remains visible while the feed reconnects.
           </span>
         </div>
       )}
