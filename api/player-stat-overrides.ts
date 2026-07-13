@@ -1,5 +1,5 @@
 /**
- * Optional corrections for statistics that ESPN does not expose or reports late.
+ * Optional corrections for statistics that the primary statistics provider does not expose or reports late.
  * Keys use: team-slug:normalized-player-name
  *
  * Example:

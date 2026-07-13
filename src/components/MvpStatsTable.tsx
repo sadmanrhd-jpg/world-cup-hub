@@ -43,6 +43,8 @@ const MvpStatsTable = ({
   );
   const showSubtitle = title !== config.title;
   const fetchedAt = data?.fetchedAt ? new Date(data.fetchedAt) : null;
+  const errorMessage = error instanceof Error ? error.message : "";
+  const isNotConfigured = errorMessage.includes("not configured");
 
   return (
     <section className="min-w-0 overflow-hidden rounded-2xl border border-primary/65 bg-gradient-to-br from-primary/[0.09] via-background/45 to-secondary/30 shadow-[0_0_0_1px_hsl(var(--primary)/0.14),0_0_18px_hsl(var(--primary)/0.08)]">
@@ -144,20 +146,22 @@ const MvpStatsTable = ({
           {isLoading && rows.length === 0 && (
             <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-muted-foreground">
               <RefreshCw className="h-4 w-4 animate-spin" />
-              Loading ESPN statistics…
+              Loading live statistics…
             </div>
           )}
 
           {!isLoading && error && rows.length === 0 && (
             <div className="flex items-center justify-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
               <WifiOff className="h-4 w-4 shrink-0" />
-              ESPN statistics are temporarily unavailable.
+              {isNotConfigured
+                ? "Live statistics are not configured yet."
+                : "Sportmonks statistics are temporarily unavailable."}
             </div>
           )}
 
           {!isLoading && !error && rows.length === 0 && (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-              No {config.label.toLowerCase()} have been recorded in the ESPN feed yet.
+              No {config.label.toLowerCase()} have been returned by Sportmonks yet.
             </div>
           )}
         </div>
@@ -168,11 +172,11 @@ const MvpStatsTable = ({
           <BarChart3 className="h-3.5 w-3.5 shrink-0" />
           <span className="min-w-0 truncate">
             {fetchedAt
-              ? `ESPN data updated ${fetchedAt.toLocaleTimeString([], {
+              ? `Sportmonks data updated ${fetchedAt.toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}`
-              : "Connecting to ESPN tournament statistics"}
+              : "Connecting to Sportmonks tournament statistics"}
           </span>
         </div>
       )}
