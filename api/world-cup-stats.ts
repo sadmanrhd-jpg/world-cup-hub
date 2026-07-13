@@ -1,85 +1,97 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export const config = {
   maxDuration: 60,
 };
 
+import fantasyHandler from "./fantasy-espn";
+
+type ApiRequest = {
+  method?: string;
+  query?: Record<string, string | string[] | undefined>;
+};
+
 type ApiResponse = {
-  setHeader: (name: string, value: string) => void;
   status: (code: number) => ApiResponse;
+  setHeader: (name: string, value: string) => void;
   json: (body: unknown) => void;
 };
 
-const buildLeaders = (players: any[], key: string) =>
-  players
-    .filter((p) => Number(p[key] ?? 0) > 0)
-    .sort((a, b) => Number(b[key] ?? 0) - Number(a[key] ?? 0))
-    .slice(0, 20)
-    .map((p, index) => ({
-      rank: index + 1,
-      name: p.name,
-      country: p.teamName,
-      countryCode: p.teamAbbreviation,
-      goals: p.goals ?? 0,
-      assists: p.assists ?? 0,
-      yellowCards: p.yellowCards ?? 0,
-      redCards: p.redCards ?? 0,
-    }));
-
-export default async function handler(request: any, response: ApiResponse) {
+export default async function handler(
+  request: ApiRequest,
+  response: ApiResponse,
+) {
   try {
-    const protocol =
-      request.headers?.["x-forwarded-proto"] || "https";
-    const host = request.headers?.host;
+    let statusCode = 200;
+    let payload: any = null;
 
-    if (!host) {
-      throw new Error("Unable to resolve internal ESPN endpoint.");
-    }
-
-    const fantasyUrl = `${protocol}://${host}/api/fantasy-espn`;
-
-    const fantasyResponse = await fetch(fantasyUrl, {
-      headers: {
-        Accept: "application/json",
+    const mockResponse: ApiResponse = {
+      status(code) {
+        statusCode = code;
+        return this;
       },
-    });
+      setHeader() {},
+      json(body) {
+        payload = body;
+      },
+    };
 
-    if (!fantasyResponse.ok) {
-      throw new Error(
-        `ESPN fantasy endpoint failed: ${fantasyResponse.status}`,
-      );
+    await fantasyHandler(request, mockResponse);
+
+    if (statusCode !== 200 || !payload) {
+      response.status(statusCode || 502).json(payload ?? {
+        error: "Could not load ESPN fantasy statistics."
+      });
+      return;
     }
 
-    const payload = await fantasyResponse.json();
-    const players = Array.isArray(payload.players)
-      ? payload.players
-      : [];
+    const players = payload.players ?? [];
+
+    const createRows = (key: string) =>
+      players
+        .map((player: any) => ({
+          name: player.name,
+          country: player.teamAbbreviation || "",
+          value: Number(player.stats?.[key] ?? 0),
+        }))
+        .filter((player: any) => player.value > 0)
+        .sort((a: any, b: any) => b.value - a.value)
+        .slice(0, 10);
 
     response.setHeader(
       "Cache-Control",
-      "public, s-maxage=300, stale-while-revalidate=1800",
+      "s-maxage=900, stale-while-revalidate=3600",
     );
 
     response.status(200).json({
       source: "ESPN FIFA World Cup Fantasy API",
       fetchedAt: new Date().toISOString(),
-      recordsReceived: players.length,
-      playerStatsCount: players.length,
       leaders: {
-        goals: buildLeaders(players, "goals"),
-        assists: buildLeaders(players, "assists"),
-        yellowCards: buildLeaders(players, "yellowCards"),
-        redCards: buildLeaders(players, "redCards"),
+        goals: createRows("goals").map((p:any) => ({
+          ...p,
+          goals: p.value,
+        })),
+        assists: createRows("assists").map((p:any) => ({
+          ...p,
+          assists: p.value,
+        })),
+        yellowCards: createRows("yellowCards").map((p:any) => ({
+          ...p,
+          yellowCards: p.value,
+        })),
+        redCards: createRows("redCards").map((p:any) => ({
+          ...p,
+          redCards: p.value,
+        })),
       },
-      stats: players,
+      stats: {
+        totalPlayers: players.length,
+      },
     });
   } catch (error) {
     response.status(502).json({
-      code: "ESPN_FANTASY_STATS_FAILED",
       error:
         error instanceof Error
           ? error.message
-          : "Could not load ESPN fantasy statistics.",
+          : "Could not load ESPN statistics.",
     });
   }
 }
