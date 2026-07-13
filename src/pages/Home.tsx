@@ -3,7 +3,7 @@ import { FIXTURES, GROUPS, TEAMS, getTeam, teamsInGroup } from "@/data/wc26";
 import { useFavoriteTeam } from "@/hooks/useFavoriteTeam";
 import { getTeamInfo } from "@/data/teamInfo";
 import { getManager } from "@/data/managers";
-import { Bell, Heart, Star, Trophy } from "lucide-react";
+import { Bell, Heart, LogIn, Star, Trophy, UsersRound } from "lucide-react";
 import HomeMatchUpdates from "@/components/HomeMatchUpdates";
 import TeamFlag from "@/components/TeamFlag";
 
@@ -203,23 +203,47 @@ const Home = () => {
   return (
     <div>
       <section className="relative min-w-0 overflow-hidden">
-        <div className="absolute inset-0 grid-bg opacity-30" />
-        <div className="absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/0.18),transparent_68%)]" />
-
-        <div className="container relative min-w-0 py-8 sm:py-12 lg:py-16">
-          <div className="max-w-5xl">
-            <h1 className="text-4xl font-black leading-[0.98] tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl">
-              The world&apos;s biggest <span className="gradient-text">stage</span>.
+        <div className="absolute inset-0 grid-bg opacity-40" />
+        <div className="container relative grid min-w-0 grid-cols-1 items-start gap-4 py-2 sm:py-4 md:py-5 lg:grid-cols-[0.9fr_1.1fr] lg:gap-7">
+          <div className="min-w-0 space-y-2.5 lg:sticky lg:top-20 lg:space-y-4">
+            <h1 className="text-[22.5px] font-bold leading-[1] tracking-tight sm:text-[27px] md:text-[36px] lg:text-[52px] lg:leading-[0.96] xl:text-[58px]">
+              The world&apos;s <br />
+              biggest <span className="gradient-text">stage</span>.
             </h1>
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base lg:text-lg">
+            <p className="max-w-lg text-xs leading-relaxed text-muted-foreground sm:text-sm md:text-base lg:max-w-xl lg:text-lg lg:leading-8">
               48 nations. 104 matches. 16 host cities across Canada, Mexico and
               the USA.
             </p>
+            <div className="grid w-full min-w-0 grid-cols-2 gap-2 pt-0.5 sm:flex sm:flex-wrap lg:gap-3">
+              <Link
+                to="/profile"
+                className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary-foreground transition-transform hover:scale-105 sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base glow"
+              >
+                <LogIn className="h-4 w-4 lg:h-5 lg:w-5" />
+                Save Data
+              </Link>
+              <Link
+                to="/best-xi"
+                className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
+              >
+                <UsersRound className="h-4 w-4 lg:h-5 lg:w-5" /> Build Team
+              </Link>
+              <Link
+                to="/mini-game"
+                className="inline-flex min-w-0 items-center justify-center rounded-full border border-primary/40 bg-primary/10 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-primary transition-all hover:scale-105 hover:bg-primary/15 sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
+              >
+                Mini Game
+              </Link>
+              <Link
+                to="/prediction"
+                className="inline-flex min-w-0 items-center justify-center rounded-full border border-border bg-secondary/50 px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors hover:bg-secondary sm:w-auto sm:px-5 sm:py-2.5 sm:text-sm lg:px-6 lg:py-3 lg:text-base"
+              >
+                Make Your Prediction
+              </Link>
+            </div>
           </div>
 
-          <div className="mt-8 min-w-0 sm:mt-10 lg:mt-12">
-            <HomeMatchUpdates />
-          </div>
+          <div className="min-w-0 max-w-full overflow-hidden"><HomeMatchUpdates /></div>
         </div>
       </section>
 
