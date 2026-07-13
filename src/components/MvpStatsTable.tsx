@@ -155,13 +155,13 @@ const MvpStatsTable = ({
               <WifiOff className="h-4 w-4 shrink-0" />
               {isNotConfigured
                 ? "Live statistics are not configured yet."
-                : "Sportmonks statistics are temporarily unavailable."}
+                : "ESPN statistics are temporarily unavailable."}
             </div>
           )}
 
           {!isLoading && !error && rows.length === 0 && (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-              No {config.label.toLowerCase()} have been returned by Sportmonks yet.
+              No {config.label.toLowerCase()} have been returned by ESPN yet.
             </div>
           )}
         </div>
@@ -172,11 +172,11 @@ const MvpStatsTable = ({
           <BarChart3 className="h-3.5 w-3.5 shrink-0" />
           <span className="min-w-0 truncate">
             {fetchedAt
-              ? `Sportmonks data updated ${fetchedAt.toLocaleTimeString([], {
+              ? `ESPN data updated ${fetchedAt.toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}`
-              : "Connecting to Sportmonks tournament statistics"}
+              : "Connecting to ESPN tournament statistics"}
           </span>
         </div>
       )}
