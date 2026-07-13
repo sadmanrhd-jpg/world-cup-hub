@@ -324,7 +324,7 @@ const loadData = async (): Promise<CachedData> => {
     }
 
     const statPayload = await fetchJson<StatsPayload>(
-      "/api/world-cup-stats?v=3",
+      "/api/world-cup-stats?v=5",
     ).catch((): StatsPayload => ({ stats: {}, playerStatsCount: 0 }));
 
     const statMap = statPayload.stats ?? {};
