@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { TournamentStatsPayload } from "@/data/tournamentStats";
 
-const CACHE_KEY = "fan26.sportmonks-tournament-stats-v5";
+const CACHE_KEY = "fan26.sportmonks-tournament-stats-v6";
 const FIVE_MINUTES = 5 * 60 * 1000;
 
 type StoredStats = {
@@ -38,7 +38,7 @@ const storeStats = (payload: TournamentStatsPayload) => {
 };
 
 const fetchTournamentStats = async () => {
-  const response = await fetch("/api/world-cup-stats?v=5", {
+  const response = await fetch("/api/world-cup-stats?v=6", {
     cache: "no-store",
     headers: { Accept: "application/json" },
   });
@@ -60,7 +60,7 @@ export const useTournamentStats = () => {
   const stored = readStoredStats();
 
   return useQuery({
-    queryKey: ["sportmonks-world-cup-stats", 5],
+    queryKey: ["sportmonks-world-cup-stats", 6],
     queryFn: fetchTournamentStats,
     initialData: stored?.payload,
     initialDataUpdatedAt: stored?.storedAt,

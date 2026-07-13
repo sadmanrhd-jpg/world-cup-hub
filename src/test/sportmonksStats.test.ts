@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import handler from "../../api/world-cup-stats";
 
@@ -111,4 +112,91 @@ describe("Sportmonks World Cup statistics route", () => {
       redCards: 1,
     });
   });
+
+  it("builds leaders from fixture events when topscorers are unavailable", async () => {
+    process.env.SPORTMONKS_API_TOKEN = "test-token";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+
+        if (url.includes("/football/leagues/732")) {
+          return new Response(
+            JSON.stringify({ data: { currentseason: { id: 2026 } } }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        if (url.includes("/football/topscorers/seasons/")) {
+          return new Response(
+            JSON.stringify({ message: "This endpoint is not included" }),
+            { status: 403, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: 7001,
+                season_id: 2026,
+                state_id: 5,
+                result_info: "France won after full-time.",
+                participants: [
+                  { id: 10, name: "France", short_code: "FRA" },
+                  { id: 20, name: "England", short_code: "ENG" },
+                ],
+                events: [
+                  {
+                    id: 1,
+                    participant_id: 10,
+                    player_name: "Test Forward",
+                    related_player_name: "Test Creator",
+                    type: { developer_name: "GOAL" },
+                  },
+                  {
+                    id: 2,
+                    participant_id: 10,
+                    player_name: "Test Forward",
+                    type: { developer_name: "YELLOW_CARD" },
+                  },
+                  {
+                    id: 3,
+                    participant_id: 20,
+                    player_name: "Test Defender",
+                    type: { developer_name: "RED_CARD" },
+                  },
+                ],
+              },
+            ],
+            pagination: { has_more: false },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      }),
+    );
+
+    const harness = responseHarness();
+    await handler({}, harness.response);
+    const result = harness.read();
+
+    expect(result.statusCode).toBe(200);
+    expect(result.body.strategy).toBe("fixture events");
+    expect(result.body.leaders.goals[0]).toMatchObject({
+      name: "Test Forward",
+      countryCode: "FRA",
+      goals: 1,
+    });
+    expect(result.body.leaders.assists[0]).toMatchObject({
+      name: "Test Creator",
+      assists: 1,
+    });
+    expect(result.body.leaders.redCards[0]).toMatchObject({
+      name: "Test Defender",
+      countryCode: "ENG",
+      redCards: 1,
+    });
+  });
+
 });
