@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PLAYER_STAT_OVERRIDES } from "./player-stat-overrides";
 import {
-  TEAMS,
   normalize,
   playerKey,
   resolveTeam,
@@ -28,7 +26,7 @@ type StatRow = {
   interceptions: number;
   saves: number;
   cleanSheets: number;
-  source: "api" | "manual" | "hybrid";
+  source: "api";
   updatedAt: string;
 };
 
@@ -39,10 +37,10 @@ type PlayerAccumulator = StatRow & {
   countryCode: string;
 };
 
-type Coverage = Record<StatCategory, boolean>;
-
-const TOURNAMENT_START = new Date("2026-06-11T00:00:00.000Z");
-const TOURNAMENT_END = new Date("2026-07-20T00:00:00.000Z");
+const SPORTMONKS_BASE = "https://api.sportmonks.com/v3";
+const DEFAULT_WORLD_CUP_LEAGUE_ID = "732";
+const PAGE_SIZE = 50;
+const MAX_PAGES = 20;
 
 const COUNTRY_CODES: Record<string, string> = {
   mexico: "MEX",
@@ -95,62 +93,77 @@ const COUNTRY_CODES: Record<string, string> = {
   croatia: "CRO",
 };
 
-const STAT_ALIASES: Record<StatCategory | "minutes" | "tackles" | "interceptions" | "saves", string[]> = {
-  goals: ["G", "GL", "GLS", "GOAL", "GOALS"],
-  assists: ["A", "AST", "ASSIST", "ASSISTS", "GOALASSISTS"],
-  yellowCards: ["YC", "YELLOW", "YELLOWCARD", "YELLOWCARDS"],
-  redCards: ["RC", "RED", "REDCARD", "REDCARDS"],
-  minutes: ["MIN", "MINS", "MINUTES", "MINUTESPLAYED", "TIMEPLAYED"],
-  tackles: ["TK", "TKL", "TACKLE", "TACKLES", "TOTALTACKLE", "TOTALTACKLES"],
-  interceptions: ["INT", "INTERCEPTION", "INTERCEPTIONS"],
-  saves: ["SV", "SVS", "SAVE", "SAVES", "GOALKEEPERSAVES"],
-};
+const compact = (value: unknown) =>
+  normalize(value).replace(/statistics?|topscorers?|season|stage/g, "");
 
-const compactDate = (date: Date) =>
-  date.toISOString().slice(0, 10).replace(/-/g, "");
-
-const addUtcDays = (date: Date, amount: number) => {
-  const next = new Date(date);
-  next.setUTCDate(next.getUTCDate() + amount);
-  return next;
-};
-
-const scoreboardEndpoint = (dates: string) =>
-  `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dates}&limit=500`;
-
-const summaryEndpoint = (eventId: string) =>
-  `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${eventId}`;
-
-const fetchJson = async (url: string) => {
-  const upstream = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": "Fan26TournamentStats/4.0",
-    },
-  });
-
-  if (!upstream.ok) {
-    throw new Error(`${url} returned ${upstream.status}`);
-  }
-
-  return upstream.json() as Promise<any>;
-};
+const unwrap = (value: any) => value?.data ?? value;
 
 const numeric = (value: unknown) => {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-
-  const text = String(value ?? "").trim();
-  const minuteMatch = text.match(/^(\d{1,3})(?::\d{2}|\+\d{1,2})$/);
-  if (minuteMatch) return Number(minuteMatch[1]);
-
-  const parsed = Number(text.replace(/[^0-9.-]/g, ""));
+  const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const statKey = (value: unknown) =>
-  String(value ?? "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "");
+const textFrom = (value: any, keys: string[]) => {
+  const source = unwrap(value);
+  for (const key of keys) {
+    const candidate = source?.[key];
+    if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+  }
+  return "";
+};
+
+const playerNameFrom = (record: any) => {
+  const player = unwrap(record?.player);
+  const direct = textFrom(player, [
+    "display_name",
+    "displayName",
+    "full_name",
+    "fullName",
+    "common_name",
+    "commonName",
+    "name",
+  ]);
+  if (direct) return direct;
+
+  const first = textFrom(player, ["firstname", "first_name", "firstName"]);
+  const last = textFrom(player, ["lastname", "last_name", "lastName"]);
+  return `${first} ${last}`.trim();
+};
+
+const teamNameFrom = (record: any) =>
+  textFrom(record?.participant, [
+    "name",
+    "display_name",
+    "displayName",
+    "short_code",
+    "shortCode",
+  ]);
+
+const typeLabelFrom = (record: any) => {
+  const type = unwrap(record?.type);
+  return [
+    type?.developer_name,
+    type?.developerName,
+    type?.name,
+    type?.code,
+    type?.stat_group,
+    type?.statGroup,
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+
+const classifyCategory = (record: any): StatCategory | undefined => {
+  const label = compact(typeLabelFrom(record));
+
+  if (label.includes("yellowcard") || label === "yellow") return "yellowCards";
+  if (label.includes("redcard") || label === "red") return "redCards";
+  if (label.includes("assist")) return "assists";
+  if (label.includes("goal") && !label.includes("owngoal")) return "goals";
+
+  return undefined;
+};
 
 const blankStats = (): StatRow => ({
   appearances: 0,
@@ -177,12 +190,12 @@ const getOrCreate = (
   name: string,
 ) => {
   const key = playerKey(team.slug, name);
-  const existing = stats.get(key);
-  if (existing) return existing;
+  const current = stats.get(key);
+  if (current) return current;
 
   const created: PlayerAccumulator = {
     ...blankStats(),
-    name: name.trim(),
+    name,
     teamSlug: team.slug,
     country: team.name,
     countryCode: countryCode(team),
@@ -192,433 +205,123 @@ const getOrCreate = (
   return created;
 };
 
-const athleteName = (item: any) =>
-  item?.athlete?.displayName ??
-  item?.athlete?.fullName ??
-  item?.athlete?.shortName ??
-  item?.displayName ??
-  item?.fullName ??
-  item?.shortName ??
-  item?.name ??
-  "";
+const sportmonksRequest = async (
+  path: string,
+  token: string,
+  params: Record<string, string | number | undefined> = {},
+) => {
+  const url = new URL(`${SPORTMONKS_BASE}${path}`);
+  url.searchParams.set("api_token", token);
 
-const athletePosition = (item: any) =>
-  String(
-    item?.athlete?.position?.abbreviation ??
-      item?.athlete?.position?.name ??
-      item?.position?.abbreviation ??
-      item?.position?.name ??
-      "",
-  ).toUpperCase();
-
-const teamNameFromBlock = (teamBlock: any) =>
-  teamBlock?.team?.displayName ??
-  teamBlock?.team?.shortDisplayName ??
-  teamBlock?.team?.name ??
-  "";
-
-const buildObjectStatMap = (statsList: unknown[]) => {
-  const map = new Map<string, number>();
-
-  for (const item of statsList) {
-    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
-    const stat = item as Record<string, unknown>;
-    const value = stat.value ?? stat.displayValue;
-
-    for (const label of [stat.abbreviation, stat.name, stat.label, stat.shortDisplayName]) {
-      const key = statKey(label);
-      if (key) map.set(key, numeric(value));
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") {
+      url.searchParams.set(key, String(value));
     }
-  }
-
-  return map;
-};
-
-const buildFlatStatMap = (labels: unknown[], values: unknown[]) => {
-  const map = new Map<string, number>();
-  labels.forEach((label, index) => {
-    const key = statKey(label);
-    if (key) map.set(key, numeric(values[index]));
   });
-  return map;
-};
 
-const hasAlias = (map: Map<string, number>, aliases: string[]) =>
-  aliases.some((alias) => map.has(statKey(alias)));
+  const upstream = await fetch(url, {
+    headers: { Accept: "application/json" },
+  });
 
-const readAlias = (map: Map<string, number>, aliases: string[]) => {
-  for (const alias of aliases) {
-    const key = statKey(alias);
-    if (map.has(key)) return map.get(key) ?? 0;
-  }
-  return 0;
-};
-
-const applyStatMap = (
-  row: PlayerAccumulator,
-  map: Map<string, number>,
-  coverage: Coverage,
-) => {
-  for (const category of ["goals", "assists", "yellowCards", "redCards"] as StatCategory[]) {
-    const aliases = STAT_ALIASES[category];
-    if (hasAlias(map, aliases)) coverage[category] = true;
-    row[category] += readAlias(map, aliases);
+  const body = await upstream.json().catch(() => null);
+  if (!upstream.ok) {
+    const upstreamMessage =
+      body?.message ?? body?.error?.message ?? body?.error ?? "Unknown Sportmonks error";
+    throw new Error(`Sportmonks returned ${upstream.status}: ${upstreamMessage}`);
   }
 
-  row.minutes += readAlias(map, STAT_ALIASES.minutes);
-  row.tackles += readAlias(map, STAT_ALIASES.tackles);
-  row.interceptions += readAlias(map, STAT_ALIASES.interceptions);
-  row.saves += readAlias(map, STAT_ALIASES.saves);
+  return body;
 };
 
-const playerAppeared = (entry: any, map: Map<string, number>) => {
-  if (entry?.starter === true) return true;
-  if (numeric(entry?.subbedIn) > 0) return true;
-  if (readAlias(map, STAT_ALIASES.minutes) > 0) return true;
+const resolveSeasonId = async (token: string, leagueId: string) => {
+  const configured = process.env.SPORTMONKS_WORLD_CUP_SEASON_ID?.trim();
+  if (configured) return configured;
 
-  return [
-    "goals",
-    "assists",
-    "yellowCards",
-    "redCards",
-  ].some((category) => readAlias(map, STAT_ALIASES[category as StatCategory]) > 0);
-};
-
-const parseRosters = (
-  summary: any,
-  stats: Map<string, PlayerAccumulator>,
-  coverage: Coverage,
-) => {
-  const startingGoalkeepers = new Map<string, string>();
-
-  for (const teamBlock of summary?.rosters ?? []) {
-    const team = resolveTeam(teamNameFromBlock(teamBlock));
-    if (!team) continue;
-
-    for (const entry of teamBlock?.roster ?? []) {
-      const name = athleteName(entry);
-      if (!name) continue;
-
-      const map = buildObjectStatMap(entry?.stats ?? []);
-      if (map.size === 0) continue;
-
-      const row = getOrCreate(stats, team, name);
-      applyStatMap(row, map, coverage);
-
-      if (playerAppeared(entry, map)) row.appearances += 1;
-      if (entry?.starter === true) row.starts += 1;
-
-      if (
-        entry?.starter === true &&
-        ["GK", "G", "GOALKEEPER"].includes(athletePosition(entry))
-      ) {
-        startingGoalkeepers.set(team.slug, playerKey(team.slug, name));
-      }
-    }
-  }
-
-  return startingGoalkeepers;
-};
-
-const parseBoxScorePlayers = (
-  summary: any,
-  stats: Map<string, PlayerAccumulator>,
-  coverage: Coverage,
-  startingGoalkeepers: Map<string, string>,
-) => {
-  for (const teamBlock of summary?.boxscore?.players ?? []) {
-    const team = resolveTeam(teamNameFromBlock(teamBlock));
-    if (!team) continue;
-
-    const seenInMatch = new Set<string>();
-
-    for (const category of teamBlock?.statistics ?? []) {
-      const labels: unknown[] =
-        Array.isArray(category?.labels) && category.labels.length > 0
-          ? category.labels
-          : category?.keys ?? [];
-
-      for (const athleteRow of category?.athletes ?? []) {
-        const name = athleteName(athleteRow);
-        if (!name) continue;
-
-        const key = playerKey(team.slug, name);
-        const map = buildFlatStatMap(labels, athleteRow?.stats ?? []);
-        const row = getOrCreate(stats, team, name);
-        applyStatMap(row, map, coverage);
-
-        if (!seenInMatch.has(key) && playerAppeared(athleteRow, map)) {
-          row.appearances += 1;
-          if (athleteRow?.starter === true) row.starts += 1;
-          seenInMatch.add(key);
-        }
-
-        if (
-          athleteRow?.starter === true &&
-          ["GK", "G", "GOALKEEPER"].includes(athletePosition(athleteRow))
-        ) {
-          startingGoalkeepers.set(team.slug, key);
-        }
-      }
-    }
-  }
-};
-
-const competitionFromSummary = (summary: any) =>
-  summary?.header?.competitions?.[0];
-
-const resolveDetailTeam = (detail: any, summary: any) => {
-  const direct = resolveTeam(
-    detail?.team?.displayName ??
-      detail?.team?.shortDisplayName ??
-      detail?.team?.name,
-  );
-  if (direct) return direct;
-
-  const detailTeamId = String(detail?.team?.id ?? detail?.teamId ?? "");
-  if (!detailTeamId) return undefined;
-
-  const competitor = (competitionFromSummary(summary)?.competitors ?? []).find(
-    (candidate: any) =>
-      String(candidate?.id ?? "") === detailTeamId ||
-      String(candidate?.team?.id ?? "") === detailTeamId,
+  const payload = await sportmonksRequest(
+    `/football/leagues/${encodeURIComponent(leagueId)}`,
+    token,
+    { include: "currentSeason" },
   );
 
-  return resolveTeam(
-    competitor?.team?.displayName ??
-      competitor?.team?.shortDisplayName ??
-      competitor?.team?.name,
-  );
-};
+  const league = unwrap(payload);
+  const currentSeason = unwrap(league?.currentseason ?? league?.currentSeason);
+  const seasonId = String(currentSeason?.id ?? "").trim();
 
-const parsePlayerAndTeamFromText = (text: string) => {
-  const matches = text.matchAll(/([^.!?]+?)\s+\(([^)]+)\)/g);
-
-  for (const match of matches) {
-    const team = resolveTeam(match[2]);
-    const name = match[1]?.trim();
-    if (team && name) return { team, name };
+  if (!seasonId) {
+    throw new Error(
+      "Sportmonks did not return a current World Cup season. Add SPORTMONKS_WORLD_CUP_SEASON_ID in the deployment environment.",
+    );
   }
 
-  return undefined;
+  return seasonId;
 };
 
-const cleanAssistName = (value: string) =>
-  value
-    .replace(/\s+with\s+.*$/i, "")
-    .replace(/\s+following\s+.*$/i, "")
-    .replace(/\s+after\s+.*$/i, "")
-    .trim();
+const hasMorePages = (payload: any, page: number, rowsOnPage: number) => {
+  const pagination = payload?.pagination ?? payload?.meta?.pagination ?? payload?.meta;
 
-const summaryEvents = (summary: any): any[] => {
-  const candidates = [
-    summary?.keyEvents,
-    competitionFromSummary(summary)?.details,
-    summary?.details,
-    summary?.scoringPlays,
-  ];
+  if (typeof pagination?.has_more === "boolean") return pagination.has_more;
+  if (typeof pagination?.hasMore === "boolean") return pagination.hasMore;
 
-  return (
-    candidates.find(
-      (candidate) => Array.isArray(candidate) && candidate.length > 0,
-    ) ?? []
-  );
+  const current = numeric(pagination?.current_page ?? pagination?.currentPage ?? page);
+  const last = numeric(pagination?.last_page ?? pagination?.lastPage);
+  if (last > 0) return current < last;
+
+  return rowsOnPage >= PAGE_SIZE;
 };
 
-const parseKeyEvents = (
-  summary: any,
-  stats: Map<string, PlayerAccumulator>,
-  coverage: Coverage,
-) => {
+const fetchTopscorerRecords = async (token: string, seasonId: string) => {
+  const records: any[] = [];
   const seen = new Set<string>();
 
-  for (const detail of summaryEvents(summary)) {
-    const typeText = String(
-      detail?.type?.text ??
-        detail?.type?.description ??
-        detail?.shortText ??
-        "",
-    );
-    const text = String(detail?.text ?? detail?.shortText ?? typeText ?? "");
-    const signature = `${detail?.clock?.displayValue ?? ""}|${typeText}|${text}`;
-    if (seen.has(signature)) continue;
-    seen.add(signature);
-
-    const playerFromText = parsePlayerAndTeamFromText(text);
-    const detailTeam = resolveDetailTeam(detail, summary);
-    const team = playerFromText?.team ?? detailTeam;
-    const structuredName = athleteName(
-      detail?.athletesInvolved?.[0] ??
-        detail?.participants?.[0] ??
-        detail?.athletes?.[0],
-    );
-    const playerName = structuredName || playerFromText?.name || "";
-
-    const isOwnGoal = /\bown goal\b/i.test(`${typeText} ${text}`);
-    const isGoal =
-      detail?.scoringPlay === true ||
-      detail?.isScoreChange === true ||
-      /\bgoal!?\b/i.test(typeText);
-
-    if (!coverage.goals && isGoal && !isOwnGoal && team && playerName) {
-      getOrCreate(stats, team, playerName).goals += 1;
-    }
-
-    if (!coverage.assists && isGoal && team) {
-      const structuredAssist =
-        (detail?.athletesInvolved ?? detail?.participants ?? detail?.athletes ?? [])
-          .slice(1)
-          .map(athleteName)
-          .find(Boolean) ?? "";
-      const textAssist = text.match(/Assisted by\s+([^.;]+)/i)?.[1] ?? "";
-      const assistName = structuredAssist || cleanAssistName(textAssist);
-
-      if (assistName) getOrCreate(stats, team, assistName).assists += 1;
-    }
-
-    const isYellow = /\byellow card\b/i.test(`${typeText} ${text}`);
-    if (!coverage.yellowCards && isYellow && team && playerName) {
-      getOrCreate(stats, team, playerName).yellowCards += 1;
-    }
-
-    const isRed = /\bred card\b/i.test(`${typeText} ${text}`);
-    if (!coverage.redCards && isRed && team && playerName) {
-      getOrCreate(stats, team, playerName).redCards += 1;
-    }
-  }
-};
-
-const applyCleanSheets = (
-  summary: any,
-  stats: Map<string, PlayerAccumulator>,
-  startingGoalkeepers: Map<string, string>,
-) => {
-  const competition = competitionFromSummary(summary);
-
-  for (const competitor of competition?.competitors ?? []) {
-    const team = resolveTeam(
-      competitor?.team?.displayName ??
-        competitor?.team?.shortDisplayName ??
-        competitor?.team?.name,
-    );
-    if (!team) continue;
-
-    const opponent = (competition?.competitors ?? []).find(
-      (candidate: any) => candidate?.id !== competitor?.id,
-    );
-    const conceded = numeric(opponent?.score);
-    const goalkeeperKey = startingGoalkeepers.get(team.slug);
-
-    if (goalkeeperKey && conceded === 0) {
-      const goalkeeper = stats.get(goalkeeperKey);
-      if (goalkeeper) goalkeeper.cleanSheets += 1;
-    }
-  }
-};
-
-const parseSummary = (summary: any, stats: Map<string, PlayerAccumulator>) => {
-  const coverage: Coverage = {
-    goals: false,
-    assists: false,
-    yellowCards: false,
-    redCards: false,
-  };
-
-  const startingGoalkeepers = parseRosters(summary, stats, coverage);
-  parseBoxScorePlayers(summary, stats, coverage, startingGoalkeepers);
-  parseKeyEvents(summary, stats, coverage);
-  applyCleanSheets(summary, stats, startingGoalkeepers);
-};
-
-const getEventStatus = (event: any) =>
-  event?.status ?? event?.competitions?.[0]?.status;
-
-const isCompletedEvent = (event: any) => {
-  const status = getEventStatus(event);
-  return status?.type?.completed === true || status?.type?.state === "post";
-};
-
-const fetchCompletedEvents = async () => {
-  const todayPlusOne = addUtcDays(new Date(), 1);
-  const end = todayPlusOne < TOURNAMENT_END ? todayPlusOne : TOURNAMENT_END;
-  const range = `${compactDate(TOURNAMENT_START)}-${compactDate(end)}`;
-  let rangeSucceeded = false;
-
-  try {
-    const payload = await fetchJson(scoreboardEndpoint(range));
-    rangeSucceeded = true;
-    const completed = (payload?.events ?? []).filter(isCompletedEvent);
-    if (completed.length > 0) return completed;
-  } catch {
-    // Some ESPN range requests fail. Daily requests below preserve partial data.
-  }
-
-  const events = new Map<string, any>();
-  const dates: string[] = [];
-  let successfulDays = 0;
-
-  for (
-    let cursor = new Date(TOURNAMENT_START);
-    cursor <= end;
-    cursor = addUtcDays(cursor, 1)
-  ) {
-    dates.push(compactDate(cursor));
-  }
-
-  for (let index = 0; index < dates.length; index += 10) {
-    const batch = dates.slice(index, index + 10);
-    const settled = await Promise.allSettled(
-      batch.map((date) => fetchJson(scoreboardEndpoint(date))),
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const payload = await sportmonksRequest(
+      `/football/topscorers/seasons/${encodeURIComponent(seasonId)}`,
+      token,
+      {
+        include: "player;participant;type",
+        per_page: PAGE_SIZE,
+        page,
+        order: "asc",
+      },
     );
 
-    for (const result of settled) {
-      if (result.status !== "fulfilled") continue;
-      successfulDays += 1;
-
-      for (const event of result.value?.events ?? []) {
-        if (event?.id && isCompletedEvent(event)) {
-          events.set(String(event.id), event);
-        }
-      }
+    const pageRows = Array.isArray(payload?.data) ? payload.data : [];
+    for (const record of pageRows) {
+      const signature = String(
+        record?.id ??
+          [record?.season_id, record?.stage_id, record?.player_id, record?.type_id].join(":"),
+      );
+      if (seen.has(signature)) continue;
+      seen.add(signature);
+      records.push(record);
     }
+
+    if (!hasMorePages(payload, page, pageRows.length)) break;
   }
 
-  if (successfulDays === 0 && !rangeSucceeded) {
-    throw new Error("ESPN scoreboard is unavailable");
-  }
-
-  return Array.from(events.values());
+  return records;
 };
 
-const fetchSummariesInBatches = async (events: any[], batchSize = 16) => {
-  const summaries: any[] = [];
+const parseRecords = (records: any[]) => {
+  const stats = new Map<string, PlayerAccumulator>();
+  let ignoredRecords = 0;
 
-  for (let index = 0; index < events.length; index += batchSize) {
-    const batch = events.slice(index, index + batchSize);
-    const settled = await Promise.allSettled(
-      batch.map((event) => fetchJson(summaryEndpoint(String(event.id)))),
-    );
+  for (const record of records) {
+    const category = classifyCategory(record);
+    const playerName = playerNameFrom(record);
+    const team = resolveTeam(teamNameFrom(record));
+    const total = numeric(record?.total ?? record?.value ?? record?.count);
 
-    for (const result of settled) {
-      if (result.status === "fulfilled") summaries.push(result.value);
+    if (!category || !playerName || !team || total <= 0) {
+      ignoredRecords += 1;
+      continue;
     }
+
+    const row = getOrCreate(stats, team, playerName);
+    row[category] += total;
   }
 
-  return summaries;
-};
-
-const applyOverrides = (stats: Map<string, PlayerAccumulator>) => {
-  const now = new Date().toISOString();
-
-  for (const [key, override] of Object.entries(PLAYER_STAT_OVERRIDES)) {
-    const current = stats.get(key);
-    if (!current) continue;
-
-    Object.assign(current, override, {
-      source: "hybrid",
-      updatedAt: now,
-    });
-  }
+  return { stats, ignoredRecords };
 };
 
 const statOnly = (row: PlayerAccumulator): StatRow => ({
@@ -653,9 +356,6 @@ const buildLeaders = (
       const secondaryDifference = second[secondary] - first[secondary];
       if (secondaryDifference !== 0) return secondaryDifference;
 
-      const minuteDifference = first.minutes - second.minutes;
-      if (minuteDifference !== 0) return minuteDifference;
-
       return first.name.localeCompare(second.name);
     })
     .slice(0, limit)
@@ -673,21 +373,27 @@ const buildLeaders = (
 
 export const config = { maxDuration: 60 };
 
-export default async function handler(
-  _request: unknown,
-  response: ApiResponse,
-) {
+export default async function handler(_request: unknown, response: ApiResponse) {
+  const token = process.env.SPORTMONKS_API_TOKEN?.trim();
+
+  if (!token) {
+    response.setHeader("Cache-Control", "no-store");
+    response.status(503).json({
+      code: "SPORTMONKS_TOKEN_MISSING",
+      configurationRequired: true,
+      provider: "Sportmonks",
+      error: "Live statistics are not configured yet.",
+    });
+    return;
+  }
+
   try {
-    const events = await fetchCompletedEvents();
-    const summaries = await fetchSummariesInBatches(events);
-
-    if (events.length > 0 && summaries.length === 0) {
-      throw new Error("ESPN returned fixtures but no readable match summaries");
-    }
-
-    const stats = new Map<string, PlayerAccumulator>();
-    for (const summary of summaries) parseSummary(summary, stats);
-    applyOverrides(stats);
+    const leagueId =
+      process.env.SPORTMONKS_WORLD_CUP_LEAGUE_ID?.trim() ||
+      DEFAULT_WORLD_CUP_LEAGUE_ID;
+    const seasonId = await resolveSeasonId(token, leagueId);
+    const records = await fetchTopscorerRecords(token, seasonId);
+    const { stats, ignoredRecords } = parseRecords(records);
 
     const leaders = {
       goals: buildLeaders(stats, "goals"),
@@ -702,11 +408,15 @@ export default async function handler(
     );
 
     response.status(200).json({
-      source: "ESPN World Cup scoreboard and match summaries",
+      source: "Sportmonks Football API",
       fetchedAt: new Date().toISOString(),
-      completedMatches: events.length,
-      parsedMatches: summaries.length,
+      leagueId,
+      seasonId,
+      completedMatches: 0,
+      parsedMatches: 0,
       playerStatsCount: stats.size,
+      recordsReceived: records.length,
+      ignoredRecords,
       leaders,
       stats: Object.fromEntries(
         Array.from(stats.entries()).map(([key, row]) => [key, statOnly(row)]),
@@ -715,6 +425,8 @@ export default async function handler(
   } catch (error) {
     response.setHeader("Cache-Control", "no-store");
     response.status(502).json({
+      code: "SPORTMONKS_REQUEST_FAILED",
+      provider: "Sportmonks",
       error:
         error instanceof Error
           ? error.message
